@@ -1,0 +1,34 @@
+Last Updated 2017/03/29
+Patch Tapestry Changelog
+
+v.0.1.0: (legacy)
+	-Created with backup (default) function only.
+	-Configuration by variable block at head of source code
+
+v.0.1.1: (stable)
+	-Added Recovery Mode
+	-First Public Testing Release
+	
+v.0.2.0 (dev):
+	-Bugfixes:
+		-Fixed bug where large backup queues failed to divide into adequate number of blocks
+		-Fixed a race condition in blockbuild() that allowed for an infinite loop
+	-Silence GPG calls using Python-GnuPG module.
+	-General Code Improvements:
+		-Replaced fetchSecretKey and findKey/mounKey with single function.
+		-Replaced plaintext backup option with key generation prompt
+		-append newline to some raw_input calls for cleaner UI
+		-implemented error handling, esp. for the known tempfile bug
+	-Replaced config block with config file "tapestry.cfg"
+		-Human-Editable file generated with module configparser.
+		-includes username and computer label variables
+		-Allows the user to define block sizes for different use cases (BluRay-ROM, tape, etc)
+		-defines the categories and category-root directories in both *nix and windows filesystems
+		-defines which categories are default and which are to be used in inclusive mode
+	-replaced the init arguments:
+		-"--setup" launches the program in config mode.
+		-"--inc" launches the program in backup mode, functioning inclusively (across all categories)
+		-"--rcv" launches in recovery mode, as before.
+	-added Debugging Mode!
+		-called with "--debug" flag
+		-activates a series of debugging functions that display additional information during program operation. Not user-friendly.
