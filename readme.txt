@@ -43,16 +43,13 @@ Getting Started
 	file. Doing so presents privacy implications you may find undesirable and I 
 	urge you to consider that possibility before continuing.
 	
-	C. Updating from Version 0.2.0
-	If you are updating Tapestry from version 0.2.0, you need to add lines to your
-	configuration file manually. Please add the following entries to Environment
-	Variables.
+	C. Updating from Previous Versions
+	It is advisable, if updating from a previous version, to first run the program
+	in --setup and visit each config option in turn to ensure the correct values
+	can be found in tapestry.cfg.
 	
-	expected fp = --the fingerprint of your DR.key
-	sign by default = True
-	signing fp = --the fingerprint of a GPG key you wish to use for signing.
-	
-	They can also be added by visiting option 5 in the "--setup" mode.
+	Alternatively you can assign those values manually by simply modifying the
+	packaged config file.
 	
 	D. Generating your PGP Keys
 	Tapestry relies on OpenPGP, as implimented in GnuPG, for its cryptographic 
@@ -102,10 +99,19 @@ Getting Started
 	in tapestry to match the fingerprint of the new key. A future version will 
 	allow key configuration in greater detail and obviate this step.
 	
-	Due to security designs in "GPG2", Tapestry (currently) cannot rely on keys 
-	with passphrases for operation, other than by the above workaround. Further,
-	Tapestry does not rely on a secure pinentry program. Your passphase may remain
-	in memory. It is recommended to either restrict signing to trusted, known-
-	secure machines or to use a subkey to sign the blocks. The truly paranoid may
-	wish to sign manually using the gpg2 CLI and its native pinentry. More robust
-	passphrase-handling procedures are planned for future releases.
+	Further, Tapestry does not rely on a secure pinentry program. Your passphase 
+	may remain in memory. It is recommended to either restrict signing to trusted,
+	known-secure machines or to use a subkey to sign the blocks. The truly 
+	paranoid may wish to sign manually using the gpg2 CLI and its native pinentry.
+	More robust passphrase-handling procedures are planned for future releases.
+	
+	Presently, to enable the use of the default-signing feature, Tapestry will
+	attempt to autodetect whether or not "allow-loopback-pinentry" is in the
+	user's gpg-agent.conf file. It will display a warning if it is absent and
+	offer to ammend the file accordingly. For most users this is suffcient,
+	however, loopback pinentry is not whitelisted. If it is enabled, any program
+	running on the computer can call to that gpg instance and access the pinentry
+	socket invisibly. This allows retry attacks to be launched against keys in the
+	user keyring, possibly without the knowledge of the user. Steps taken to
+	mitigate this risk are beyond the explicit scope of this document. Solutions
+	include disallowing the behavior by default, or manual signing.
