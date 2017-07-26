@@ -1,12 +1,13 @@
 # Tapestry Backup Automation Tool
 # Coded in python3 at Patch Savage Labs
 # git: ~/ZAdamMac/Patchs-Tapestry
-global version; version = "DevBuild"  # Sets the version to display. "DevBuild" enables some extra debugging not normally accessable
+version = 'DevBuild'; global version  # Sets the version to display. "DevBuild" enables some extra debugging not normally accessable
 
 # Importing Modules
 import argparse
 import configparser
 import datetime
+from datetime import date
 import gnupg
 import math
 import multiprocessing as mp
@@ -17,11 +18,9 @@ import platform
 import shutil
 import tarfile
 
-
 # Defining Classes
 class skipLogger:  # dedicated skip-logging handler for use in buildBlocks
-    def __init__(self, landingdir,
-                 name):  # starts the skiplogger and tells it it will be writing to landingdir with name
+    def __init__(self, landingdir,name):  # starts the skiplogger and tells it it will be writing to landingdir with name
         landingAbs = os.path.join(landingdir, name)
         if not os.path.exists(landingdir):
             os.makedirs(landingdir)
@@ -60,18 +59,18 @@ class tapBlock(object):
             return "stored"
 
     def pack(self):  # enques the contents of the block for packaging
-        os.chdir(drop)
+        os.chdir(ns.drop)
         for file in self.contents:
-            tasks.put(buildTasker("tar", self.label, file, self.contents[file]))
+            tasks.put(buildTasker(self.label, file, self.contents[file]))
         if self.label.endswith("1.tap"):
-            tasks.put(buildTasker("tar", self.label, "recovery.pkl", pathPickle))
+            tasks.put(buildTasker(self.label, "recovery.pkl", pathPickle))
 
 
 class tapProc(mp.Process):
     def __init__(self, qTask):
         mp.Process.__init__(self)
         self.qTask = qTask
-        os.chdir(drop)
+        os.chdir(ns.date)
 
     def run(self):
         proc_name = self.name
@@ -109,13 +108,13 @@ class encTasker(object):
 
     def __call__(self):
         with open(self.tarf, "r") as p:
-            tgtOutput = os.path.join(drop, tar)
+            tgtOutput = os.path.join(ns.drop, tar)
             debugPrint("Encrypting - sending block to: " + tgtOutput)
             k = gpg.encrypt_file(p, fp, output=tgtOutput, armor=True, always_trust=True)
-            if k.ok == True:
+            if k.ok:
                 debugPrint("Success.")
-            elif k.ok == False:
-                debugPrint(str(k.status))
+            elif not k.ok:
+                debugPrint(str(k.status)) #Displays the specific encryption error encountered if encryption fails
 
 
 class sigTasker(object):
@@ -125,12 +124,12 @@ class sigTasker(object):
 
     def __call__(self):
         with open(self.block, "r") as p:
-            tgtOutput = block + ".sig"
+            tgtOutput = self.block + ".sig"
             debugprint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True, passphrase=ns.secret)
-            if sis.ok == True:
+            if sis.ok:
                 debugPrint("Success.")
-            elif sis.ok == False:
+            elif not sis.ok:
                 debugPrint(str(sis.status))
 
 
@@ -142,21 +141,20 @@ class recTask(object):
         self.pathend = pathend
 
     def __call__(self):
-        absTar = os.path.join(workDir, self.tar)
-        placementEnd, nameProper = os.path.split(
-            self.pathend)  # split the pathend component into the subpath from the category dir, and the original filename.
+        absTar = os.path.join(ns.workDir, self.tar)
+        placementEnd, nameProper = os.path.split(self.pathend)  # split the pathend component into the subpath from the category dir, and the original filename.
         placement = os.path.join(self.catdir, placementEnd)  # merges the subpath and the category path
         with tarfile.open(absTar, "r:bz2") as tf:
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
         placed = os.path.join(placement, self.fid)
-        os.rename(placed, proper)  # and now it's named correctly.
+        os.rename(placed, nameProper)  # and now it's named correctly.
 
 
 class recProc(mp.Process):
     def __init__(self, qTask):
         mp.Process.__init__(self)
         self.qTask = qTask
-        os.chdir(drop)
+        os.chdir(ns.drop)
 
     def run(self):
         proc_name = self.name
@@ -179,7 +177,7 @@ def debugPrint(foo):
 
 
 def announce():
-    if __name__ = "__main__":
+    if __name__ == '__main__':
         print("Welcome to Tapestry Backup Tool Version " + version)
 
 
@@ -187,16 +185,16 @@ def init():
     print("Configuration file not found.")
     print("Beginning first-time setup.")
     print("To begin with, please provide your username on this system.")
-    uid = raw_input("Username:")
+    uid = input("Username:")
     config.set("Environment Variables", "uid", str(uid))
     print("Next, enter a label to uniquely identify this computer.")
-    compID = raw_input("CompID:")
+    compID = input("CompID:")
     config.set("Environment Variables", "compID", str(compID))
     print("Please enter the desired blocksize in MB.")
-    blockSize = raw_input("(4000)")
+    blockSize = input("(4000)")
     config.set("Environment Variables", "compID", blockSize)
     print("If you have a signing key you wish to use, please enter it, else 0.")
-    sigFP = raw_input("FP: ")
+    sigFP = input("FP: ")
     config.set("Environment Variables", "signing fp", str(sigFP))
     if sigFP != "0":
         config.set("Environment Variables", "sign by default", str(True))
@@ -220,8 +218,9 @@ def init():
 
 
 def checkGPGConfig():
-    if signing:  # if signing is disabled by default we don't care about loopback pinentry because a DR key doesn't use a passphrase
+    if ns.signing:  # if signing is disabled by default we don't care about loopback pinentry because a DR key doesn't use a passphrase
         tgt = gpgDir + "/gpg-agent.conf"
+        configured = false
         with open(tgt, "rw") as conf:
             for line in conf:
                 if "allow-loopback-pinentry" in line:
@@ -237,6 +236,7 @@ def checkGPGConfig():
             conf.close()
 
 
+# noinspection PyGlobalUndefined
 def setup():
     global setupMode
     setupMode = True
@@ -249,23 +249,23 @@ def setup():
         print("4. Directory Management")
         print("5. Key Options")
         print("6. Quit")
-        func = raw_input("Option:")
+        func = input("Option:")
         if func == "1":
             print("Please enter the desired username.")
-            uid = raw_input("Username:")
+            uid = input("Username:")
             config.set("Environment Variables", "uid", str(uid))
             print("New UID Set: " + uid)
         elif func == "2":
             print("The current machine label is: " + str(config.getopt("environment Variables", "compID")))
             print("Please enter the new label.")
-            compID = raw_input("Machine Label:")
+            compID = input("Machine Label:")
             config.set("Environment Variables", "compID", str(compID))
             print("The new label was set to :" + compID)
         elif func == "3":
             print("The Blocksize determines the maximum size in MB a .tap block can be.")
             print("It is recommended to choose a value 100 MB less than the capacity of your media.")
             print("Please enter a new blocksize in MB.")
-            newSize = raw_input("Default is 4000:")
+            newSize = input("Default is 4000:")
             config.set("Environment Variables", "blockSize", newSize)
         elif func == "4":
             print("The directory management function is under construction.")
@@ -275,35 +275,35 @@ def setup():
             print("Please edit this file directly to add, remove, or change target directories and their labels.")
         elif func == "5":
             print("Tapestry can sign your blocks for you, to prevent tampering.")
-            if signing:
+            if ns.signing:
                 print("Default signing is currently on.")
             else:
                 print("Default signing is currently off.")
             print("Blocks will be signed with the key with the following fingerprint:")
-            print(str(sigFP))
+            print(str(ns.sigFP))
             print("You can:")
             print("1. Toggle Default Signing")
             print("2. Assign a new signing key")
             print("3. Toggle Keyring Mode.")
             print("4. Go Back")
-            subfunc = raw_input("Choice?")
+            subfunc = input("Choice?")
             if subfunc == "1":
-                if signing:
-                    signing = False
+                if ns.signing:
+                    ns.signing = False
                     config.set("Environment Variables", "sign by default", str(False))
                 else:
-                    signing = True
+                    ns.signing = True
                     config.set("Environment Variables", "sign by default", str(True))
             elif subfunc == "2":
                 print("Please enter the fingerprint of the new key.")
                 sigFP = raw_input("FP: ")
                 config.set("Environment Variables", "signing fp", str(sigFP))
             elif subfunc == "3":
-                if not keyringMode:
-                    keyringMode = True
+                if not ns.keyringMode:
+                    ns.keyringMode = True
                     config.set("Environment Variables", "keyringMode", str(True))
                 else:
-                    keyringMode = False
+                    ns.keyringMode = False
                     config.set("Environment Variables", "keryingMode", str(False))
             else:
                 pass
@@ -316,15 +316,15 @@ def setup():
             print("Your entry was not a valid option.")
             print("Please enter the number of the option you wish to execute.")
 
-
 def findKeyFile(arg):
     foundKey = False
-    if not keyringMode:
+    global pathKey
+    if not ns.keyringMode:
         if arg == "pub":
             tgt = "DRPub.key"
         elif arg == "sec":
             tgt = "DR.key"
-        if currentOS == "Linux":
+        if ns.currentOS == "Linux":
             dirSearch = ("/media/" + uid)
             for root, dirs, files in os.walk(dirSearch):
                 for file in files:
@@ -332,7 +332,7 @@ def findKeyFile(arg):
                         foundKey = True
                         pathKey = os.path.join(root, tgt)
                         debugPrint("Found key at: " + pathKey)
-        if currentOS == "Windows":
+        if ns.currentOS == "Windows":
             drives = ['{}:\\' for letter in 'DEFGHIJKLMNOPQRSTUVWXYZ']
             for drive in drives:
                 if os.path.isdir(drive):
@@ -342,10 +342,10 @@ def findKeyFile(arg):
                                 foundKey = True
                                 pathKey = os.path.join(root, tgt)
                                 debugPrint("Found key at: " + pathKey)
-                if foundKey == True:
+                if foundKey:
                     break
     else:
-        print("Tapestry will use the key with the fingerprint %s for this session." % expectedFP)
+        print("Tapestry will use the key with the fingerprint %s for this session." % ns.expectedFP)
 
     if not foundKey:
         if not keyringMode:
@@ -354,16 +354,16 @@ def findKeyFile(arg):
             while getPassphrase:
                 print("Please enter a passphrase to protect this recovery key. Leave blank to skip.")
                 s1 = input(">")
-                if s1 != None:
+                if s1 is not None:
                     print("Please enter the passphrase again.")
                     s2 = input(">")
                     if s1 == s2:
-                        secret = s1
+                        ns.secret = s1
                         break
                     else:
                         pass
                 else:
-                    secret = None
+                    ns.secret = None
                     getPassphrase = False
             print("Generating a new recovery key, please stand by.")
             input_data = gpg.gen_key_input(key_type="RSA", key_length=2048, name_real=str(uid),
@@ -373,11 +373,11 @@ def findKeyFile(arg):
             debugPrint(keypair.fingerprint)
             fp = keypair.fingerprint  # Changes the value of FP to the new key
             config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
-            with open("tapestry.cfg", "w") as cfg:
+            with open(confFile, "w") as cfg:
                 config.write(cfg)
-            if not os.path.isdir(drop):
-                os.mkdir(drop)
-            os.chdir(drop)
+            if not os.path.isdir(ns.drop):
+                os.mkdir(ns.drop)
+            os.chdir(ns.drop)
             pubOut = gpg.export_keys(fp)
             keyOut = gpg.export_keys(fp, True)
             pubFile = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
@@ -391,17 +391,18 @@ def findKeyFile(arg):
             print("The exported keys have been saved in the output folder. Please move them to removable media.")
 
 
+# noinspection PyGlobalUndefined
 def loadKey():
     global activeFP
     debugPrint("loadkey Start")
-    if not keyringMode:
+    if not ns.keyringMode:
         foo = input("Press enter to confirm that the system will use the key located at " + pathKey)
         keyFile = open(pathKey)
         keyData = keyFile.read()
         importResult = gpg.import_keys(keyData)
         debugPrint("I have imported key: " + importResult.fingerprints[0])
-        debugPrint("I was expecting: " + expectedFP)
-        if str(importResult.fingerprints[0]) != expectedFP:
+        debugPrint("I was expecting: " + ns.expectedFP)
+        if str(importResult.fingerprints[0]) != ns.expectedFP:
             print(
                 "WARNING: the fingerprint of the DR key imported from the supplied thumb drive does not match the expected value.")
             print("This could pose a threat to the privacy of your backups.")
@@ -410,8 +411,8 @@ def loadKey():
             if confirmation == "OK":
                 debugPrint("Setting the new expected fp to %s" % str(importResult.fingerprints[0]))
                 config.set("Environment Variables", "expected fp", str(importResult.fingerprints[0]))
-                with open("tapestry-test.cfg", "w") as cfg:  # TODO detest
-                    config.write(cfg)
+                with open(cfg, "w") as cfile:
+                    config.write(cfile)
             else:
                 print("You have indicated you do not wish to use the current key. The program will now terminate.")
                 remKey()
@@ -420,32 +421,30 @@ def loadKey():
         print("Key imported. If program terminates irregularly, remove manually from GPG.")
         activeFP = importResult.fingerprints[0]
 
-    if keyringMode:
+    if ns.keyringMode:
         debugPrint("Fetching key from Keyring")
-        activeFP = expectedFP
-        debugPrint(activeFP)
+        ns.activeFP = ns.expectedFP
+        debugPrint(ns.activeFP)
 
 
 def createDIRS():
-    if currentOS == "Linux":
-        workDir = "
-
-    if not os.path.exists(workDir):
-        os.mkdir(workDir)
-    if not os.path.exists(drop):
-        os.mkdir(drop)
+    if not os.path.exists(ns.workDir):
+        os.mkdir(ns.workDir)
+    if not os.path.exists(ns.drop):
+        os.mkdir(ns.drop)
 
 
+# noinspection PyGlobalUndefined
 def findblock():  # Time to go grepping for taps!
     os.chdir(media)
     for foo, bar, files in os.walk(media):
         for file in files:
             if file.endswith(".tap"):
                 os.chdir(os.path.join(a + media))
-                global foundBlock;
-                foundblock = file
+                global foundBlock;  foundBlock = file
 
 
+# noinspection PyGlobalUndefined
 def validateBlock():
     print("Checking the validity of this disk's signature.")
     global valid
@@ -458,7 +457,7 @@ def validateBlock():
                 data = os.path.join(dont, file)
             else:
                 continue
-    if sig == None:
+    if sig is None:
         print("No signature is available for this block. Continue?")
         go = raw_input("y/n?")
         if go.lower() == "y":
@@ -490,7 +489,7 @@ def decryptBlock():
     os.mkdir(os.path.join(workDir, foundBlock))
     outputTGT = str(os.path.join(workDir, foundBlock))
     with open(a + "/" + file, "r") as kfile:
-        if secret == None:
+        if secret is None:
             baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
         else:
             baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True, passphrase=secret)
@@ -498,6 +497,7 @@ def decryptBlock():
             debugPrint("Decryption Error: " + str(baz.status))
 
 
+# noinspection PyGlobalUndefined,PyGlobalUndefined,PyGlobalUndefined
 def openPickle():
     for foo, bar, files in os.walk(workDir):
         for file in files:
@@ -532,6 +532,7 @@ def openPickle():
         exit()
 
 
+# noinspection PyGlobalUndefined
 def unpackBlocks():
     global tasker
     tasker = mp.joinableQueue()
@@ -564,6 +565,7 @@ def cleardown():
     rmkey()
 
 
+# noinspection PyGlobalUndefined,PyGlobalUndefined,PyGlobalUndefined
 def getContents(category, tgt):
     print("Currently walking the " + category + " directory.")
     for fromRoot, dirs, files, in os.walk(str(tgt)):
@@ -587,6 +589,7 @@ def getContents(category, tgt):
     debugPrint("After crawling " + category + " there are " + str(len(listAbsolutePaths)) + " items in the index.")
 
 
+# noinspection PyGlobalUndefined,PyGlobalUndefined
 def makeIndex():  # does some operations to the working dictionaries to remove items that are too large and place them in order.
     print("Compiling the working indexes")
     global workIndex
@@ -605,12 +608,12 @@ def makeIndex():  # does some operations to the working dictionaries to remove i
 def buildBlocks():
     print("Beginning the blockbuilding process. This may take a moment.")
     numBlocks = math.ceil(sumSize / blockSizeActual)
-    for i in range(numBlocks):
+    for i in range(int(numBlocks)):
         SID = str(str(compid) + str(date) + str(i) + ".tap")
         blocks.append(tapBlock(blockSizeActual, SID))
     for block in blocks:
         debugPrint("Testing in Block: " + str(block))
-        if block.full == False:
+        if not block.full:
             for FID in workIndex:
                 fSize = listSizes[FID]
                 status = block.add(FID, fSize, listAbsolutePaths[FID])
@@ -624,6 +627,7 @@ def buildBlocks():
     placePickle()
 
 
+# noinspection PyGlobalUndefined
 def placePickle():  # generates the recovery pickle and leaves it where it can be found later.
     os.chdir(workDir)
     global sumBlocks
@@ -635,6 +639,7 @@ def placePickle():  # generates the recovery pickle and leaves it where it can b
     pickle.dump(listRecovery, filePickles)
 
 
+# noinspection PyGlobalUndefined
 def processBlocks():  # signblocks is in here now
     print("Packaging Blocks.")
     debugPrint("Spawning %s processes." % numConsumers)
@@ -693,10 +698,10 @@ def parseArgs():  # mounts argparser, crawls it and then assigns to the managed 
         ns.inc = args.inc
         ns.debug = args.debug
 
-
 def parseConfig():  # mounts the configparser instance, grabs the config file, and passes its values into the namespace
     if __name__ == "__main__":
-        config = configparser.SafeConfigParser()
+        # noinspection PyDeprecation
+        config = configparser.ConfigParser()
         if version == "DevBuild":
             cfg = "tapestry-test.cfg"
         else:
@@ -727,7 +732,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
                            str(uname[1]))  # gets the nodeid and sets it as the computer's name.
             configFile = os.open("tapestry.cfg", os.O_CREAT | os.O_RDWR)
             os.close(configFile)
-            with open("tapestry.cfg", "r+") as t:
+            with open(cfg, "r+") as t:
                 config.write(t)
 
         ns.expectedFP = config.get("Environment Variables", "Expected FP")
@@ -737,16 +742,59 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.sigFP = config.get("Environment Variables", "Signing FP")
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
-        global blockSizeActual;
+        global blockSizeActual
         blockSizeActual = config.getint("Environment Variables", "blockSize") * (
         2 ** 20)  # cfg asks the user for MB, but for actual processes we need bytes
-        global compid, compid = config.get("Environment Variables", "compid")
-        global driveletter;
+        global compid; compid = config.get("Environment Variables", "compid")
+        global driveletter
         driveletter = config.get("Environment Variables",
                                  "driveletter")  # The windows drive letter of the removable disk mount point. Used for rcv mode.
-        global uid;
+        global uid
         uid = config.get("Environment Variables", "uid")  # Not sure actually used anywhere!
 
+    if currentOS == "Linux":
+        ns.workDir = "/tmp/Tapestry/"
+        ns.desktop = str("/home/" + uid + "/Desktop")
+        ns.gpgDir = str("/home/" + uid + "/.gnupg")
+        ns.media = "/media/"
+    elif currentOS == "Windows":
+        ns.workDir = "C:/Windows/Temp"
+        ns.esktop = str("C:/Users/" + uid + "/Desktop")
+        ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
+        ns.media = driveLetter
+    drop = desktop + "/Tapestry Outputs/"
+
+
+def startLogger():
+    skiplogger = skipLogger(ns.drop, "Skipped Files")
+
+def startGPG():
+    gpg = gnupg.GPG(gnupghome=gpgDir, verbose=ns.debug)
+
+def buildOpsList():
+    global listDefaults
+    global listAdditionals
+    global dirActual
+
+    if currentOS == "Linux":
+        listDefaults = dict(config.items("Default Locations/Nix"))
+        listAdditionals = dict(config.items("Additional Locations/Nix"))
+    if currentOS == "Windows":
+        listDefaults = dict(config.items("Default Locations/Win"))
+        listAdditionals = dict(config.items("Additional Locations/Win"))
+
+    global listRun
+
+    if args.inc:
+        listRun = listDefaults.copy()
+        listRun.update(listAdditionals)
+    else:
+        listRun = listDefaults
+
+    dirActual = listDefaults.copy()
+    dirActual.update(listAdditionals)
+
+    ns.dirActual = dirActual #This last value needs to go to namespace because it is needed by the worker processes too.
 
 # Runtime
 if __name__ == "__main__":
@@ -755,6 +803,7 @@ if __name__ == "__main__":
     parseArgs()
     parseConfig()
     startLogger()
+    startGPG()
     if ns.uninit:
         init()
         checkGPGConfig()
@@ -787,7 +836,7 @@ if __name__ == "__main__":
         exit()
     else:
         createDIRS()
-        buildOpsList()  # TODO Define
+        buildOpsList()
         print("Tapestry is configuring itself. Please wait.")
         findKeyFile("pub")
         loadKey()
