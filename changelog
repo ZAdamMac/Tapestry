@@ -50,3 +50,9 @@ v0.2.2 (release):
 	-Fixed bug in recovery that would crash Tapestry on an unknown category.
 	-Organization improvements: outputs moved to a subdirectory on the desktop, rather than loose.
 	-Script will now check to see if loopback pinentry is enabled. If it is not, it will ask the user for permission to add it, or disable signing-by-default.
+
+v0.3.0 (dev):
+    -Multiprocessing is now used for some steps of operation.
+    --Decision was made to improve performance.
+    -Recovery pickle is now added to all blocks(old was block1).
+    -Minor fixes to various naming systems.

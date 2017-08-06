@@ -40,12 +40,13 @@ class skipLogger:  # dedicated skip-logging handler for use in buildBlocks
 
 
 class tapBlock(object):
-    def __init__(self, size, label):
+    def __init__(self, size, label, index):
         self.sizeCur = 0
         self.sizeMax = size
         self.label = label
         self.full = False
         self.contents = {}
+        self.index = index #This is the index number used to find the right lock for later
 
     def add(self, FID, fSize, fPath):  # General function for adding a file to the box. Called during block assembly.
         if (self.sizeMax - self.sizeCur) < smallest:
@@ -62,9 +63,7 @@ class tapBlock(object):
         os.chdir(ns.drop)
         global tasks
         for file in self.contents:
-            tasks.put(buildTasker(self.label, file, self.contents[file]))
-        if self.label.endswith("1.tap"):
-            tasks.put(buildTasker(self.label, "recovery.pkl", pathPickle))
+            tasks.put(buildTasker(self.label, file, self.contents[file], self.index))
 
 
 class tapProc(mp.Process):
@@ -87,15 +86,21 @@ class tapProc(mp.Process):
 
 
 class buildTasker(object):
-    def __init__(self, tarfile, a, b):
+    def __init__(self, tarfile, FID, PATH, index):
         self.tarf = tarfile
-        self.a = a  # TAR:FID
-        self.b = b  # TAR: PATH
+        self.a = FID
+        self.b = PATH
+        self.index = index #index number of the appropriate mutex
 
     def __call__(self):
-        tar = tarfile.open(self.tarf, "w:bz2")
-        tar.add(self.b, arcname=self.a)
-        tar.close()
+        os.chdir(ns.workDir)
+        if os.path.exists(self.tarf): #we need to know if we're starting a new file or not.
+            fLock = locks[self.index] #Aquires the lock indicated in the index value from the master
+            fLock.acquire()
+            tar = tarfile.open(name=self.tarf, mode="a:")
+            tar.add(self.b, arcname=self.a, recursive=False)
+            tar.close()
+            fLock.release()
 
 class encTasker(object):
     def __init__(self, tarfile, fp):
@@ -104,7 +109,9 @@ class encTasker(object):
 
     def __call__(self):
         with open(self.tarf, "r") as p:
-            tgtOutput = os.path.join(ns.drop, self.tarf)
+            os.chdir(ns.workDir)
+            tapped = self.tarf.replace(".tar", ".tap")
+            tgtOutput = os.path.join(ns.drop, tapped)
             debugPrint("Encrypting - sending block to: " + tgtOutput)
             k = gpg.encrypt_file(p, self.fp, output=tgtOutput, armor=True, always_trust=True)
             if k.ok:
@@ -216,11 +223,11 @@ def init():
 def checkGPGConfig():
     if ns.signing:  # if signing is disabled by default we don't care about loopback pinentry because a DR key doesn't use a passphrase
         tgt = gpgDir + "/gpg-agent.conf"
-        configured = false
+        configured = False
         with open(tgt, "rw") as conf:
             for line in conf:
                 if "allow-loopback-pinentry" in line:
-                    configured = true
+                    configured = True
                     break
         if not configured:
             print("Tapestry has detected that loopback pintentry is disabled in your gpg installation.")
@@ -495,9 +502,9 @@ def decryptBlock():
 def openPickle():
     for foo, bar, files in os.walk(workDir):
         for file in files:
-            if file.endswith("1.tap"):
+            if file.endswith(".tap"):
                 with tarfile.open(os.path.join(foo, file), "r:bz2") as tfile:
-                    tfile.extract("recovery.pkl", path=workDir)
+                    tfile.extract("recovery-pkl", path=workDir)
     for a, b, files in os.walk(workDir):
         for file in files:
             if file == "recovery.pkl":
@@ -606,34 +613,40 @@ def buildBlocks():
     numBlocks = math.ceil(sumSize / blockSizeActual)
     debugPrint("numblocks = "+ str(numBlocks))
     for i in range(int(numBlocks)):
-        SID = str(str(compid) +"-"+ str(date.today())+"-"+ + str(i) + ".tap")
-        blocks.append(tapBlock(blockSizeActual, SID))
+        SID = str(str(compid) +"-"+ str(date.today())+"-"+ str(i+1) + ".tar")
+        blocks.append(tapBlock(blockSizeActual, SID, i))
     for block in blocks:
         debugPrint("Testing in Block: " + str(block))
+        activeIndex = workIndex.copy() #At the start of each block we clone the whole index for it to track over.
         if not block.full:
-            for FID in workIndex:
-                pos = 0
+            for FID in activeIndex:
+                pos = workIndex.index(FID)
                 fSize = listSizes[FID]
                 status = block.add(FID, int(fSize), listAbsolutePaths[FID])
                 if status == "pass":
-                    continue
+                    pass
                 elif status == "stored":
-                    del workIndex[pos]
-                pos += 1
+                    del workIndex[pos] #placed items are removed from the work index
         if len(workIndex) == 0:
             break
     print("There are no items left to sort.")
     placePickle()
 
 def placePickle():  # generates the recovery pickle and leaves it where it can be found later.
-    os.chdir(ns.workDir)
-    global sumBlocks
-    sumBlocks = len(blocks)
-    listRecovery = [sumBlocks, listRelativePaths,
-                    listSection]  # Believe it or not, this number and these two lists are all we need to recover from a tapestry backup!
-    recPickle = os.open("recovery.pkl", os.O_CREAT | os.O_RDWR)
-    filePickles = os.fdopen(recPickle, "wb")
-    pickle.dump(listRecovery, filePickles)
+    if __name__ == "__main__":
+        os.chdir(ns.workDir)
+        global sumBlocks
+        sumBlocks = len(blocks)
+        listRecovery = [sumBlocks, listRelativePaths,
+                        listSection]  # Believe it or not, this number and these two lists are all we need to recover from a tapestry backup!
+        recPickle = os.open("recovery.pkl", os.O_CREAT | os.O_RDWR)
+        filePickles = os.fdopen(recPickle, "wb")
+        pickle.dump(listRecovery, filePickles)
+        pathPickle = os.path.join(ns.workDir, "recovery.pkl")
+        for block in blocks:
+            tar = tarfile.open(block.label, "w:") #attempting workaround to append issue.
+            tar.add(pathPickle, arcname="recovery-pkl", recursive=False)
+            tar.close()
 
 def processBlocks():  # signblocks is in here now
     print("Packaging Blocks.")
@@ -648,18 +661,21 @@ def processBlocks():  # signblocks is in here now
         global tasks
         tasks = mp.JoinableQueue()
         consumers = []
+        global locks
+        locks = []
         for i in range(ns.numConsumers):
             consumers.append(tapProc(tasks))
         for b in blocks:
             b.pack()
-            debugPrint("Packed Blocks")
-            debugPrint(tasks.qsize())
+            locks.append(master.Lock())
+        debugPrint("Packed Blocks")
         for w in consumers:
             w.start()
         tasks.join()
-        for foo, bar, files in os.walk(ns.drop):
+        #todo need to add a compression step here because of appendmode
+        for foo, bar, files in os.walk(ns.workDir):
             for file in files:
-                if file.endswith(".tap"):
+                if file.endswith(".tar"):
                     tasks.put(encTasker(file, ns.activeFP))
                     debugPrint("Encryption enqueued")
         tasks.join()
@@ -676,6 +692,7 @@ def processBlocks():  # signblocks is in here now
 
 def buildMaster():  # summons the master process and builds its corresponding namespace, then assigns some starting values
     if __name__ == "__main__":
+        global master
         master = mp.Manager()
         global ns
         ns = master.Namespace()
@@ -684,6 +701,7 @@ def buildMaster():  # summons the master process and builds its corresponding na
         ns.date = datetime.date
         ns.home = os.getcwd()
         ns.numConsumers = os.cpu_count()  # The practical limit of consumer processes during multiprocessed blocks.
+        #ns.numConsumers = 1 ; existed purely for debugging purposes.
         ns.secret = None  # Placeholder so that we can use this value later as needed. Needs to explicitly be none in case no password is used.
 
 def parseArgs():  # mounts argparser, crawls it and then assigns to the managed namespace
@@ -801,26 +819,6 @@ def buildOpsList():
     dirActual.update(listAdditionals)
 
     ns.dirActual = dirActual #This last value needs to go to namespace because it is needed by the worker processes too.
-
-def enqueueCompression(): #We build a queue of all the files across all blocks
-    if __name__ == "__main__":
-
-        pass
-
-def processCompression(): #We execute that queue using a pool of worker processes
-    pass
-
-def enqueueEncryption(): #We pass all the tar/bz2 files into gpg for crypto, output .tap
-    pass
-
-def processEncryption():
-    pass
-
-def enqueueSigning(): #Build a queue of files
-    pass
-
-def processSigning(): #Pass the sig queue to gpg2 for detatched sig creation
-    pass
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
