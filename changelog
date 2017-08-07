@@ -54,5 +54,6 @@ v0.2.2 (release):
 v0.3.0 (dev):
     -Multiprocessing is now used for some steps of operation.
     --Decision was made to improve performance.
+    -Changed structure of the compression operation, may lead to performance impacts. See readme
     -Recovery pickle is now added to all blocks(old was block1).
     -Minor fixes to various naming systems.

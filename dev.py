@@ -5,6 +5,7 @@ global version; version = 'DevBuild'  # Sets the version to display. "DevBuild" 
 
 # Importing Modules
 import argparse
+import bz2
 import configparser
 import datetime
 from datetime import date
@@ -113,7 +114,8 @@ class encTasker(object):
             tapped = self.tarf.replace(".tar", ".tap")
             tgtOutput = os.path.join(ns.drop, tapped)
             debugPrint("Encrypting - sending block to: " + tgtOutput)
-            k = gpg.encrypt_file(p, self.fp, output=tgtOutput, armor=True, always_trust=True)
+            with open(self.tarf, "r") as p:
+                k = gpg.encrypt_file(p, self.fp, output=tgtOutput, armor=True, always_trust=True)
             if k.ok:
                 debugPrint("Success.")
             elif not k.ok:
@@ -642,6 +644,7 @@ def placePickle():  # generates the recovery pickle and leaves it where it can b
         recPickle = os.open("recovery.pkl", os.O_CREAT | os.O_RDWR)
         filePickles = os.fdopen(recPickle, "wb")
         pickle.dump(listRecovery, filePickles)
+        filePickles.close()
         pathPickle = os.path.join(ns.workDir, "recovery.pkl")
         for block in blocks:
             tar = tarfile.open(block.label, "w:") #attempting workaround to append issue.
@@ -672,8 +675,8 @@ def processBlocks():  # signblocks is in here now
         for w in consumers:
             w.start()
         tasks.join()
-        #todo need to add a compression step here because of appendmode
-        for foo, bar, files in os.walk(ns.workDir):
+
+        for foo, bar, files in os.walk(ns.workDir): #TODO find why no file contents survive this step
             for file in files:
                 if file.endswith(".tar"):
                     tasks.put(encTasker(file, ns.activeFP))
