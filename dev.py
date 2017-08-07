@@ -5,7 +5,6 @@ global version; version = 'DevBuild'  # Sets the version to display. "DevBuild" 
 
 # Importing Modules
 import argparse
-import bz2
 import configparser
 import datetime
 from datetime import date
@@ -111,10 +110,11 @@ class encTasker(object):
     def __call__(self):
         with open(self.tarf, "r") as p:
             os.chdir(ns.workDir)
+            tstring = self.tarf
             tapped = self.tarf.replace(".tar", ".tap")
             tgtOutput = os.path.join(ns.drop, tapped)
             debugPrint("Encrypting - sending block to: " + tgtOutput)
-            with open(self.tarf, "r") as p:
+            with open(tstring, "rb") as p:
                 k = gpg.encrypt_file(p, self.fp, output=tgtOutput, armor=True, always_trust=True)
             if k.ok:
                 debugPrint("Success.")
