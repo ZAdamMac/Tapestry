@@ -86,8 +86,8 @@ class tapProc(mp.Process):
 
 
 class buildTasker(object):
-    def __init__(self, tarfile, FID, PATH, index):
-        self.tarf = tarfile
+    def __init__(self, tarf, FID, PATH, index):
+        self.tarf = tarf
         self.a = FID
         self.b = PATH
         self.index = index #index number of the appropriate mutex
@@ -103,8 +103,8 @@ class buildTasker(object):
             fLock.release()
 
 class encTasker(object):
-    def __init__(self, tarfile, fp):
-        self.tarf = tarfile
+    def __init__(self, t, fp):
+        self.tarf = t
         self.fp = fp
 
     def __call__(self):
@@ -114,8 +114,8 @@ class encTasker(object):
             tapped = self.tarf.replace(".tar", ".tap")
             tgtOutput = os.path.join(ns.drop, tapped)
             debugPrint("Encrypting - sending block to: " + tgtOutput)
-            with open(tstring, "rb") as p:
-                k = gpg.encrypt_file(p, self.fp, output=tgtOutput, armor=True, always_trust=True)
+            with open(tstring, "rb") as tgt:
+                k = gpg.encrypt_file(tgt, self.fp, output=tgtOutput, armor=True, always_trust=True)
             if k.ok:
                 debugPrint("Encryption Success.")
             elif not k.ok:
@@ -144,12 +144,13 @@ class recTask(object):
 
     def __call__(self):
         absTar = os.path.join(ns.workDir, self.tar)
-        placementEnd, nameProper = os.path.split(self.pathend)  # split the pathend component into the subpath from the category dir, and the original filename.
-        placement = os.path.join(self.catdir, placementEnd)  # merges the subpath and the category path
-        with tarfile.open(absTar, "r:bz2") as tf:
+        pathEnd = self.pathend.strip('~/')
+        absFile = os.path.join(self.catdir,pathEnd)
+        placement, nameProper = os.path.split(absFile)  # split the pathend component into the subpath from the category dir, and the original filename.
+        with tarfile.open(absTar, "r") as tf:
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
         placed = os.path.join(placement, self.fid)
-        os.rename(placed, nameProper)  # and now it's named correctly.
+        os.rename(placed, absFile)  # and now it's named correctly.
 
 
 class recProc(mp.Process):
@@ -203,7 +204,7 @@ def init():
     else:
         config.set("Environment Variables", "sign by default", str(False))
     print("Excellent. Tapestry will now create a default configuration file here:")
-    print(str(homeDir))
+    print(str(os.getcwd()))
     config.set("Default Locations/Nix", "Docs", "/home/" + uid + "/Documents")
     config.set("Default Locations/Nix", "Photos", "/home/" + uid + "/Pictures")
     config.set("Additional Locations/Nix", "Video", "/home/" + uid + "/Videos")
@@ -221,7 +222,7 @@ def init():
 
 def checkGPGConfig():
     if ns.signing:  # if signing is disabled by default we don't care about loopback pinentry because a DR key doesn't use a passphrase
-        tgt = gpgDir + "/gpg-agent.conf"
+        tgt = ns.gpgDir + "/gpg-agent.conf"
         configured = False
         with open(tgt, "rw") as conf:
             for line in conf:
@@ -256,7 +257,7 @@ def setup():
             config.set("Environment Variables", "uid", str(uid))
             print("New UID Set: " + uid)
         elif func == "2":
-            print("The current machine label is: " + str(config.getopt("environment Variables", "compID")))
+            print("The current machine label is: " + str(config.get("environment Variables", "compID")))
             print("Please enter the new label.")
             compID = input("Machine Label:")
             config.set("Environment Variables", "compID", str(compID))
@@ -270,7 +271,7 @@ def setup():
         elif func == "4":
             print("The directory management function is under construction.")
             print("Your configuration file is at:")
-            locationConfig = os.path.join(homeDir, "tapestry.cfg")
+            locationConfig = os.path.join(ns.homeDir, "tapestry.cfg")
             print(str(locationConfig))
             print("Please edit this file directly to add, remove, or change target directories and their labels.")
         elif func == "5":
@@ -296,7 +297,7 @@ def setup():
                     config.set("Environment Variables", "sign by default", str(True))
             elif subfunc == "2":
                 print("Please enter the fingerprint of the new key.")
-                sigFP = raw_input("FP: ")
+                sigFP =input("FP: ")
                 config.set("Environment Variables", "signing fp", str(sigFP))
             elif subfunc == "3":
                 if not ns.keyringMode:
@@ -373,8 +374,8 @@ def findKeyFile(arg):
             debugPrint(keypair.fingerprint)
             fp = keypair.fingerprint  # Changes the value of FP to the new key
             config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
-            with open(confFile, "w") as cfg:
-                config.write(cfg)
+            with open(cfg, "w") as cf:
+                config.write(cf)
             if not os.path.isdir(ns.drop):
                 os.mkdir(ns.drop)
             os.chdir(ns.drop)
@@ -415,7 +416,7 @@ def loadKey():
                     config.write(cfile)
             else:
                 print("You have indicated you do not wish to use the current key. The program will now terminate.")
-                remKey()
+                rmKey()
                 exit()
         debugPrint(str(importResult.count) + " keys imported.")
         print("Key imported. If program terminates irregularly, remove manually from GPG.")
@@ -436,11 +437,11 @@ def createDIRS():
 
 # noinspection PyGlobalUndefined
 def findblock():  # Time to go grepping for taps!
-    os.chdir(media)
-    for foo, bar, files in os.walk(media):
+    os.chdir(ns.media)
+    for foo, bar, files in os.walk(ns.media):
         for file in files:
             if file.endswith(".tap"):
-                os.chdir(os.path.join(a + media))
+                os.chdir(foo)
                 global foundBlock;  foundBlock = file
 
 
@@ -448,7 +449,7 @@ def findblock():  # Time to go grepping for taps!
 def validateBlock():
     print("Checking the validity of this disk's signature.")
     global valid
-    for dont, care, files in os.walk(media):
+    for dont, care, files in os.walk(ns.media):
         for file in files:
             debugPrint("Looking for a sig at file: " + file)
             if file.endswith(".sig"):
@@ -459,15 +460,15 @@ def validateBlock():
                 continue
     if sig is None:
         print("No signature is available for this block. Continue?")
-        go = raw_input("y/n?")
+        go = input("y/n?")
         if go.lower() == "y":
             valid = True
         else:
             print("Aborting backup.")
-            clearDown()
+            cleardown()
             exit()
     else:
-        with open(sig) as fsig:
+        with open(sig, "rb") as fsig:
             verified = gpg.verify_file(fsig, data)
         if verified.trust_level is not None and verified.trust_level >= verified.TRUST_FULLY:
             valid = True
@@ -475,87 +476,98 @@ def validateBlock():
         else:
             print("This block claims to have been signed by %s." % verified.username)
             print("The signature is %s. Continue?" % verified.trust_text)
-            go = raw_input("y/n?")
+            go = input("y/n?")
             if go.lower() == "y":
                 valid = True
             else:
                 print("Aborting backup.")
-                clearDown()
+                cleardown()
                 exit()
 
 
 def decryptBlock():
     global foundBlock
-    os.mkdir(os.path.join(workDir, foundBlock))
-    outputTGT = str(os.path.join(workDir, foundBlock))
-    with open(a + "/" + file, "r") as kfile:
+    outputTGT = str(os.path.join(ns.workDir, foundBlock))
+    with open(foundBlock, "rb") as kfile:
         if secret is None:
             baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
         else:
             baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True, passphrase=secret)
         if not baz.ok:
             debugPrint("Decryption Error: " + str(baz.status))
-
+            print("Tapestry could not decrypt the block. Shutting down.")
+            cleardown()
+            exit()
 
 # noinspection PyGlobalUndefined,PyGlobalUndefined,PyGlobalUndefined
 def openPickle():
-    for foo, bar, files in os.walk(workDir):
+    for foo, bar, files in os.walk(ns.workDir):
         for file in files:
             if file.endswith(".tap"):
-                with tarfile.open(os.path.join(foo, file), "r:bz2") as tfile:
-                    tfile.extract("recovery-pkl", path=workDir)
-    for a, b, files in os.walk(workDir):
+                with tarfile.open(os.path.join(foo, file), "r") as tfile:
+                    tfile.extract("recovery-pkl", path=ns.workDir)
+    for a, b, files in os.walk(ns.workDir):
         for file in files:
-            if file == "recovery.pkl":
+            if file == "recovery-pkl":
                 foo = os.path.join(a, file)
                 global recPaths
                 global recSections
-                global numVolumes
-                listRecovery = pickle.load(open(foo))
-                numVolumes, recPaths, recSections = listRecovery
+                global numBlocks
+                with open(foo, "rb") as baz:
+                    listRecovery = pickle.load(baz)
+                numBlocks, recPaths, recSections = listRecovery
     if len(
             recPaths) > 0:  # Throws an internal error if the required files are not properly mounted and closes the program so that it will not damage the archive
         print("Found Recovery Table 1")
     else:
         print(
             "There was a problem finding the file 'recPaths' on the disk. Please reload this program and try again, being careful to use Disk 1.")
-        clearDown()  # Deletes temporary files to prevent system bloat
-        remKey()  # removes the recovery secret key from the keyring per protocol
+        cleardown()  # Deletes temporary files to prevent system bloat
+        rmKey()  # removes the recovery secret key from the keyring per protocol
         exit()
     if len(recSections) > 0:
         print("Found Recovery Table 2")
     else:
         print(
             "There was a problem finding the file 'recovery.pkl' on the disk. Please reload this program and try again, being careful to use Disk 1.")
-        clearDown()
-        remKey()
+        cleardown()
+        rmKey()
         exit()
 
 
 # noinspection PyGlobalUndefined
 def unpackBlocks():
-    global tasker
-    tasker = mp.joinableQueue()
-    for foo, bar, files in os.walk(workDir):
-        for file in files:
-            if file.endswith(".tap"):
-                with tarfile.open(os.path.join(foo, file), "r:bz2")as tf:
-                    for item in tf.getnames():  # at this point item yields a tap FID
-                        cat = recSections[item]
-                        try:
-                            catdir = dirActual[cat]
-                        except KeyError:
-                            catdir = os.path.join(drop, cat)
-                        pathend = recPaths[item]
-                        tasker.put(rectask(file, fid, catdir, pathend))
-    for foo in range(numConsumers):
-        tasker.put(None)  # seed poison pills at the end of the queue to kill the damn consumers
-
+    if __name__ == '__main__':
+        global tasker
+        tasker = mp.JoinableQueue()
+        for foo, bar, files in os.walk(ns.workDir):
+            for file in files:
+                if file.endswith(".tap"):
+                    with tarfile.open(os.path.join(foo, file), "r")as tf:
+                        for item in tf.getnames():  # at this point item yields a tap FID
+                            if item == "recovery-pkl": #avoids a keyerror later.
+                                continue
+                            cat = recSections[item]
+                            try:
+                                catdir = dirActual[cat]
+                            except KeyError:
+                                catdir = os.path.join(ns.drop, cat)
+                            pathend = recPaths[item]
+                            tasker.put(recTask(file, item, catdir, pathend))
+        global workers; workers = [] #TODO explore why some of the 'video' files consistantly disappear
+        for i in range(ns.numConsumers):
+            workers.append(recProc(tasker))
+        for w in workers:
+            w.start()
+        tasker.join()
+        for foo in range(ns.numConsumers):
+            tasker.put(None)  # seed poison pills at the end of the queue to kill the damn consumers
+        tasker.join()
 
 def rmkey():
     if not ns.keyringMode:
-        gpg.delete_keys(fp, True)
-        gpg.delete_keys(fp)
+        gpg.delete_keys(ns.activeFP, True)
+        gpg.delete_keys(ns.activeFP)
         print("The recovery key has been deleted from the keyring.")
 
 
@@ -723,6 +735,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
     if __name__ == "__main__":
         global config
         config = configparser.ConfigParser()
+        global cfg
         if version == "DevBuild":
             cfg = "tapestry-test.cfg"
         else:
@@ -783,12 +796,12 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.workDir = "C:/Windows/Temp"
         ns.desktop = str("C:/Users/" + uid + "/Desktop")
         ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
-        ns.media = driveLetter
+        ns.media = driveletter
     ns.drop = ns.desktop + "/Tapestry Outputs/"
 
 
 def startLogger():
-    global skipLogger
+    global skiplogger
     skiplogger = skipLogger(ns.drop, "Skipped Files")
 
 def startGPG():
@@ -846,11 +859,13 @@ if __name__ == "__main__":
         exit()
     elif ns.rcv:
         print("Tapestry is ready to recover your files. Please insert the first disk.")
+        input("Press any key to continue")
         findKeyFile("sec")
         loadKey()
         print("Tapestry is using this secret key: %s" % ns.activeFP)
         print("Please enter the secret for this key. If none, leave blank.")
         secret = input(">")
+        buildOpsList()
         createDIRS()
         findblock()
         validateBlock()
@@ -859,11 +874,11 @@ if __name__ == "__main__":
         print("This backup exists in %d blocks." % numBlocks)
         for i in range(numBlocks - 1):
             input("Please insert the next disk and press enter to continue.")
-            findBlock()
+            findblock()
             validateBlock()
             decryptBlock()
         unpackBlocks()
-        print("Any files with uncertain placement were moved to the desktop.")
+        print("Any files with uncertain placement were moved to the output folder.")
         print("All blocks have now been unpacked. Tapestery will clean up and exit.")
         cleardown()
         exit()
