@@ -117,7 +117,7 @@ class encTasker(object):
             with open(tstring, "rb") as p:
                 k = gpg.encrypt_file(p, self.fp, output=tgtOutput, armor=True, always_trust=True)
             if k.ok:
-                debugPrint("Success.")
+                debugPrint("Encryption Success.")
             elif not k.ok:
                 debugPrint(str(k.status)) #Displays the specific encryption error encountered if encryption fails
 
@@ -128,14 +128,11 @@ class sigTasker(object):
         self.fp = sigfp
 
     def __call__(self):
-        with open(self.block, "r") as p:
+        os.chdir(ns.drop)
+        with open(self.block, "rb") as p:
             tgtOutput = self.block + ".sig"
-            debugprint("Signing: " + tgtOutput)
+            debugPrint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True, passphrase=ns.secret)
-            if sis.ok:
-                debugPrint("Success.")
-            elif not sis.ok:
-                debugPrint(str(sis.status))
 
 
 class recTask(object):
