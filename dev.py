@@ -151,7 +151,7 @@ class recTask(object):
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
         placed = os.path.join(placement, self.fid)
         os.rename(placed, absFile)  # and now it's named correctly.
-
+        debugPrint("Placed " + str(pathEnd))
 
 class recProc(mp.Process):
     def __init__(self, qTask):
@@ -449,6 +449,7 @@ def findblock():  # Time to go grepping for taps!
 def validateBlock():
     print("Checking the validity of this disk's signature.")
     global valid
+    global sig; sig = None
     for dont, care, files in os.walk(ns.media):
         for file in files:
             debugPrint("Looking for a sig at file: " + file)
@@ -554,7 +555,7 @@ def unpackBlocks():
                                 catdir = os.path.join(ns.drop, cat)
                             pathend = recPaths[item]
                             tasker.put(recTask(file, item, catdir, pathend))
-        global workers; workers = [] #TODO explore why some of the 'video' files consistantly disappear
+        global workers; workers = []
         for i in range(ns.numConsumers):
             workers.append(recProc(tasker))
         for w in workers:
@@ -685,7 +686,7 @@ def processBlocks():  # signblocks is in here now
             w.start()
         tasks.join()
 
-        for foo, bar, files in os.walk(ns.workDir): #TODO find why no file contents survive this step
+        for foo, bar, files in os.walk(ns.workDir):
             for file in files:
                 if file.endswith(".tar"):
                     tasks.put(encTasker(file, ns.activeFP))
@@ -712,8 +713,8 @@ def buildMaster():  # summons the master process and builds its corresponding na
         ns.currentOS = platform.system()  # replaces old global var currentOS
         ns.date = datetime.date
         ns.home = os.getcwd()
-        ns.numConsumers = os.cpu_count()  # The practical limit of consumer processes during multiprocessed blocks.
-        #ns.numConsumers = 1 ; existed purely for debugging purposes.
+        #ns.numConsumers = os.cpu_count()  # The practical limit of consumer processes during multiprocessed blocks.
+        ns.numConsumers = 1 # existed purely for debugging purposes.
         ns.secret = None  # Placeholder so that we can use this value later as needed. Needs to explicitly be none in case no password is used.
 
 def parseArgs():  # mounts argparser, crawls it and then assigns to the managed namespace
