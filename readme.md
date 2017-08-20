@@ -50,101 +50,49 @@ I can't speak for everyone's use case and I'm also not an expert on the matter. 
 
 As for my signing key, I am currently (perhaps wrongly) using my main signing key, which lives on an OpenPGP smart key. In point of fact, Tapestry is perfectly oblivious to how you choose to store your keys - if it can't import them from removable media and can't find them in your keyring it assumes they don't exist.
 	
-Getting Started
----------------
+## Installation and First Time Setup
+### Dependencies
+If you are lacking any of the above requirements, please install them first. GPG is available on most Linux distros by default - under Windows, locate and install Gnupg4Win from the gnupg website. You may also need to install the latest python under windows. When doing so, be sure to also install pip.
 
-	A. First-Time Startup
-	The first time you launch pTapestry, the script will check for the presence of
-	a configuration file, tapestry.cfg. If it does not find this file, it will 
-	walk you through a simple initialization process and construct tapestry.cfg. 
-	It is particularly important to set the uid variable correctly - it MUST 
-	exactly match the username of the user which is running Tapestry, or the tool
-	will fail to autogenerate backup paths correctly.
-	
-	
-	B. Setup
-	After the initialization run, run tapestry again with the "--setup" flag. You
-	will be presented with a menu that walks you through setting the customizable 
-	variables on the program. 
-	
-	In the present version, it is necessary to edit tapestry.cfg manually to add, 
-	remove, or edit your backup directories.
-	
-	NOTE TO USERS OF GPG v 2.0 AND ABOVE: Automated signing functionality depends 
-	on a presently-blocked option. You can enable this functionality in modern 
-	versions of GPG by adding "allow-loopback-pinentry" to your gpg-agent.conf
-	file. Doing so presents privacy implications you may find undesirable and I 
-	urge you to consider that possibility before continuing.
-	
-	C. Updating from Previous Versions
-	It is advisable, if updating from a previous version, to first run the program
-	in --setup and visit each config option in turn to ensure the correct values
-	can be found in tapestry.cfg.
-	
-	Alternatively you can assign those values manually by simply modifying the
-	packaged config file.
-	
-	D. Generating your PGP Keys
-	Tapestry relies on OpenPGP, as implimented in GnuPG, for its cryptographic 
-	aspects. It does so by generating a key with certain default parameters, with
-	minimal user intervention, and saves them as two seperate files "DRPub.key" 
-	and "DR.key".
-	
-	DRPub.key contains only the "public", or encrypting, key. A compromise of 
-	DRPub.key's security would not compromise the security of your backup process 
-	in most cases - see the caveats section. If you are using Patch's Tapestry as 
-	an organizational backup tool, it is perfectly acceptable to widely distribute
-	DRPub.key.
-	
-	DR.key contains the "secret" key, which is necessary to decrypt backups 
-	created with Tapestry. A full briefing on PGP key security is beyond the scope
-	of this document, but DR.key should be in the hands of as few individuals as 
-	possible - preferably only the people who will actually handle recovering from
-	backups.
-	
-	Tapestry looks for both files on removable media ONLY. It then checks the
-	fingerprint of the key it finds against the last approved fingerprint that was
-	used, to ensure the key has not been altered or replaced. It is possible to
-	continue past the error message this generates if desired. Doing so resets the
-	expected fingerprint value.
-	
-	The relatively unsecured nature of the DR key is covered by the use of digital
-	signatures. It is intended for each user to sign the .tap blocks they generate
-	with their own personal PGP key or subkey - a signature that can then be
-	validated using the public version of their key on the part of those who are
-	recovering these backups. Again, a primer on PGP key security is beyond the
-	scope of this document - the signing keys can be made as secure as thought
-	necessary.
-	
-	The lone exception is in the event the signing key is to be stored on an
-	OpenPGP-compliant smart card device that supports "touch-only" operation, 
-	such as a Yubikey. As Tapestry has no way to emulate a touch event, nor should
-	it, using such a key is unlikely to be supported in any convenient way.
-	
-	D. Caveats
-	There are still a few unresolved security issues with pTapestry. Tapestry's 
-	config file presently doesn't self-diagnose changes or other incorrectness.
-	
-	It is possible to use a larger (and therefore more notionally secure) key as 
-	DR.key and DRPub.key if desired. Such a key would have to be generated 
-	manually using GPG. Tapestry has no way of knowing which key you wanted to use
-	at this point, and you would then need to replace the "expected FP" variable 
-	in tapestry to match the fingerprint of the new key. A future version will 
-	allow key configuration in greater detail and obviate this step.
-	
-	Further, Tapestry does not rely on a secure pinentry program. Your passphase 
-	may remain in memory. It is recommended to either restrict signing to trusted,
-	known-secure machines or to use a subkey to sign the blocks. The truly 
-	paranoid may wish to sign manually using the gpg2 CLI and its native pinentry.
-	More robust passphrase-handling procedures are planned for future releases.
-	
-	Presently, to enable the use of the default-signing feature, Tapestry will
-	attempt to autodetect whether or not "allow-loopback-pinentry" is in the
-	user's gpg-agent.conf file. It will display a warning if it is absent and
-	offer to ammend the file accordingly. For most users this is suffcient,
-	however, loopback pinentry is not whitelisted. If it is enabled, any program
-	running on the computer can call to that gpg instance and access the pinentry
-	socket invisibly. This allows retry attacks to be launched against keys in the
-	user keyring, possibly without the knowledge of the user. Steps taken to
-	mitigate this risk are beyond the explicit scope of this document. Solutions
-	include disallowing the behavior by default, or manual signing.
+In either event, it is likely you are missing python-gnupg. That's okay, we can get python modules using `pip` at the command line.
+
+Under Linux:
+    sudo pip install python-gnupg
+    sudo pip3 install python-gnupg
+
+Under Windows:
+    python -m pip install python-gnupg
+
+Once you have all the requirements installed it's time to go ahead with installing Tapestry itself.
+
+###Installing Tapestry
+It's important to note that as a python script, Tapestry strictly-speaking isn't something you "install", but it's still necessary to properly obtain and configure it.
+
+**1. Begin by downloading the latest release of tapestry and its signature from the official github repo.** While older versions are made available for users of the older versions to aid recovery, it is always recommended to use the most recent release version. You should also download the corresponding signature file so that we can verify it. I'll show you how. If you haven't already, this is a good time to obtain the key with the fingerprint "FE7E 1DF0 3EC1 A278 FFDC 9E02 BE15 FA90 DB57 DFAC" from an appropriate keyserver. You'll need it to verify the package.
+
+**2. Verify the signature.** Under windows this should be as easy as right-clicking on the signature and selecting verify - your GPG4Win install should have also installed a tool called Kleopatra. Linux users can use cleopatra as well, or they can open the terminal in the directory where they have stored the downloaded signature and file and run the following command:
+    gpg --verify <sigfile>
+
+If the files have not been tampered with and you have correctly imported the public key ending in "DFAC" or its corresponding master key you should recieve a message that the signature is valid. It may not be fully trusted - this is a limitation of GPG's web-of-trust principle and a sign that I am not getting enough people to sign my key!
+
+**3. Unpack the archive.** When you downloaded a release version of the program you downloaded a tarfile and the signature of that tarfile. Whether you are using Windows or Linux, unpack the archive to a directory of your choosing.
+
+**4. First-Time Configuration** The `tapestry.cfg` file among the extracted files is a duplicate of either my own personal configuration or the configuration of the test instance. Either way it won't do you much good. You can configure Tapestry by deleting this file and running it once, or, more efficiently, simply open the file in a text editor and make a few changes. *Note: Under windows' notepad.exe, your line breaks may be absent. Either add them back in for your own readability or use a text editor that supports unix line termination.*
+ 1.  The Environment Variable "uid" must match the username of the user who will be running Tapestry, as it appears in the directory structure.
+ 2. CompID can be any value, but you should make it something that would make sense to you. A discriptor or the machine's host name would both serve well. This is especially important if you are using network storage or don't intend to label your physical disks.
+ 3. Blocksize can be any size - the config file is expressed in MB. For most users the default should be sufficient - it ensures both the archive and its signature can be placed on the same single-layer DVD-R disk.
+ 4. The "expected FP" value can be set to 0. When Tapestry generates your DR key for you, it will automatically set this value to the value of the new key.
+ 5. "Sign by Default" controls the default signing of output files. ***It is very much recommended that signing of backups be done***. However, if you find this to be impractical (say, running Tapestry as an automated task at 3AM with the signing key on a smart card), you can set it to false, but I strongly encourage you to sign the backups before burning them. It is your only assurance that they haven't been tampered with since they were created.
+ 6. Set KeyringMode to true, if it isn't already. Use of the non-keyring mode is depricated and will likely be removed as early as v.0.3.1. **For the Time Being, set this to false on your first run of Tapestry to enable the new key generation process**
+ 7. Set the drive letter to the string pointing to your optical disk drive under Windows. If you are using Linux exclusively this value isn't important to you.
+ 8. Set any of the further values as you would like them, bearing in mind the following:
+  - The directory path shown is the top of a recursive dive. All of its subdirectories will be included
+  - category names "doc" should be duplicated where possible between /nix and /Win, but cannot be duplicated internally.
+  - Default Locations will be backed up with a simple call to the program. Additional locations require the additional argument `--inc` to be passed at runtime.
+ 9. Save your configuration and consider backing it up to a spare removable drive now. You can still recover without a configuration file but the results won't be as tidy.
+ 10. Launch tapestry. The program will spin for a while and eventually prompt you for information it needs to make you a key, which will be output to a folder on the desktop. Double-check that this key is still in your keyring, and backup both copies of the key to another disk.
+ 11. Go back into config and set Keyring Mode back to true. This will be changed in a future version to obviate the need for this step and step 6.
+
+Congratulations, Tapestry is now ready to use.
+
+
