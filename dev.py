@@ -713,8 +713,8 @@ def buildMaster():  # summons the master process and builds its corresponding na
         ns.currentOS = platform.system()  # replaces old global var currentOS
         ns.date = datetime.date
         ns.home = os.getcwd()
-        #ns.numConsumers = os.cpu_count()  # The practical limit of consumer processes during multiprocessed blocks.
-        ns.numConsumers = 1 # existed purely for debugging purposes.
+        ns.numConsumers = os.cpu_count()  # The practical limit of consumer processes during multiprocessed blocks.
+        #ns.numConsumers = 1 # existed purely for debugging purposes.
         ns.secret = None  # Placeholder so that we can use this value later as needed. Needs to explicitly be none in case no password is used.
 
 def parseArgs():  # mounts argparser, crawls it and then assigns to the managed namespace
