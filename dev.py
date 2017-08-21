@@ -369,7 +369,7 @@ def findKeyFile(arg):
             print("Generating a new recovery key, please stand by.")
             input_data = gpg.gen_key_input(key_type="RSA", key_length=2048, name_real=str(uid),
                                            name_comment="Disaster Recovery", name_email="nul@autogen.key",
-                                           passphrase=secret)
+                                           passphrase=ns.secret)
             keypair = gpg.gen_key(input_data)
             debugPrint(keypair.fingerprint)
             fp = keypair.fingerprint  # Changes the value of FP to the new key
