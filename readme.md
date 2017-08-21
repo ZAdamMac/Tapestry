@@ -57,11 +57,15 @@ If you are lacking any of the above requirements, please install them first. GPG
 In either event, it is likely you are missing python-gnupg. That's okay, we can get python modules using `pip` at the command line.
 
 Under Linux:
+```
     sudo pip install python-gnupg
     sudo pip3 install python-gnupg
+```
 
 Under Windows:
+```
     python -m pip install python-gnupg
+```
 
 Once you have all the requirements installed it's time to go ahead with installing Tapestry itself.
 
@@ -94,5 +98,15 @@ If the files have not been tampered with and you have correctly imported the pub
  11. Go back into config and set Keyring Mode back to true. This will be changed in a future version to obviate the need for this step and step 6.
 
 Congratulations, Tapestry is now ready to use.
+
+## Regular Use
+During regular operation, Tapestry is pretty straightforward to use. The main choice is whether or not to invoke it using `--inc` or not. This is going to depend a lot on your threat model and backup policy. I use `--inc` about every 3 months, but my inclusive operation only adds music and videos to the list, and I don't use those much.
+
+Tapestry can also be scheduled as a cron job or triggered using the Windows Task Scheduler.
+
+Before running Tapestry, it is important to scan your computer for malware to ensure everything is good and clean before backing up, as Tapestry currently provides no means of ensuring the contents of a backup are "clean". Obviously, recovering from an infected backup would put you right back where to started, so check first!
+
+## Recovery Options
+Recovering under tapestry is as easy as making sure the correct secret key is available on the keyring, inserting one of the disks from a Tapestry backup, and running tapestry with the `--rcv` argument. Tapestry will automatically recover your files to the category locations defined in the local config file! If no location is given in `Tapestry.cfg`, that's okay - Tapestry will create a subdirectory in `~/Desktop/Tapestry Output` for that category and unpack your files there!
 
 
