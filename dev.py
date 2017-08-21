@@ -613,7 +613,7 @@ def makeIndex():  # does some operations to the working dictionaries to remove i
         if size > blockSizeActual:
             print("Error: %s is too large to be processed and will be excluded." % listFSNames[item])
             skiplogger.log(listAbsolutePaths[item])
-            del workIndex[item]
+            del workIndex[int(item)]
     global smallest
     smallest = int(listSizes[workIndex[(len(workIndex)-1)]])
 
