@@ -893,8 +893,8 @@ if __name__ == "__main__":
         print(str(ns.activeFP))
         print("The expected FP is:")
         print(str(ns.activeFP))
-        qcontinue = input("Continue? y/n>")
-        if qcontinue.lower() != "y":
+        qContinue = input("Continue? y/n>")
+        if qContinue.lower() != "y":
             cleardown()
             exit()
         print("Tapestry is preparing the backup index. This may take a few moments.")
