@@ -416,7 +416,7 @@ def loadKey():
                     config.write(cfile)
             else:
                 print("You have indicated you do not wish to use the current key. The program will now terminate.")
-                rmKey()
+                rmkey()
                 exit()
         debugPrint(str(importResult.count) + " keys imported.")
         print("Key imported. If program terminates irregularly, remove manually from GPG.")
@@ -524,7 +524,7 @@ def openPickle():
         print(
             "There was a problem finding the file 'recPaths' on the disk. Please reload this program and try again, being careful to use Disk 1.")
         cleardown()  # Deletes temporary files to prevent system bloat
-        rmKey()  # removes the recovery secret key from the keyring per protocol
+        rmkey()  # removes the recovery secret key from the keyring per protocol
         exit()
     if len(recSections) > 0:
         print("Found Recovery Table 2")
@@ -532,7 +532,7 @@ def openPickle():
         print(
             "There was a problem finding the file 'recovery.pkl' on the disk. Please reload this program and try again, being careful to use Disk 1.")
         cleardown()
-        rmKey()
+        rmkey()
         exit()
 
 
