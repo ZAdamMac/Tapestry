@@ -182,7 +182,10 @@ def debugPrint(foo):
 def announce():
     if __name__ == '__main__':
         print("Welcome to Tapestry Backup Tool Version " + version)
-
+    if platform.system() == "Windows":
+        print("Unfortunately, windows functionality is currently blocked for incompletion.")
+        print("Please watch the repo for news and updates about this feature.")
+        exit()
 
 def init():
     print("Configuration file not found.")
