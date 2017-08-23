@@ -51,7 +51,7 @@ v0.2.2 (release):
 	-Organization improvements: outputs moved to a subdirectory on the desktop, rather than loose.
 	-Script will now check to see if loopback pinentry is enabled. If it is not, it will ask the user for permission to add it, or disable signing-by-default.
 
-v0.3.0 (dev):
+v0.3.0 (release):
     -Multiprocessing is now used for some steps of operation.
     --Decision was made to improve performance.
     -Discontinued the use of bz2 compression for performance reasons. Increased op time unjustified.
