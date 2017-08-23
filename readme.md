@@ -52,6 +52,7 @@ As for my signing key, I am currently (perhaps wrongly) using my main signing ke
 	
 ## Installation and First Time Setup
 ### Dependencies
+***Note, in spite of the conversation below, as of 0.3.0 Tapestry will not function as expected under Windows. If this is important to you, consider waiting for 0.4.0 or contributing to the project!***
 If you are lacking any of the above requirements, please install them first. GPG is available on most Linux distros by default - under Windows, locate and install Gnupg4Win from the gnupg website. You may also need to install the latest python under windows. When doing so, be sure to also install pip.
 
 In either event, it is likely you are missing python-gnupg. That's okay, we can get python modules using `pip` at the command line.
