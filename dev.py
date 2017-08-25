@@ -132,7 +132,7 @@ class sigTasker(object):
         with open(self.block, "rb") as p:
             tgtOutput = self.block + ".sig"
             debugPrint("Signing: " + tgtOutput)
-            sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True, passphrase=ns.secret)
+            sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True)
 
 
 class recTask(object):
@@ -493,10 +493,7 @@ def decryptBlock():
     global foundBlock
     outputTGT = str(os.path.join(ns.workDir, foundBlock))
     with open(foundBlock, "rb") as kfile:
-        if secret is None:
-            baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
-        else:
-            baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True, passphrase=secret)
+        baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
         if not baz.ok:
             debugPrint("Decryption Error: " + str(baz.status))
             print("Tapestry could not decrypt the block. Shutting down.")
@@ -667,10 +664,6 @@ def placePickle():  # generates the recovery pickle and leaves it where it can b
 def processBlocks():  # signblocks is in here now
     print("Packaging Blocks.")
     debugPrint("Spawning %s processes." % ns.numConsumers)
-    if ns.signing:
-        global secret
-        secret = input("Please enter the passphrase/pin for the signing key now.")
-        ns.secret = secret
     if __name__ == '__main__':
         global blocks
         os.chdir(ns.workDir)
@@ -866,9 +859,6 @@ if __name__ == "__main__":
         input("Press any key to continue")
         findKeyFile("sec")
         loadKey()
-        print("Tapestry is using this secret key: %s" % ns.activeFP)
-        print("Please enter the secret for this key. If none, leave blank.")
-        secret = input(">")
         buildOpsList()
         createDIRS()
         findblock()

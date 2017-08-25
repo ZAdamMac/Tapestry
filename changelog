@@ -58,3 +58,6 @@ v0.3.0 (release):
     -Changed structure of the compression operation, may lead to performance impacts. See readme
     -Recovery pickle is now added to all blocks(old was block1).
     -Minor fixes to various naming systems.
+
+v0.3.1 (dev):
+    -Removed internal requests for pin/passphrase to force pinentry popout.
