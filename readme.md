@@ -70,7 +70,7 @@ Under Windows:
 
 Once you have all the requirements installed it's time to go ahead with installing Tapestry itself.
 
-###Installing Tapestry
+### Installing Tapestry
 It's important to note that as a python script, Tapestry strictly-speaking isn't something you "install", but it's still necessary to properly obtain and configure it.
 
 **1. Begin by downloading the latest release of tapestry and its signature from the official github repo.** While older versions are made available for users of the older versions to aid recovery, it is always recommended to use the most recent release version. You should also download the corresponding signature file so that we can verify it. I'll show you how. If you haven't already, this is a good time to obtain the key with the fingerprint "FE7E 1DF0 3EC1 A278 FFDC 9E02 BE15 FA90 DB57 DFAC" from an appropriate keyserver. You'll need it to verify the package.

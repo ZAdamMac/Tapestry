@@ -592,6 +592,7 @@ def makeIndex():  # does some operations to the working dictionaries to remove i
     for item in workIndex:  # We need to remove the largest items.
         size = int(listSizes[item])
         if size > blockSizeActual:
+            global sumSize; sumSize = sumSize - size  # In retrospect this was obviously needed for blockbuild to work right later.
             print("Error: %s is too large to be processed and will be excluded." % listFSNames[item])
             skiplogger.log(listAbsolutePaths[item])
             del workIndex[int(item)]
