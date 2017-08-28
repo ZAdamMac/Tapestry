@@ -222,25 +222,6 @@ def init():
         config.write(cfg)
     exit()
 
-
-def checkGPGConfig():
-    if ns.signing:  # if signing is disabled by default we don't care about loopback pinentry because a DR key doesn't use a passphrase
-        tgt = ns.gpgDir + "/gpg-agent.conf"
-        configured = False
-        with open(tgt, "rw") as conf:
-            for line in conf:
-                if "allow-loopback-pinentry" in line:
-                    configured = True
-                    break
-        if not configured:
-            print("Tapestry has detected that loopback pintentry is disabled in your gpg installation.")
-            print("Tapestry can enable this function, but doing so carries security risks. See the readme.")
-            print("Press enter to accept these risks, or control-c to cancel.")
-            conf.write("allow-loopback-pinentry")
-            conf.close()
-        else:
-            conf.close()
-
 def setup():
     global setupMode
     setupMode = True
@@ -849,7 +830,6 @@ if __name__ == "__main__":
     startGPG()
     if uninit:
         init()
-        checkGPGConfig()
         exit()
     elif ns.setup:
         setup()
