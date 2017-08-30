@@ -61,3 +61,6 @@ v0.3.0 (release):
 
 v0.3.1 (dev):
     -Removed internal requests for pin/passphrase to force pinentry popout.
+    -Switched to UUIDs for the FID value, rather than a counter.
+    --Eliminates Collisions
+    -Fixed an issue with the blockbuild process that could generate empty blocks pointlessly.

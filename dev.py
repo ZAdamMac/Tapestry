@@ -17,6 +17,7 @@ import pickle
 import platform
 import shutil
 import tarfile
+import uuid
 
 # Defining Classes
 class skipLogger:  # dedicated skip-logging handler for use in buildBlocks
@@ -567,8 +568,8 @@ def getContents(category, tgt):
             global sumSize
             global counterFID
             global listSection
-            foo = counterFID + 1
-            counterFID = foo
+            node = uuid.getnode()
+            counterFID = uuid.uuid1(node=node)
             metaTGT = os.path.join(fromRoot, item)
             size = os.path.getsize(metaTGT)
             fooSize = sumSize + size
