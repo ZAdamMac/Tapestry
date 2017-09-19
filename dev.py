@@ -221,6 +221,8 @@ def init():
     print("locations, please run the program again with the flag --setup.")
     with open("tapestry.cfg", "w") as cfg:
         config.write(cfg)
+    print("As this is the first time we are using tapestry we will now drop to the key generation function.")
+    genKey()
     exit()
 
 def setup():
@@ -302,115 +304,42 @@ def setup():
             print("Your entry was not a valid option.")
             print("Please enter the number of the option you wish to execute.")
 
-def findKeyFile(arg):
-    foundKey = False
-    global pathKey
-    if not ns.keyringMode:
-        if arg == "pub":
-            tgt = "DRPub.key"
-        elif arg == "sec":
-            tgt = "DR.key"
-        if ns.currentOS == "Linux":
-            dirSearch = ("/media/" + uid)
-            for root, dirs, files in os.walk(dirSearch):
-                for file in files:
-                    if file == tgt:
-                        foundKey = True
-                        pathKey = os.path.join(root, tgt)
-                        debugPrint("Found key at: " + pathKey)
-        if ns.currentOS == "Windows":
-            drives = ['{}:\\' for letter in 'DEFGHIJKLMNOPQRSTUVWXYZ']
-            for drive in drives:
-                if os.path.isdir(drive):
-                    for root, dirs, files in os.walk(drive):
-                        for file in files:
-                            if file == tgt:
-                                foundKey = True
-                                pathKey = os.path.join(root, tgt)
-                                debugPrint("Found key at: " + pathKey)
-                if foundKey:
-                    break
-    else:
-        print("Tapestry will use the key with the fingerprint %s for this session." % ns.expectedFP)
-
-    if not foundKey:
-        if not ns.keyringMode:
-            print("No key found, beginning new key generation. Press ctrl+c to cancel.")
-            getPassphrase = True
-            while getPassphrase:
-                print("Please enter a passphrase to protect this recovery key. Leave blank to skip.")
-                s1 = input(">")
-                if s1 is not None:
-                    print("Please enter the passphrase again.")
-                    s2 = input(">")
-                    if s1 == s2:
-                        ns.secret = s1
-                        break
-                    else:
-                        pass
-                else:
-                    ns.secret = None
-                    getPassphrase = False
-            print("Generating a new recovery key, please stand by.")
-            input_data = gpg.gen_key_input(key_type="RSA", key_length=2048, name_real=str(uid),
-                                           name_comment="Disaster Recovery", name_email="nul@autogen.key",
-                                           passphrase=ns.secret)
-            keypair = gpg.gen_key(input_data)
-            debugPrint(keypair.fingerprint)
-            fp = keypair.fingerprint  # Changes the value of FP to the new key
-            config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
-            with open(cfg, "w") as cf:
-                config.write(cf)
-            if not os.path.isdir(ns.drop):
-                os.mkdir(ns.drop)
-            os.chdir(ns.drop)
-            pubOut = gpg.export_keys(fp)
-            keyOut = gpg.export_keys(fp, True)
-            pubFile = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
-            pubHandle = os.fdopen(pubFile, "w")
-            pubHandle.write(str(pubOut))
-            pubHandle.close()
-            keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
-            keyHandle = os.fdopen(keyFile, "w")
-            keyHandle.write(str(keyOut))
-            keyHandle.close()
-            print("The exported keys have been saved in the output folder. Please move them to removable media.")
+def genKey():
+    print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
+    print("This key will be a 2048-bit RSA Keypair with the credentials you specify.")
+    print("This key will not expire by default. If you need this functionality, add it in GPG.")
+    nameKey = str(input("User/Organization Name: "))
+    contactKey = str(input("Recovery Contact Email: "))
+    print("You will be prompted externally to enter a passphrase for this key via your default pinentry program.")
+    inp = gpg.gen_key_input(key_type="RSA", key_length=2048, name_real=nameKey, name_comment="Tapestry Recovery",
+                            name_email=contactKey)
+    keypair = gpg.gen_key(inp)
+    fp = keypair.fingerprint  # Changes the value of FP to the new key
+    config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
+    with open(cfg, "w") as cf:
+        config.write(cf)
+    if not os.path.isdir(ns.drop):
+        os.mkdir(ns.drop)
+    os.chdir(ns.drop)
+    pubOut = gpg.export_keys(fp)
+    keyOut = gpg.export_keys(fp, True)
+    pubFile = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
+    pubHandle = os.fdopen(pubFile, "w")
+    pubHandle.write(str(pubOut))
+    pubHandle.close()
+    keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
+    keyHandle = os.fdopen(keyFile, "w")
+    keyHandle.write(str(keyOut))
+    keyHandle.close()
+    print("The exported keys have been saved in the output folder. Please move them to removable media or other backup.")
 
 
-# noinspection PyGlobalUndefined
 def loadKey():
-    global activeFP
-    debugPrint("loadkey Start")
-    if not ns.keyringMode:
-        foo = input("Press enter to confirm that the system will use the key located at " + pathKey)
-        keyFile = open(pathKey)
-        keyData = keyFile.read()
-        importResult = gpg.import_keys(keyData)
-        debugPrint("I have imported key: " + importResult.fingerprints[0])
-        debugPrint("I was expecting: " + ns.expectedFP)
-        if str(importResult.fingerprints[0]) != ns.expectedFP:
-            print(
-                "WARNING: the fingerprint of the DR key imported from the supplied thumb drive does not match the expected value.")
-            print("This could pose a threat to the privacy of your backups.")
-            print("If this is acceptable, type OK to continue. Your expected FP value will be changed.")
-            confirmation = input("OK?")
-            if confirmation == "OK":
-                debugPrint("Setting the new expected fp to %s" % str(importResult.fingerprints[0]))
-                config.set("Environment Variables", "expected fp", str(importResult.fingerprints[0]))
-                with open(cfg, "w") as cfile:
-                    config.write(cfile)
-            else:
-                print("You have indicated you do not wish to use the current key. The program will now terminate.")
-                rmkey()
-                exit()
-        debugPrint(str(importResult.count) + " keys imported.")
-        print("Key imported. If program terminates irregularly, remove manually from GPG.")
-        activeFP = importResult.fingerprints[0]
-
-    if ns.keyringMode:
-        debugPrint("Fetching key from Keyring")
-        ns.activeFP = ns.expectedFP
-        debugPrint(ns.activeFP)
+    if ns.genKey:
+        genKey()
+    debugPrint("Fetching key from Keyring")
+    ns.activeFP = ns.expectedFP
+    debugPrint(ns.activeFP)
 
 
 def createDIRS():
@@ -506,7 +435,6 @@ def openPickle():
         print(
             "There was a problem finding the file 'recPaths' on the disk. Please reload this program and try again, being careful to use Disk 1.")
         cleardown()  # Deletes temporary files to prevent system bloat
-        rmkey()  # removes the recovery secret key from the keyring per protocol
         exit()
     if len(recSections) > 0:
         print("Found Recovery Table 2")
@@ -514,7 +442,6 @@ def openPickle():
         print(
             "There was a problem finding the file 'recovery.pkl' on the disk. Please reload this program and try again, being careful to use Disk 1.")
         cleardown()
-        rmkey()
         exit()
 
 
@@ -547,20 +474,12 @@ def unpackBlocks():
             tasker.put(None)  # seed poison pills at the end of the queue to kill the damn consumers
         tasker.join()
 
-def rmkey():
-    if not ns.keyringMode:
-        gpg.delete_keys(ns.activeFP, True)
-        gpg.delete_keys(ns.activeFP)
-        print("The recovery key has been deleted from the keyring.")
-
 
 def cleardown():
     if os.path.exists(ns.workDir):
         shutil.rmtree(ns.workDir)
-    rmkey()
 
 
-# noinspection PyGlobalUndefined,PyGlobalUndefined,PyGlobalUndefined
 def getContents(category, tgt):
     print("Currently walking the " + category + " directory.")
     for fromRoot, dirs, files, in os.walk(str(tgt)):
@@ -583,8 +502,6 @@ def getContents(category, tgt):
             listSection.update({str(counterFID): str(category)})
     debugPrint("After crawling " + category + " there are " + str(len(listAbsolutePaths)) + " items in the index.")
 
-
-# noinspection PyGlobalUndefined,PyGlobalUndefined
 def makeIndex():  # does some operations to the working dictionaries to remove items that are too large and place them in order.
     print("Compiling the working indexes")
     global workIndex
@@ -599,7 +516,6 @@ def makeIndex():  # does some operations to the working dictionaries to remove i
             del workIndex[int(item)]
     global smallest
     smallest = int(listSizes[workIndex[(len(workIndex)-1)]])
-
 
 def buildBlocks():
     global blocks
@@ -704,12 +620,15 @@ def parseArgs():  # mounts argparser, crawls it and then assigns to the managed 
         parser.add_argument('--inc', help="Tells the system to include non-default sections in the backup process.",
                             action="store_true")
         parser.add_argument('--debug', help="Increase output verbosity.", action="store_true")
+        parser.add_argument('--genKey', help="Generates a new key before proceeding with any other functions called.",
+                            action="store_true")
         args = parser.parse_args()
 
         ns.rcv = args.rcv
         ns.setup = args.setup
         ns.inc = args.inc
         ns.debug = args.debug
+        ns.genKey = args.genKey
 
 def parseConfig():  # mounts the configparser instance, grabs the config file, and passes its values into the namespace
     if __name__ == "__main__":
@@ -839,7 +758,6 @@ if __name__ == "__main__":
     elif ns.rcv:
         print("Tapestry is ready to recover your files. Please insert the first disk.")
         input("Press any key to continue")
-        findKeyFile("sec")
         loadKey()
         buildOpsList()
         createDIRS()
@@ -862,7 +780,6 @@ if __name__ == "__main__":
         createDIRS()
         buildOpsList()
         print("Tapestry is configuring itself. Please wait.")
-        findKeyFile("pub")
         loadKey()
         print("Confirm this session will use the following key:")
         print(str(ns.activeFP))
