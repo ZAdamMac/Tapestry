@@ -272,8 +272,7 @@ def setup():
             print("You can:")
             print("1. Toggle Default Signing")
             print("2. Assign a new signing key")
-            print("3. Toggle Keyring Mode.")
-            print("4. Go Back")
+            print("3. Go Back")
             subfunc = input("Choice?")
             if subfunc == "1":
                 if ns.signing:
@@ -286,13 +285,6 @@ def setup():
                 print("Please enter the fingerprint of the new key.")
                 sigFP =input("FP: ")
                 config.set("Environment Variables", "signing fp", str(sigFP))
-            elif subfunc == "3":
-                if not ns.keyringMode:
-                    ns.keyringMode = True
-                    config.set("Environment Variables", "keyringMode", str(True))
-                else:
-                    ns.keyringMode = False
-                    config.set("Environment Variables", "keryingMode", str(False))
             else:
                 pass
         elif func == "6":
@@ -306,12 +298,12 @@ def setup():
 
 def genKey():
     print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
-    print("This key will be a 2048-bit RSA Keypair with the credentials you specify.")
+    print("This key will be a %s -bit RSA Keypair with the credentials you specify.", ns.keysize)
     print("This key will not expire by default. If you need this functionality, add it in GPG.")
     nameKey = str(input("User/Organization Name: "))
     contactKey = str(input("Recovery Contact Email: "))
     print("You will be prompted externally to enter a passphrase for this key via your default pinentry program.")
-    inp = gpg.gen_key_input(key_type="RSA", key_length=2048, name_real=nameKey, name_comment="Tapestry Recovery",
+    inp = gpg.gen_key_input(key_type="RSA", key_length=ns.keysize, name_real=nameKey, name_comment="Tapestry Recovery",
                             name_email=contactKey)
     keypair = gpg.gen_key(inp)
     fp = keypair.fingerprint  # Changes the value of FP to the new key
@@ -652,9 +644,9 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
             config.add_section("Default Locations/Win")
             config.add_section("Additional Locations/Win")
             config.set("Environment Variables", "blockSize", "4000")
+            config.set("Environment Variables", "keysize", "2048")
             config.set("Environment Variables", "expected fp", "0")
             config.set("Environment Variables", "compid", "uninit")
-            config.set("Environment Variables", "keyringMode", str(False))
             config.set("Environment Variables", "sign by default", str(True))
             config.set("Environment Variables", "signing fp", "0")
             config.set("Envrionment Variables", "Drive Letter", "D:/")
@@ -671,9 +663,9 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
 
         ns.expectedFP = config.get("Environment Variables", "Expected FP")
         ns.fp = config.get("Environment Variables", "Expected FP")  # Can be changed during the finding process.
-        ns.keyringMode = config.getboolean("Environment Variables", "keyringMode")
         ns.signing = config.getboolean("Environment Variables", "Sign by Default")
         ns.sigFP = config.get("Environment Variables", "Signing FP")
+        ns.keysize = config.getint("Environment Variables", "keysize")
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
