@@ -41,7 +41,7 @@ A cryptographic signature can be generated alongside the backup itself at relati
 
 **A signature is not an assurance that there is no malicious code in the signed file or message.** It is merely an assurance of the identify of the person who signed the code. Under tapestry's use case, it is an assurance that the person who ran tapestry was in the possession of both the private key they used and its passphrase. ***Never*** *use a key with no passphrase for signing*. This practice is such a bad idea that Tapestry will choke and die if you try.
 
-***As of 0.3.0 and prior "loopback pinentry" was being used to pass pins from Tapestry to GPG!*** If you have more and less sensitive keys to use for signing use your least sensitive one until a proper pinentry hooking method is implemented. A malicious actor sniffing the traffic on your machine's loopback interface may be able to capture packets revealing your PIN or Passphrase.
+***in versions 0.3.0 and prior "loopback pinentry" was being used to pass pins from Tapestry to GPG!*** If you have more and less sensitive keys to use for signing use your least sensitive one until a proper pinentry hooking method is implemented. A malicious actor sniffing the traffic on your machine's loopback interface may be able to capture packets revealing your PIN or Passphrase.
 
 It may be desirable for example, to have a "I did this Tapestry Backup" signing key, used for nothing else, that you signed with your main key. If compromised, someone could still sign backups as you, but if they tried to sign an email, for example, it would look odd to the recipient. This is obviouslly a halfassed solution at best. *For all versions 1.0 and up this is a non-issue*, as loopback pinentry was abandoned. Modern versions of Tapestry never even see your passphrase, even on key generation.
 
@@ -52,20 +52,14 @@ As for my signing key, I am currently (perhaps wrongly) using my main signing ke
 	
 ## Installation and First Time Setup
 ### Dependencies
-***Note, in spite of the conversation below, as of 1.0.0 Tapestry will not function as expected under Windows. If this is important to you, consider donating or contributing to the project!***
-If you are lacking any of the above requirements, please install them first. GPG is available on most Linux distros by default - under Windows, locate and install Gnupg4Win from the gnupg website. You may also need to install the latest python under windows. When doing so, be sure to also install pip, and verify the integrity of the downloads with their signatures!
+If you are lacking any of the above requirements, please install them first. GPG is available on most Linux distros by default.
 
-In either event, it is likely you are missing python-gnupg. That's okay, we can get python modules using `pip` at the command line.
+In any event, it is likely you are missing python-gnupg. That's okay, we can get python modules using `pip` at the command line.
 
 Under Linux:
 ```
     sudo pip install python-gnupg
     sudo pip3 install python-gnupg
-```
-
-Under Windows:
-```
-    python -m pip install python-gnupg
 ```
 
 Once you have all the requirements installed it's time to go ahead with installing Tapestry itself.
@@ -88,13 +82,12 @@ If the files have not been tampered with and you have correctly imported the pub
  3. Blocksize can be any size - the config file is expressed in MB. For most users the default should be sufficient - it ensures both the archive and its signature can be placed on the same single-layer DVD-R disk.
  4. The "expected FP" value can be set to 0. When Tapestry generates your DR key for you, it will automatically set this value to the value of the new key.
  5. "Sign by Default" controls the default signing of output files. ***It is very much recommended that signing of backups be done***. However, if you find this to be impractical (say, running Tapestry as an automated task at 3AM with the signing key on a smart card), you can set it to false, but I strongly encourage you to sign the backups before burning them. It is your only assurance that they haven't been tampered with since they were created.
- 6. Set the drive letter to the string pointing to your optical disk drive under Windows. If you are using Linux exclusively this value isn't important to you.
- 8. Set any of the further values as you would like them, bearing in mind the following:
+ 7. Set any of the further values as you would like them, bearing in mind the following:
   - The directory path shown is the top of a recursive dive. All of its subdirectories will be included
   - category names ("doc") should be duplicated where possible between /nix and /Win, but cannot be duplicated internally.
   - Default Locations will be backed up with a simple call to the program. Additional locations require the additional argument `--inc` to be passed at runtime.
- 9. Save your configuration and consider backing it up to a spare removable drive now. You can still recover without a configuration file but the results won't be as tidy.
- 10. Launch tapestry with the arugment --genKey. This will cause the program to generate and export the keys you need in order to operate it. (You may then delete the secret key from the keyring manually at your own discretion).
+ 8. Save your configuration and consider backing it up to a spare removable drive now. You can still recover without a configuration file but the results won't be as tidy.
+ 9. Launch tapestry with the arugment `--genKey`. This will cause the program to generate and export the keys you need in order to operate it. (You may then delete the secret key from the keyring manually at your own discretion).
 
 Congratulations, Tapestry is now ready to use.
 
