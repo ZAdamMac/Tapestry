@@ -65,3 +65,4 @@ v1.0 (dev):
     -Switched to UUIDs for the FID value, rather than a counter.
     --Eliminates Collisions
     -Fixed an issue with the blockbuild process that could generate empty blocks pointlessly.
+    -Added `--genKey`, the new-key generation call.

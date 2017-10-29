@@ -13,7 +13,7 @@ Patch's Tapestry is a bespoke data backup tool designed for a particular, but ge
 
 Building Tapestry has been a large and time-consuming project, but it would have been even more so without the work of the developers of our dependancies - GnuPG, the Python-GnuPG module, and obvious python itself.
 
-If you would like to contriubte to the development of Tapestry, feel free to start a pull request, or perhaps buy me a coffee at ko-fi.com/PSavLabs
+If you would like to contriubte to the development of Tapestry, feel free to submit a pull request, or perhaps buy me a coffee at [ko-fi.com/PSavLabs]
 	
 ## Security Considerations
 Tapestry relies on Gnu Privacy Guard - an implementation of the PGP protocol - in order to securely store the archives it generates, and also to provide a mechanism for verifying the individual who generated the backup. It does this using two seperate keys - the Encryption Key (sometimes called the "Disaster Recovery" key, after the comment included on keys Tapestry Generates) and an optional signing key specified by the user.
@@ -52,8 +52,8 @@ As for my signing key, I am currently (perhaps wrongly) using my main signing ke
 	
 ## Installation and First Time Setup
 ### Dependencies
-***Note, in spite of the conversation below, as of 1.0.0 Tapestry will not function as expected under Windows. If this is important to you, consider to the project!***
-If you are lacking any of the above requirements, please install them first. GPG is available on most Linux distros by default - under Windows, locate and install Gnupg4Win from the gnupg website. You may also need to install the latest python under windows. When doing so, be sure to also install pip.
+***Note, in spite of the conversation below, as of 1.0.0 Tapestry will not function as expected under Windows. If this is important to you, consider donating or contributing to the project!***
+If you are lacking any of the above requirements, please install them first. GPG is available on most Linux distros by default - under Windows, locate and install Gnupg4Win from the gnupg website. You may also need to install the latest python under windows. When doing so, be sure to also install pip, and verify the integrity of the downloads with their signatures!
 
 In either event, it is likely you are missing python-gnupg. That's okay, we can get python modules using `pip` at the command line.
 
@@ -76,18 +76,18 @@ It's important to note that as a python script, Tapestry strictly-speaking isn't
 **1. Begin by downloading the latest release of tapestry and its signature from the official github repo.** While older versions are made available for users of the older versions to aid recovery, it is always recommended to use the most recent release version. You should also download the corresponding signature file so that we can verify it. I'll show you how. If you haven't already, this is a good time to obtain the key with the fingerprint "E122 9B2A 2DF4 F2FE 50A5 A23F F373 FF4B 43FC 742F" from an appropriate keyserver. You'll need it to verify the package.
 
 **2. Verify the signature.** Under windows this should be as easy as right-clicking on the signature and selecting verify - your GPG4Win install should have also installed a tool called Kleopatra. Linux users can use Kleopatra as well, or they can open the terminal in the directory where they have stored the downloaded signature and file and run the following command:
-    gpg --verify <sigfile>
+    `gpg --verify <sigfile>`
 
 If the files have not been tampered with and you have correctly imported the public key ending in "DFAC" or its corresponding master key you should recieve a message that the signature is valid. It may not be fully trusted - this is a limitation of GPG's web-of-trust principle and a sign that I am not getting enough people to sign my key!
 
 **3. Unpack the archive.** When you downloaded a release version of the program you downloaded a tarfile and the signature of that tarfile. Whether you are using Windows or Linux, unpack the archive to a directory of your choosing.
 
 **4. First-Time Configuration** The `tapestry.cfg` file among the extracted files is a duplicate of either my own personal configuration or the configuration of the test instance. Either way it won't do you much good. You can configure Tapestry by deleting this file and running it once, or, more efficiently, simply open the file in a text editor and make a few changes. *Note: Under windows' notepad.exe, your line breaks may be absent. Either add them back in for your own readability or use a text editor that supports unix line termination.*
- 1.  The Environment Variable "uid" must match the username of the user who will be running Tapestry, as it appears in the directory structure.
- 2. CompID can be any value, but you should make it something that would make sense to you. A discriptor or the machine's host name would both serve well. This is especially important if you are using network storage or don't intend to label your physical disks.
+ 1.  The Environment Variable "uid" *must* match the username of the user who will be running Tapestry, as it appears in the directory structure.
+ 2. CompID can be any value, but you should make it something that would make sense to you. A descriptor or the machine's host name would both serve well. This is especially important if you are using network storage or don't intend to label your physical disks.
  3. Blocksize can be any size - the config file is expressed in MB. For most users the default should be sufficient - it ensures both the archive and its signature can be placed on the same single-layer DVD-R disk.
  4. The "expected FP" value can be set to 0. When Tapestry generates your DR key for you, it will automatically set this value to the value of the new key.
- 5. "Sign by Default" controls the default signing of output files. ***It is very much recommended that signing of backups be done***. However, if you find this to be impractical (say, running Tapestry as an automated task at 3AM with the signing key on a smart card), you can set it to false, but I strongly encourage you to sign the backups before burning them. It is your only assurance that they haven't been tampered with since they were c
+ 5. "Sign by Default" controls the default signing of output files. ***It is very much recommended that signing of backups be done***. However, if you find this to be impractical (say, running Tapestry as an automated task at 3AM with the signing key on a smart card), you can set it to false, but I strongly encourage you to sign the backups before burning them. It is your only assurance that they haven't been tampered with since they were created.
  6. Set the drive letter to the string pointing to your optical disk drive under Windows. If you are using Linux exclusively this value isn't important to you.
  8. Set any of the further values as you would like them, bearing in mind the following:
   - The directory path shown is the top of a recursive dive. All of its subdirectories will be included
