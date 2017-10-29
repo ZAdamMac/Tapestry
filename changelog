@@ -59,7 +59,8 @@ v0.3.0 (release):
     -Recovery pickle is now added to all blocks(old was block1).
     -Minor fixes to various naming systems.
 
-v0.3.1 (dev):
+v1.0 (dev):
+    -Killed KeyringMode=False with fire.
     -Removed internal requests for pin/passphrase to force pinentry popout.
     -Switched to UUIDs for the FID value, rather than a counter.
     --Eliminates Collisions
