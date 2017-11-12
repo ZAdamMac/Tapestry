@@ -674,7 +674,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         global compid; compid = config.get("Environment Variables", "compid")
         global driveletter
         driveletter = config.get("Environment Variables",
-                                 "drive letter")  # The windows drive letter of the removable disk mount point. Used for rcv mode.
+                                 "recovery path")  #path to the removable disk mount point. Used mostly for testing.
         global uid
         uid = config.get("Environment Variables", "uid")  # Not sure actually used anywhere!
 
@@ -688,7 +688,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.desktop = str("C:/Users/" + uid + "/Desktop")
         ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
         ns.media = driveletter
-    ns.drop = ns.desktop + "/Tapestry Outputs/"
+    ns.drop = config.get("Environment Variables", "Output Path")
 
 
 def startLogger():
