@@ -682,7 +682,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.workDir = "/tmp/Tapestry/"
         ns.desktop = str("/home/" + uid + "/Desktop")
         ns.gpgDir = str("/home/" + uid + "/.gnupg")
-        ns.media = "/media/"
+        ns.media = driveletter
     elif ns.currentOS == "Windows":
         ns.workDir = "C:/Windows/Temp"
         ns.desktop = str("C:/Users/" + uid + "/Desktop")
