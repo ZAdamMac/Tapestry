@@ -23,12 +23,12 @@ When you run Tapestry for the first time, or otherwise cause it to generate a ne
 
 The private key and its associated file should be kept in a secure location - preferably either on removable media accessable only by trusted administrators or possibly on the keyring of a single-user/single-machine system, protected by a passphrase. **The use of passphraseless DR keys is considered harmful and should not be implemented.** It is even recommendable that you change the passphrase of the DR key regularly. If you are using the DR key across several systems, it is recommended that you also generate a revocation certificate (see GPG's docs) so that it can be revoked in the event of compromise.
 
-By design, the public key can be widely distributed if desired, as it cannot be used to decrypt files it was used to encrypt. This is the useful property of the PGP protocol. In Tapestry's case, this may be useful for a number of reasons. You may desire to leave the public key on your keyring to run the program in keyring mode, or you may be working in an office environment where it would be useful to have the key stored on many machines at once. Using an asymetric protocol like this allows you this flexability. A public key cannot be said to be compromised, as it isn't even a secret.
+By design, the public key can be widely distributed if desired, as it cannot be used to decrypt files it was used to encrypt. This is the useful property of the PGP protocol. In Tapestry's case, this may be useful for a number of reasons. You may desire to leave the public key on your keyring to run the program in an automated mode, or you may be working in an office environment where it would be useful to have the key stored on many machines at once. Using an asymetric protocol like this allows you this flexability. A public key cannot be said to be compromised, as it isn't even a secret.
 
 ### In the Event of a Compromise, Do Not Break Glass
 It's possible that your `DR.key` file may be compromised through misuse, overuse, carelessness, or malicious action. Don't panic. If your archives are stored remotely and on removable media they will not be immediately accessable to an attacker, necessarily. The decision to destroy these archives or not is ultimately up to the user.
 
-If a physical compromise of your storage is not in your threat model, you can still issue the revocation certificate over your key server of choice, preventing further archives from being written to the corresponding public key. Doing only prevents new archives from being generated - the compromised key can still be used to open your files.
+If a compromise of your storage is not in your threat model, you can still issue the revocation certificate over your key server of choice, preventing further archives from being written to the corresponding public key. Doing only prevents new archives from being generated - the compromised key can still be used to open your files.
 
 Do not simply change the passphrase - it will not save you now. Simply revoke and delete the old key, and generate a new one. A tool is under consideration in the future for retroactively recreating .tap archives to use your new key. At present, the only solution is to follow the usual recommendations in generating a fresh backup.
 
@@ -41,7 +41,7 @@ A cryptographic signature can be generated alongside the backup itself at relati
 
 **A signature is not an assurance that there is no malicious code in the signed file or message.** It is merely an assurance of the identify of the person who signed the code. Under tapestry's use case, it is an assurance that the person who ran tapestry was in the possession of both the private key they used and its passphrase. ***Never*** *use a key with no passphrase for signing*. This practice is such a bad idea that Tapestry will choke and die if you try.
 
-***in versions 0.3.0 and prior "loopback pinentry" was being used to pass pins from Tapestry to GPG!*** If you have more and less sensitive keys to use for signing use your least sensitive one until a proper pinentry hooking method is implemented. A malicious actor sniffing the traffic on your machine's loopback interface may be able to capture packets revealing your PIN or Passphrase.
+***in versions 0.3.0 and prior "loopback pinentry" was being used to pass pins from Tapestry to GPG!*** If you have more and less sensitive keys to use for signing use your least sensitive one until a proper pinentry hooking method is implemented. A malicious actor sniffing the traffic on your machine's loopback interface may be able to capture packets revealing your PIN or Passphrase. **This vulnerability is fixed as of next release, v1.0, and in the current development build**
 
 It may be desirable for example, to have a "I did this Tapestry Backup" signing key, used for nothing else, that you signed with your main key. If compromised, someone could still sign backups as you, but if they tried to sign an email, for example, it would look odd to the recipient. This is obviouslly a halfassed solution at best. *For all versions 1.0 and up this is a non-issue*, as loopback pinentry was abandoned. Modern versions of Tapestry never even see your passphrase, even on key generation.
 
@@ -69,14 +69,14 @@ It's important to note that as a python script, Tapestry strictly-speaking isn't
 
 **1. Begin by downloading the latest release of tapestry and its signature from the official github repo.** While older versions are made available for users of the older versions to aid recovery, it is always recommended to use the most recent release version. You should also download the corresponding signature file so that we can verify it. I'll show you how. If you haven't already, this is a good time to obtain the key with the fingerprint "E122 9B2A 2DF4 F2FE 50A5 A23F F373 FF4B 43FC 742F" from an appropriate keyserver. You'll need it to verify the package.
 
-**2. Verify the signature.** Under windows this should be as easy as right-clicking on the signature and selecting verify - your GPG4Win install should have also installed a tool called Kleopatra. Linux users can use Kleopatra as well, or they can open the terminal in the directory where they have stored the downloaded signature and file and run the following command:
+**2. Verify the signature.** Linux users can use Kleopatra, or they can open the terminal in the directory where they have stored the downloaded signature and file and run the following command:
     `gpg --verify <sigfile>`
 
-If the files have not been tampered with and you have correctly imported the public key ending in "DFAC" or its corresponding master key you should recieve a message that the signature is valid. It may not be fully trusted - this is a limitation of GPG's web-of-trust principle and a sign that I am not getting enough people to sign my key!
+If the files have not been tampered with and you have correctly imported the public key belonging to Zachary Adam-MacEwen or its corresponding master key you should recieve a message that the signature is valid. It may not be fully trusted - this is a limitation of GPG's web-of-trust principle and a sign that I am not getting enough people to sign my key!
 
-**3. Unpack the archive.** When you downloaded a release version of the program you downloaded a tarfile and the signature of that tarfile. Whether you are using Windows or Linux, unpack the archive to a directory of your choosing.
+**3. Unpack the archive.** When you downloaded a release version of the program you downloaded a tarfile and the signature of that tarfile. Unpack the archive to a directory of your choosing - it makes no real difference to Tapestry's Operation.
 
-**4. First-Time Configuration** The `tapestry.cfg` file among the extracted files is a duplicate of either my own personal configuration or the configuration of the test instance. Either way it won't do you much good. You can configure Tapestry by deleting this file and running it once, or, more efficiently, simply open the file in a text editor and make a few changes. *Note: Under windows' notepad.exe, your line breaks may be absent. Either add them back in for your own readability or use a text editor that supports unix line termination.*
+**4. First-Time Configuration** The `tapestry.cfg` file among the extracted files is a duplicate of either my own personal configuration or the configuration of the test instance. Either way it won't do you much good. You can configure Tapestry by deleting this file and running it once, or, more efficiently, simply open the file in a text editor and make a few changes. 
  1.  The Environment Variable "uid" *must* match the username of the user who will be running Tapestry, as it appears in the directory structure.
  2. CompID can be any value, but you should make it something that would make sense to you. A descriptor or the machine's host name would both serve well. This is especially important if you are using network storage or don't intend to label your physical disks.
  3. Blocksize can be any size - the config file is expressed in MB. For most users the default should be sufficient - it ensures both the archive and its signature can be placed on the same single-layer DVD-R disk.
@@ -86,8 +86,9 @@ If the files have not been tampered with and you have correctly imported the pub
   - The directory path shown is the top of a recursive dive. All of its subdirectories will be included
   - category names ("doc") should be duplicated where possible between /nix and /Win, but cannot be duplicated internally.
   - Default Locations will be backed up with a simple call to the program. Additional locations require the additional argument `--inc` to be passed at runtime.
- 8. Save your configuration and consider backing it up to a spare removable drive now. You can still recover without a configuration file but the results won't be as tidy.
- 9. Launch tapestry with the arugment `--genKey`. This will cause the program to generate and export the keys you need in order to operate it. (You may then delete the secret key from the keyring manually at your own discretion).
+ 8. Set the recovery and output paths as desired. **If you are recovering from physical media, set the recovery path to `/media/`**
+ 9. Save your configuration and consider backing it up to a spare removable drive now. You can still recover without a configuration file but the results won't be as tidy.
+ 10. Launch tapestry with the arugment `--genKey`. This will cause the program to generate and export the keys you need in order to operate it. (You may then delete the secret key from the keyring manually at your own discretion).
 
 Congratulations, Tapestry is now ready to use.
 
@@ -99,6 +100,6 @@ Tapestry can also be scheduled as a cron job or triggered using the Windows Task
 Before running Tapestry, it is important to scan your computer for malware to ensure everything is good and clean before backing up, as Tapestry currently provides no means of ensuring the contents of a backup are "clean". Obviously, recovering from an infected backup would put you right back where to started, so check first!
 
 ## Recovery Options
-Recovering under tapestry is as easy as making sure the correct secret key is available on the keyring, or otherwise present, inserting one of the disks from a Tapestry backup, and running tapestry with the `--rcv` argument. Tapestry will automatically recover your files to the category locations defined in the local config file! If no location is given in `Tapestry.cfg`, that's okay - Tapestry will create a subdirectory in `~/Desktop/Tapestry Output` for that category and unpack your files there!
+Recovering under tapestry is as easy as making sure the correct secret key is available on the keyring, or otherwise present, inserting one of the disks from a Tapestry backup, and running tapestry with the `--rcv` argument. Tapestry will automatically recover your files to the category locations defined in the local config file! If no location is given in `Tapestry.cfg`, that's okay - Tapestry will create a subdirectory in its output directory for that category and unpack your files there!
 
 
