@@ -685,6 +685,8 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.signing = config.getboolean("Environment Variables", "Sign by Default")
         ns.sigFP = config.get("Environment Variables", "Signing FP")
         ns.keysize = config.getint("Environment Variables", "keysize")
+        ns.compress = config.getboolean("Environment Variables", "Use Compression")
+        ns.compressLevel = config.getint("Environment Variables", "Compression Level")
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
