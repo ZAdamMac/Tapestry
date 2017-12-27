@@ -70,3 +70,4 @@ v1.0 (dev):
     -Began implementation of unit testing.
     -Added "recovery path" to configuration file for testing purposes.
     -Added "output path" to configuration file for user config.
+    -Returned bz2 compression in the form of the comTasker. Configured in the config.

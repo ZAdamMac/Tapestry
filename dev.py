@@ -5,6 +5,7 @@ global version; version = 'DevBuild'  # Sets the version to display. "DevBuild" 
 
 # Importing Modules
 import argparse
+import bz2
 import configparser
 import datetime
 from datetime import date
@@ -103,6 +104,21 @@ class buildTasker(object):
             tar.close()
             fLock.release()
 
+class comTasker(object):
+    def __init__(self, t, lvl):
+        self.tarf = t
+        self.level = lvl
+
+    def __call__(self):
+        os.chdir(ns.workDir)
+        with open(self.tarf, "w") as b:
+            bz2d = self.tarf+".bz2"
+            bz2f = bz2.BZ2File(bz2d, "w", compresslevel=ns.compressLevel)
+            data = b.read()
+            bz2f.write(data)
+            bz2f.close()
+        pass
+
 class encTasker(object):
     def __init__(self, t, fp):
         self.tarf = t
@@ -188,7 +204,7 @@ def announce():
         print("Please watch the repo for news and updates about this feature.")
         exit()
 
-def init():
+def init(): # TODO Deprecate or Update
     print("Configuration file not found.")
     print("Beginning first-time setup.")
     print("To begin with, please provide your username on this system.")
@@ -340,8 +356,6 @@ def createDIRS():
     if not os.path.exists(ns.drop):
         os.mkdir(ns.drop)
 
-
-# noinspection PyGlobalUndefined
 def findblock():  # Time to go grepping for taps!
     os.chdir(ns.media)
     for foo, bar, files in os.walk(ns.media):
@@ -350,8 +364,6 @@ def findblock():  # Time to go grepping for taps!
                 os.chdir(foo)
                 global foundBlock;  foundBlock = file
 
-
-# noinspection PyGlobalUndefined
 def validateBlock():
     print("Checking the validity of this disk's signature.")
     global valid
@@ -572,10 +584,17 @@ def processBlocks():  # signblocks is in here now
         for w in consumers:
             w.start()
         tasks.join()
+        if ns.compress:
+            for foo, bar, tars in os.walk(ns.workDir):
+                for tar in tars:
+                    if tar.endswith("tar"):
+                        tasks.put(comTasker(tar, ns.compressLevel))
+                        debugPrint("Compression Enqueued")
+        tasks.join()
 
         for foo, bar, files in os.walk(ns.workDir):
             for file in files:
-                if file.endswith(".tar"):
+                if file.endswith(".tar") or file.endswith(".bz2"):
                     tasks.put(encTasker(file, ns.activeFP))
                     debugPrint("Encryption enqueued")
         tasks.join()
