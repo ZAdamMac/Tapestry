@@ -129,7 +129,10 @@ class encTasker(object):
         with open(self.tarf, "r") as p:
             os.chdir(ns.workDir)
             tstring = self.tarf
-            tapped = self.tarf.replace(".tar", ".tap")
+            if not ns.compress:
+                tapped = self.tarf.replace(".tar", ".tap")
+            else:
+                tapped = self.tarf.replace(".tar.bz2", ".tap")
             tgtOutput = os.path.join(ns.drop, tapped)
             debugPrint("Encrypting - sending block to: " + tgtOutput)
             with open(tstring, "rb") as tgt:
