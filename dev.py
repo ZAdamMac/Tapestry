@@ -114,7 +114,7 @@ class comTasker(object):
         debugPrint("I am at %s" % os.getcwd())
         with open(self.tarf, "rb") as b:
             bz2d = self.tarf+".bz2"
-            bz2f = bz2.BZ2File(bz2d, "w", compresslevel=ns.compressLevel)
+            bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=ns.compressLevel)
             data = b.read()
             bz2f.write(data)
             bz2f.close()
@@ -318,7 +318,7 @@ def setup():
 
 def genKey():
     print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
-    print("This key will be a %s -bit RSA Keypair with the credentials you specify.", ns.keysize)
+    print(("This key will be a %s -bit RSA Keypair with the credentials you specify." % ns.keysize))
     print("This key will not expire by default. If you need this functionality, add it in GPG.")
     nameKey = str(input("User/Organization Name: "))
     contactKey = str(input("Recovery Contact Email: "))
@@ -593,7 +593,7 @@ def processBlocks():  # signblocks is in here now
                 for tar in tars:
                     if tar.endswith("tar"):
                         tasks.put(comTasker(tar, ns.compressLevel))
-                        debugPrint("Compression Enqueued")
+        debugPrint("Compression Enqueued")
         tasks.join()
 
         for foo, bar, files in os.walk(ns.workDir):
@@ -604,7 +604,7 @@ def processBlocks():  # signblocks is in here now
             for file in files:
                 if file.endswith(suffix):
                     tasks.put(encTasker(file, ns.activeFP))
-                    debugPrint("Encryption enqueued")
+        debugPrint("Encryption enqueued")
         tasks.join()
         if ns.signing:
             for foo, bar, taps in os.walk(ns.drop):

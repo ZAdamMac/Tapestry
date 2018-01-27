@@ -7,7 +7,7 @@ import os.path
 import random
 
 global dest; dest = "/home/patches/Desktop/Tapestry Testbed/Control/Corpus" # some pathlike destination to be root
-global num; num = 10 #Number of files to include per category
+global num; num = 20 #Number of files to include per category
 global sizeEach; sizeEach = 1000000 # Desired file size in lines
 global subdirs; subdirs = ["documents", "photos", "music", "videos"]
 
@@ -25,7 +25,6 @@ for subdir in subdirs:
     for i in range(1, num+1):
         with open(str(i), "w") as file:
             for line in range (0, sizeEach):
-                global line
                 line = str(" ")
                 for i in range (0, 12):
                     line = line+str(src[random.randint(0, bound)])+" "
