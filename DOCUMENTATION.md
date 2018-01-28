@@ -1,5 +1,5 @@
 # Tapestry Specialist Backup Tool
-*Technical and User Documentation, prepared for Version 1.0*
+*User Documentation, prepared for Version 1.0*
 
 ## Full System Requirements
 Tapestry is a reasonably lightweight and flexible script in its essence, but it does involve some basic requirements.
