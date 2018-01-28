@@ -4,10 +4,12 @@
 
 Patch's Tapestry is a bespoke data backup tool designed for a particular, but generally-acceptable, use case. Written in python, Tapestry uses Gnu Privacy Guard (GPG) to generate archive "blocks" from targeted directories on a given system and reproduce those blocks in a same-or-similar organizational format  upon restoration. The tool automatically subdivides the archive into blocks of a user-configurable size without breaking the content data (that is, the  structure of individual files is maintained). The blocks are then encrypted using the users Disaster Recovery PGP key and presented as ready-to-move. The intended use case is for backup to single-write physical media - though other use cases exist and are being actively developed for.
 
+Full documentation is available as part of DOCUMENTATION.md
+
 ## Requirements
 	-Python 3.5 or later
 	-Python-gnupg
-	-GnuPG 2 or later
+	-GnuPG 2 or later, installed as default
 	
 ## Contribution and Acknowledgement
 
