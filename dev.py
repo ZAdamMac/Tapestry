@@ -111,7 +111,6 @@ class comTasker(object):
 
     def __call__(self):
         os.chdir(ns.workDir)
-        debugPrint("I am at %s" % os.getcwd())
         with open(self.tarf, "rb") as b:
             bz2d = self.tarf+".bz2"
             bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=ns.compressLevel)
@@ -591,13 +590,13 @@ def processBlocks():  # signblocks is in here now
         if ns.compress:
             for foo, bar, tars in os.walk(ns.workDir):
                 for tar in tars:
-                    if tar.endswith("tar"):
+                    if tar.endswith(".tar"):
                         tasks.put(comTasker(tar, ns.compressLevel))
         debugPrint("Compression Enqueued")
         tasks.join()
 
         for foo, bar, files in os.walk(ns.workDir):
-            if ns.compress:
+            if not ns.compress:
                 suffix = ".tar"
             else:
                 suffix = ".bz2"
