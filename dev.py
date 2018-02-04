@@ -361,11 +361,13 @@ def createDIRS():
 
 def findblock():  # Time to go grepping for taps!
     os.chdir(ns.media)
+    global foundBlocks; foundBlocks = []
     for foo, bar, files in os.walk(ns.media):
         for file in files:
             if file.endswith(".tap"):
                 os.chdir(foo)
-                global foundBlock;  foundBlock = file
+                foundBlocks.append(file)
+
 
 def validateBlock():
     print("Checking the validity of this disk's signature.")
@@ -408,15 +410,21 @@ def validateBlock():
 
 
 def decryptBlock():
-    global foundBlock
-    outputTGT = str(os.path.join(ns.workDir, foundBlock))
-    with open(foundBlock, "rb") as kfile:
-        baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
-        if not baz.ok:
-            debugPrint("Decryption Error: " + str(baz.status))
-            print("Tapestry could not decrypt the block. Shutting down.")
-            cleardown()
-            exit()
+    global foundBlocks
+    for block in foundBlocks:
+        outputTGT = str(os.path.join(ns.workDir, block))
+        with open(block, "rb") as kfile:
+            baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
+            with open(outputTGT, "rb") as dropped:
+                signature = dropped.read(3)
+                if signature.startswith(b"BZh"):
+                    #we need to add some code here to swap the file we just spat out with a decompressed version.
+                    pass
+            if not baz.ok:
+                debugPrint("Decryption Error: " + str(baz.status))
+                print("Tapestry could not decrypt the block. Shutting down.")
+                cleardown()
+                exit()
 
 # noinspection PyGlobalUndefined,PyGlobalUndefined,PyGlobalUndefined
 def openPickle():
@@ -425,6 +433,9 @@ def openPickle():
             if file.endswith(".tap"):
                 with tarfile.open(os.path.join(foo, file), "r") as tfile:
                     tfile.extract("recovery-pkl", path=ns.workDir)
+                    break
+        break
+
     for a, b, files in os.walk(ns.workDir):
         for file in files:
             if file == "recovery-pkl":
@@ -778,6 +789,7 @@ if __name__ == "__main__":
     elif ns.rcv:
         print("Tapestry is ready to recover your files. Please insert the first disk.")
         input("Press any key to continue")
+        usedBlocks = []
         loadKey()
         buildOpsList()
         createDIRS()
@@ -786,7 +798,10 @@ if __name__ == "__main__":
         decryptBlock()
         openPickle()
         print("This backup exists in %d blocks." % numBlocks)
-        for i in range(numBlocks - 1):
+        for foo, bar, found in os.walk(ns.workDir):
+            countBlocks = len(found)-1
+        print("So far, you have supplied %d blocks." % countBlocks)
+        while countBlocks < numBlocks:
             input("Please insert the next disk and press enter to continue.")
             findblock()
             validateBlock()
