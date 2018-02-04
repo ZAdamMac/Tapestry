@@ -419,6 +419,10 @@ def decryptBlock():
                 signature = dropped.read(3)
                 if signature.startswith(b"BZh"):
                     #we need to add some code here to swap the file we just spat out with a decompressed version.
+                    shutil.copy(outputTGT, (outputTGT+".temp"))
+                    with bz2.BZ2File(outputTGT+".temp", "rb") as compressed:
+                        with open(outputTGT, "wb") as uncompressed:
+                            uncompressed.write(compressed.read())
                     pass
             if not baz.ok:
                 debugPrint("Decryption Error: " + str(baz.status))
