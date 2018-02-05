@@ -3,10 +3,11 @@
 
 #  Import Modules
 import configparser as cp
-import date
+from datetime import date
 import gnupg
 import os
 import shutil
+import subprocess
 import unittest
 
 #  Stash classes and functions here if necessary.
@@ -29,11 +30,19 @@ class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
         self.loggerfile.close()
 
 #  Parse test config
+os.chdir(os.getcwd())
+
 cfg = cp.ConfigParser()
 cfg.read("tapestry-test.cfg")
-out = cfg.get("Envrionment Variables", "output path")
+out = cfg.get("Environment Variables", "output path")
 uid = cfg.get("Environment Variables", "uid")
 logs = os.path.join(out, "Logs")
+
+shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup of the config to restore to after testing.
+
+cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
+with open("tapestry-test.cfg", "w") as warp:
+    cfg.write(warp)
 
 #  Establish a Logger for Test Output
 if not os.path.isdir((logs)):
@@ -44,6 +53,30 @@ log = simpleLogger(logs, logname)
 
 
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
+if not os.path.isdir(os.path.join(out, "Non-Inc")):
+    os.mkdir(os.path.join(out, "Non-Inc"))
+waiting = subprocess.run(("python3.6", "dev.py", "--genKey"))
+
+cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
+with open("tapestry-test.cfg", "w") as warp:
+    cfg.write(warp)
+
+waiting = subprocess.run(("python3.6", "dev.py", "--inc"))
+
+cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
+docs = cfg.get("Default Locations/Nix", "docs")
+cfg.set("Default Locations/Nix", "docs", docs.replace("Control", "Test"))
+pics = cfg.get("Default Locations/Nix", "photos")
+cfg.set("Default Locations/Nix", "photos", pics.replace("Control", "Test"))
+vids = cfg.get("Additional Locations/Nix", "video")
+cfg.set("Default Locations/Nix", "video", vids.replace("Control", "Test"))
+cfg.remove_option("Additional Locations/Nix", "Music") # This should still wind up in corpus if you didn't break directionless recovery.
+with open("tapestry-test.cfg", "w") as warp:
+    cfg.write(warp)
+
+waiting = subprocess.run(("python3.6", "dev.py", "--rcv"))
+
+shutil.copy("tapestry-test.cfg.bak", "tapestry-test.cfg")
 
 #  Identity Testing
     #  Hash to Hash of Corpuses
