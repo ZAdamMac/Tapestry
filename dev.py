@@ -641,8 +641,6 @@ def buildMaster():  # summons the master process and builds its corresponding na
         ns.currentOS = platform.system()  # replaces old global var currentOS
         ns.date = datetime.date
         ns.home = os.getcwd()
-        ns.numConsumers = os.cpu_count()  # The practical limit of consumer processes during multiprocessed blocks.
-        #ns.numConsumers = 1 # existed purely for debugging purposes.
         ns.secret = None  # Placeholder so that we can use this value later as needed. Needs to explicitly be none in case no password is used.
 
 def parseArgs():  # mounts argparser, crawls it and then assigns to the managed namespace
@@ -732,7 +730,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
         ns.media = driveletter
     ns.drop = config.get("Environment Variables", "Output Path")
-
+    ns.numConsumers = calcConsumers()
 
 def startLogger():
     global skiplogger
@@ -766,6 +764,19 @@ def buildOpsList():
     dirActual.update(listAdditionals)
 
     ns.dirActual = dirActual #This last value needs to go to namespace because it is needed by the worker processes too.
+
+def calcConsumers(): #  Simple function, returns an appropriate number of consumers based on available RAM and available processor cores. TODO add win compat
+    cielCores = os.cpu_count()
+    global blockSizeActual
+    cielRAM = math.floor(int(os.popen("free -m").readlines()[1].split()[1])/blockSizeActual)
+    if cielCores < cielRAM:
+        if cielRAM > 1:
+            print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
+            return 1
+        else:
+            return cielRAM
+    else:
+        return cielCores
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
