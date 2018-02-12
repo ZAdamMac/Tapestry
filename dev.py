@@ -244,7 +244,7 @@ def init(): # TODO Deprecate or Update
     genKey()
     exit()
 
-def setup():
+def setup(): #TODO deprecate
     global setupMode
     setupMode = True
     print("Entering the setup menu")
@@ -370,7 +370,7 @@ def findblock():  # Time to go grepping for taps!
 
 
 def validateBlock():
-    print("Checking the validity of this disk's signature.")
+    print("Checking the validity of this tapfile's signature.")
     global valid
     global sig; sig = None
     for dont, care, files in os.walk(ns.media):
@@ -418,7 +418,7 @@ def decryptBlock():
             with open(outputTGT, "rb") as dropped:
                 signature = dropped.read(3)
                 if signature.startswith(b"BZh"):
-                    #we need to add some code here to swap the file we just spat out with a decompressed version.
+                    # we need to add some code here to swap the file we just spat out with a decompressed version.
                     shutil.copy(outputTGT, (outputTGT+".temp"))
                     with bz2.BZ2File(outputTGT+".temp", "rb") as compressed:
                         with open(outputTGT, "wb") as uncompressed:
@@ -430,7 +430,6 @@ def decryptBlock():
                 cleardown()
                 exit()
 
-# noinspection PyGlobalUndefined,PyGlobalUndefined,PyGlobalUndefined
 def openPickle():
     for foo, bar, files in os.walk(ns.workDir):
         for file in files:
@@ -466,8 +465,6 @@ def openPickle():
         cleardown()
         exit()
 
-
-# noinspection PyGlobalUndefined
 def unpackBlocks():
     if __name__ == '__main__':
         global tasker
@@ -538,6 +535,7 @@ def makeIndex():  # does some operations to the working dictionaries to remove i
             del workIndex[int(item)]
     global smallest
     smallest = int(listSizes[workIndex[(len(workIndex)-1)]])
+    print("The working index contains %s items." % len(workIndex))
 
 def buildBlocks():
     global blocks
@@ -731,6 +729,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.media = driveletter
     ns.drop = config.get("Environment Variables", "Output Path")
     ns.numConsumers = calcConsumers()
+    debugPrint("I am operating with %s consumers." % ns.numConsumers)
 
 def startLogger():
     global skiplogger
