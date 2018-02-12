@@ -830,14 +830,6 @@ if __name__ == "__main__":
         buildOpsList()
         print("Tapestry is configuring itself. Please wait.")
         loadKey()
-        print("Confirm this session will use the following key:")
-        print(str(ns.activeFP))
-        print("The expected FP is:")
-        print(str(ns.activeFP))
-        qContinue = input("Continue? y/n>")
-        if qContinue.lower() != "y":
-            cleardown()
-            exit()
         print("Tapestry is preparing the backup index. This may take a few moments.")
         for category in listRun:
             getContents(category, listRun[category])
