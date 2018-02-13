@@ -596,17 +596,19 @@ def processBlocks():  # signblocks is in here now
         for b in blocks:
             b.pack()
             locks.append(master.Lock())
-        debugPrint("Packed Blocks")
+        print("Packed Blocks")
         for w in consumers:
             w.start()
         tasks.join()
-        if ns.compress:
+        if ns.compress: # Compression structured differently to force only MAIN to do it.
+            compressionQueue = []
             for foo, bar, tars in os.walk(ns.workDir):
                 for tar in tars:
                     if tar.endswith(".tar"):
-                        tasks.put(comTasker(tar, ns.compressLevel))
-        debugPrint("Compression Enqueued")
-        tasks.join()
+                        compressionQueue.append(comTasker(tar, ns.compressLevel))
+        print("Compression Enqueued")
+        for foo in compressionQueue:
+            foo()
 
         for foo, bar, files in os.walk(ns.workDir):
             if not ns.compress:
@@ -616,7 +618,7 @@ def processBlocks():  # signblocks is in here now
             for file in files:
                 if file.endswith(suffix):
                     tasks.put(encTasker(file, ns.activeFP))
-        debugPrint("Encryption enqueued")
+        print("Encryption enqueued")
         tasks.join()
         if ns.signing:
             for foo, bar, taps in os.walk(ns.drop):
@@ -771,10 +773,6 @@ def calcConsumers(): #  Simple function, returns an appropriate number of consum
     if cielCores < cielRAM:
         if cielRAM > 1:
             print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
-            return 1
-        else:
-            return cielRAM
-    else:
         return cielCores
 
 #We're gonna need some globals
