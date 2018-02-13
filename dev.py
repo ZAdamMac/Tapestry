@@ -773,7 +773,7 @@ def calcConsumers(): #  Simple function, returns an appropriate number of consum
     if cielCores < cielRAM:
         if cielRAM > 1:
             print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
-        return cielCores
+    return cielCores
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
