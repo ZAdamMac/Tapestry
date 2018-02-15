@@ -9,6 +9,7 @@ import mp5
 import os
 import shutil
 import subprocess
+import time
 import unittest
 
 #  Stash classes and functions here if necessary.
@@ -19,16 +20,29 @@ class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
             os.makedirs(landingdir)
         self.loggerfile = open(landingAbs, "w")  # This will REPLACE the existing logfile with the new one so be careful
         self.loggerfile.write("This is a log of tests run against some version of tapestry by the functional-tests.py testing utility. \n")
-        self.loggerfile.write("\n")
+        self.loggerfile.write("\n\n\n")
+        self.loggerfile.write("===============")
+        global host
+        self.loggerfile.write("Test Host: %s \n" % host)
+        cores = os.cpu_count()
+        self.loggerfile.write("Cores Available: %s \n" % cores)
+        RAM = os.popen("free -m").readlines()[1].split()[1]
+        self.loggerfile.write("RAM Available: %s MB \n" % RAM)
+        self.loggerfile.write("===============")
 
     def log(self, foo):  # Formats foo nicely and adds it to the log
         self.loggerfile.write(foo + '\n')
 
     def save(self):  # saves the file to disk. Once used you have to re-instance the logger
         self.loggerfile.write("\n")
-        self.loggerfile.write("\n This backup was run on " + str(date.today()))
+        self.loggerfile.write("\n This test was run on " + str(date.today()))
         self.loggerfile.flush()
         self.loggerfile.close()
+
+def elapsed(start):  #Quickly calculate the elapsed time between two points, to feed to the logger. Returns it formatted nicely.
+    current = time.monotonic()
+    secElapsed = current - start
+    strElapsed = time.strftime("%H:%M:%S", time.gmtime(secElapsed))
 
 #  Parse test config
 os.chdir(os.getcwd())
@@ -37,6 +51,7 @@ cfg = cp.ConfigParser()
 cfg.read("tapestry-test.cfg")
 out = cfg.get("Environment Variables", "output path")
 uid = cfg.get("Environment Variables", "uid")
+host = cfg.get("Environment Variables", "compID")
 logs = os.path.join(out, "Logs")
 
 shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup of the config to restore to after testing.
