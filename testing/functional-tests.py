@@ -5,7 +5,7 @@
 import configparser as cp
 from datetime import date
 import gnupg
-import mp5
+import hashlib
 import os
 import shutil
 import subprocess
@@ -28,7 +28,7 @@ class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
         self.loggerfile.write("Cores Available: %s \n" % cores)
         RAM = os.popen("free -m").readlines()[1].split()[1]
         self.loggerfile.write("RAM Available: %s MB \n" % RAM)
-        self.loggerfile.write("===============")
+        self.loggerfile.write("===============\n\n\n\n[Tests Begin - Generating Samples]\n")
 
     def log(self, foo):  # Formats foo nicely and adds it to the log
         self.loggerfile.write(foo + '\n')
@@ -43,6 +43,7 @@ def elapsed(start):  #Quickly calculate the elapsed time between two points, to 
     current = time.monotonic()
     secElapsed = current - start
     strElapsed = time.strftime("%H:%M:%S", time.gmtime(secElapsed))
+    return strElapsed
 
 #  Parse test config
 os.chdir(os.getcwd())
@@ -60,6 +61,8 @@ cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
 with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
 
+pathControl = out.replace("Test", "Control")
+
 #  Establish a Logger for Test Output
 if not os.path.isdir((logs)):
     os.mkdir(logs)
@@ -71,13 +74,27 @@ log = simpleLogger(logs, logname)
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
 if not os.path.isdir(os.path.join(out, "Non-Inc")):
     os.mkdir(os.path.join(out, "Non-Inc"))
+log.log("Now beginning the --genKey test.")
+print("Now Beginning the --genKey test")
+start = time.monotonic()
 waiting = subprocess.run(("python3.6", "dev.py", "--genKey"))
+elapse = elapsed(start)
+print("--genKey completed in %s" % elapse)
+log.log("--genKey completed in %s" % elapse)
+log.log("Run returned with the following information: %s" % waiting)
 
 cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
 with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
 
+print("Now beginning --inc test.")
+log.log("Now beginning --inc test.")
+start = time.monotonic()
 waiting = subprocess.run(("python3.6", "dev.py", "--inc"))
+elapse = elapsed(start)
+print("--inc completed in %s" % elapse)
+log.log("--inc completed in %s" % elapse)
+log.log("--inc returned the following information: %s" % waiting)
 
 cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
 docs = cfg.get("Default Locations/Nix", "docs")
@@ -90,12 +107,42 @@ cfg.remove_option("Additional Locations/Nix", "Music") # This should still wind 
 with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
 
+print("Now beginning --rcv test.")
+start = time.monotonic()
 waiting = subprocess.run(("python3.6", "dev.py", "--rcv"))
+elapse = elapsed(start)
+print("--rcv completed in %s" % elapse)
+log.log("--rcv completed in %s" % elapse)
+log.log("--rcv returned the following information: %s" % waiting)
 
 shutil.copy("tapestry-test.cfg.bak", "tapestry-test.cfg")
+print("Sample generation complete!")
 
-#  Identity Testing
-    #  Hash to Hash of Corpuses
+#  Identity Testing -- Hash to Hash
+print("Starting Identity Test")
+hashControl = hashlib.md5()
+hashTest = hashlib.md5()
+counterMismatch = 0
+identical = False
+
+for foo, bar, files in os.walk(pathControl):
+    for file in files:
+        absfile = os.path.join(foo, file)
+        testfile = absfile.replace("Control", "Test")
+        with open(absfile, "rb") as f:
+            hashControl.update(f)
+        with open(testfile, "rb") as f:
+            hashTest.update(f)
+
+        if hashControl != hashTest:
+            print("Mismatch detected!")
+            log.log("Mismatch detected with file: %s" % testfile)
+            counterMismatch += 1
+
+if counterMismatch == 0:
+    identical = True
+    print("Identity test passed with no mismatching detected.")
+    log.log("Identity test passed with no mismatching detected.")
 
 #  Encryption and Signing Passing
     # Test if Signatures are Valid
