@@ -55,6 +55,7 @@ out = cfg.get("Environment Variables", "output path")
 uid = cfg.get("Environment Variables", "uid")
 host = cfg.get("Environment Variables", "compID")
 logs = os.path.join(out, "Logs")
+blockSize = cfg.get("Environment Variables", "blocksize")
 
 shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup of the config to restore to after testing.
 
@@ -224,7 +225,23 @@ else:
     log.log("Pickle Comparison Failed: Test case does not match control. Possible break in version compatibility. Please test manually.")
 
 #  Compression Testing
-    # Test that output is smaller than Blocksize
+print("Beginning Compression Efficacy Test!")
+log.log("\n\n\nBeginning Compression Efficacy Test")
+passing = True
+for foo, bar, files in os.walk(out):
+    for file in files:
+        if file.endswith(".tap"):
+            size = os.path.getsize(os.path.join(foo, file))
+            if size > blockSize:
+                print("Error: %s is larger than blocksize!" % file)
+                passing = False
+
+if passing:
+    print("All tapfiles are smaller than the specified blocksize!")
+    log.log("Compression Efficacy Test Passed")
+else:
+    print("Compression Efficacy Test failed. Check compression code or increase compression level.")
+    log.log("Compression Efficacy Test Failed. Check compresson code or increase compression level.")
 
 #Inclusive/Exclusive Differentiation Test
     # Test that /inc is bigger than /non-inc
