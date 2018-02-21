@@ -47,14 +47,14 @@ def elapsed(start):  #Quickly calculate the elapsed time between two points, to 
     return strElapsed
 
 #  Parse test config
-os.chdir(os.getcwd())
+permaHome = os.getcwd()
 
 cfg = cp.ConfigParser()
 cfg.read("tapestry-test.cfg")
 out = cfg.get("Environment Variables", "output path")
 uid = cfg.get("Environment Variables", "uid")
 host = cfg.get("Environment Variables", "compID")
-logs = os.path.join(out, "Logs")
+logs = os.path.join(permaHome, "Logs")
 blockSize = cfg.get("Environment Variables", "blocksize")
 
 shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup of the config to restore to after testing.
@@ -287,7 +287,10 @@ else:
     log.log("Test failed: please confirm you entered the correct passphrase and check the export code!")
 
 #  Clear Down!
-    # Save Logfile
-    # Prompt for Confirmation
-    # Delete Items
-    # Delete Keys
+log.save()
+
+print("After passing this confirmation screen, the test result material will be deleted (except the log). If you need to dissect further, leave this session open or delete the items manually yourself.")
+carryOn = input("Press any key to continue. > ")
+shutil.rmtree(out)
+remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"), secret=True)
+remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"))
