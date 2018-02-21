@@ -195,9 +195,13 @@ else:
 #  Compression Testing
     # Test that output is smaller than Blocksize
 
+#Inclusive/Exclusive Differentiation Test
+    # Test that /inc is bigger than /non-inc
+
 #  Export Check
     # Check for output!
 
 #  Clear Down!
+    # Prompt for Confirmation
     # Delete Items
     # Delete Keys
