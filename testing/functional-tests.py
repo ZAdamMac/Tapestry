@@ -174,11 +174,16 @@ else:
     print("Beginning Decryption Test")
     log.log("\n\nBeginning Decryption Test")
     failures = 0
+    first = True
     for foo, bar, files in os.walk(out):
         for file in files:
             if file.endswith(".tap"):
                 with open(file, "rb") as k:
-                    decrypted = gpg.decrypt_file(k, always_trust=True)
+                    if first:
+                        decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
+                        first = False
+                    else:
+                        decrypted = gpg.decrypt_file(k, always_trust=True)
                     if decrypted.ok:
                         print("Signature at %s verified." % file)
                     else:
@@ -191,6 +196,7 @@ else:
 #  Version Specificity
     # Compare a test pickle to control pickle.
     # Report the diff (pass if no diff)
+
 
 #  Compression Testing
     # Test that output is smaller than Blocksize
