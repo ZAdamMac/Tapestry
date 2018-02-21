@@ -214,8 +214,8 @@ tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
 os.chdir(out)
 tfTest.extract("recovery-pkl")
 
-pklControl = pickle.load(os.join(pathControl, "control-pkl"))
-pklTest = pickle.load(os.join(out, "recovery-pkl"))
+pklControl = pickle.load(os.path.join(pathControl, "control-pkl"))
+pklTest = pickle.load(os.path.join(out, "recovery-pkl"))
 if len(pklControl) == len(pklTest):
     print("Recovery Files have Matching Structure!")
     log.log("No changes detected in recovery-pkl structure.")
@@ -241,13 +241,50 @@ if passing:
     log.log("Compression Efficacy Test Passed")
 else:
     print("Compression Efficacy Test failed. Check compression code or increase compression level.")
-    log.log("Compression Efficacy Test Failed. Check compresson code or increase compression level.")
+    log.log("Compression Efficacy Test Failed. Check compression code or increase compression level.")
 
 #Inclusive/Exclusive Differentiation Test
-    # Test that /inc is bigger than /non-inc
+sizePoolInclusive = 0
+sizePoolExclusive = 0
 
-#  Export Check
-    # Check for output!
+print("Beginning Inclusive/Exclusive Size Test")
+for foo, bar, file in os.walk(os.path.join(out,"Non-Inc")):
+    for file in files:
+        sizePoolExclusive += os.path.getsize(os.path.join(foo, file))
+
+for foo, bar, files in os.walk(os.path.join(out,"Inc")):
+    for file in files:
+        sizePoolInclusive += os.path.getsize(os.path.join(foo, file))
+
+if sizePoolExclusive < sizePoolInclusive:
+    print("Inclusive/Exclusive Comparison Test Passed")
+    log.log("Passed!")
+else:
+    print("Inclusive/Exclusive sizes are mismatched!")
+    log.log("Failed: Exclusive run produced equal or larger output to the inclusive run. Check relevant code and run again.")
+
+#  Key Export Check
+print("Checking if keys were correctly exported!")
+log.log("\n\n\nBeginning key export test.")
+os.chdir(out)
+keysExpected = ["DRPub.key", "DR.key"]
+passing = True
+
+for key in keysExpected:
+    with open(key) as k:
+        keyIn = gpg.import_keys(k)
+        if not keyIn.ok:
+            print(keyIn.ok_reason)
+            log.log("WARNING: %s failed to import because: %s" % (key, keyIn.ok_reason))
+            passing = False
+        else:
+            print("%s imported successfully." % key)
+if passing:
+    print("Keys were exported successfully!")
+    log.log("Test passed!")
+else:
+    print("Some keys did not pass correctly.")
+    log.log("Test failed: please confirm you entered the correct passphrase and check the export code!")
 
 #  Clear Down!
     # Save Logfile
