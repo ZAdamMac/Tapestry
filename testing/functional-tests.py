@@ -7,8 +7,10 @@ from datetime import date
 import gnupg
 import hashlib
 import os
+import pickle
 import shutil
 import subprocess
+import tarfile
 import time
 
 #  Stash classes and functions here if necessary.
@@ -194,9 +196,32 @@ else:
     log.log("Decryption Test complete. In total there were %s failures." % failures)
 
 #  Version Specificity
-    # Compare a test pickle to control pickle.
-    # Report the diff (pass if no diff)
+print("Beginning Recovery File Completion Check")
+log.log("\n\n\nBeginning Recovery File Comparison")
+if identical:
+    print("Decrypting a tapfile to run test against.")
+    for foo, bar, files in os.walk(out):
+        for file in files:
+            if file.endswith(".tap"):
+                with open(file, "rb") as k:
+                    decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
+                    if decrypted.ok:
+                        break
+        break
+print("Extracting recovery pickle from the tapfile.")
+tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
+os.chdir(out)
+tfTest.extract("recovery-pkl")
 
+pklControl = pickle.load(os.join(pathControl, "control-pkl"))
+pklTest = pickle.load(os.join(out, "recovery-pkl"))
+if len(pklControl) == len(pklTest):
+    print("Recovery Files have Matching Structure!")
+    log.log("No changes detected in recovery-pkl structure.")
+else:
+    print("WARNING: Recovery Files are mismatched!")
+    print("This could indicate a break in version compatibility.")
+    log.log("Pickle Comparison Failed: Test case does not match control. Possible break in version compatibility. Please test manually.")
 
 #  Compression Testing
     # Test that output is smaller than Blocksize
@@ -208,6 +233,7 @@ else:
     # Check for output!
 
 #  Clear Down!
+    # Save Logfile
     # Prompt for Confirmation
     # Delete Items
     # Delete Keys
