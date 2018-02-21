@@ -10,7 +10,6 @@ import os
 import shutil
 import subprocess
 import time
-import unittest
 
 #  Stash classes and functions here if necessary.
 class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
@@ -62,6 +61,8 @@ with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
 
 pathControl = out.replace("Test", "Control")
+
+gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
 
 #  Establish a Logger for Test Output
 if not os.path.isdir((logs)):
@@ -119,7 +120,7 @@ shutil.copy("tapestry-test.cfg.bak", "tapestry-test.cfg")
 print("Sample generation complete!")
 
 #  Identity Testing -- Hash to Hash
-print("Starting Identity Test")
+print("\n\nStarting Identity Test")
 hashControl = hashlib.md5()
 hashTest = hashlib.md5()
 counterMismatch = 0
@@ -143,13 +144,52 @@ if counterMismatch == 0:
     identical = True
     print("Identity test passed with no mismatching detected.")
     log.log("Identity test passed with no mismatching detected.")
+else:
+    identical = False
 
 #  Encryption and Signing Passing
     # Test if Signatures are Valid
+print("Beginning Signature Verification.")
+log.log("\n\nBeginning of Signature Verification Test.")
+failures = 0
+for foo, bar, files in os.walk(out):
+    for file in files:
+        if file.endswith(".tap.sig"):
+            with open(file, "rb") as sig:
+                verified = gpg.verify_file(sig, file.lstrip(".sig"))
+                if verified.trust_level >= verified.TRUST_FULLY:
+                    print("Signature at %s verified." % file)
+                else:
+                    print("WARNING: Signature at %s insufficiently trusted." % file)
+                    log.log("%s has failed verification: insufficient trust." % file)
+                    failures =+ 1
+print("Signature verification completed with %s failures." % failures)
+log.log("Signature Verification Test complete. In total there were %s failures." % failures)
+
     # If Identity failed, test encryption
+if identical:
+    print("Decryption Test Skipped - Identity Check Passed.")
+    log.log("\n\nSkipping Decryption Test - The Identity Check implicitly passed it.")
+else:
+    print("Beginning Decryption Test")
+    log.log("\n\nBeginning Decryption Test")
+    failures = 0
+    for foo, bar, files in os.walk(out):
+        for file in files:
+            if file.endswith(".tap"):
+                with open(file, "rb") as k:
+                    decrypted = gpg.decrypt_file(k, always_trust=True)
+                    if decrypted.ok:
+                        print("Signature at %s verified." % file)
+                    else:
+                        print("WARNING: Decryption of %s failed because: %s" % (file, decrypted.ok_reason))
+                        log.log("%s has failed to decrypt: %s" % (file, decrypted.ok_reason))
+                        failures = + 1
+    print("Decryption Testing completed with %s failures." % failures)
+    log.log("Decryption Test complete. In total there were %s failures." % failures)
 
 #  Version Specificity
-    # If Identity failed, compare a test pickle to control pickle.
+    # Compare a test pickle to control pickle.
     # Report the diff (pass if no diff)
 
 #  Compression Testing
@@ -159,3 +199,5 @@ if counterMismatch == 0:
     # Check for output!
 
 #  Clear Down!
+    # Delete Items
+    # Delete Keys
