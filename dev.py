@@ -203,7 +203,7 @@ def announce():
     if __name__ == '__main__':
         print("Welcome to Tapestry Backup Tool Version " + version)
     if platform.system() == "Windows":
-        print("Unfortunately, windows functionality is currently blocked for incompletion.")
+        print("Unfortunately, windows functionality is currently due to flaws in the current program structure.")
         print("Please watch the repo for news and updates about this feature.")
         exit()
 
@@ -317,7 +317,7 @@ def setup(): #TODO deprecate
 
 def genKey():
     print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
-    print(("This key will be a %s -bit RSA Keypair with the credentials you specify." % ns.keysize))
+    print(("This key will be a %s -bit RSA Key Pair with the credentials you specify." % ns.keysize))
     print("This key will not expire by default. If you need this functionality, add it in GPG.")
     nameKey = str(input("User/Organization Name: "))
     contactKey = str(input("Recovery Contact Email: "))
@@ -348,7 +348,7 @@ def genKey():
 def loadKey():
     if ns.genKey:
         genKey()
-    debugPrint("Fetching key from Keyring")
+    debugPrint("Fetching key %s from Keyring" % ns.expectedFP)
     ns.activeFP = ns.expectedFP
     debugPrint(ns.activeFP)
 
@@ -399,7 +399,7 @@ def validateBlock():
             print("This block has been verified by %s, which is sufficiently trusted." % verified.username)
         else:
             print("This block claims to have been signed by %s." % verified.username)
-            print("The signature is %s. Continue?" % verified.trust_text)
+            print("The signature's trust level is %s. Continue?" % verified.trust_text)
             go = input("y/n?")
             if go.lower() == "y":
                 valid = True
@@ -426,7 +426,7 @@ def decryptBlock():
                     pass
             if not baz.ok:
                 debugPrint("Decryption Error: " + str(baz.status))
-                print("Tapestry could not decrypt the block. Shutting down.")
+                print("A decryption error was encountered. Tapestry will now shut down.")
                 cleardown()
                 exit()
 
@@ -454,14 +454,14 @@ def openPickle():
         print("Found Recovery Table 1")
     else:
         print(
-            "There was a problem finding the file 'recPaths' on the disk. Please reload this program and try again, being careful to use Disk 1.")
+            "There was a problem finding the file 'recovery-pkl' on the disk. Please reload this program and try again.")
         cleardown()  # Deletes temporary files to prevent system bloat
         exit()
     if len(recSections) > 0:
         print("Found Recovery Table 2")
     else:
         print(
-            "There was a problem finding the file 'recovery.pkl' on the disk. Please reload this program and try again, being careful to use Disk 1.")
+            "There was a problem finding the file 'recovery-pkl' on the disk. Please reload this program and try again.")
         cleardown()
         exit()
 
@@ -535,7 +535,7 @@ def makeIndex():  # does some operations to the working dictionaries to remove i
             del workIndex[int(item)]
     global smallest
     smallest = int(listSizes[workIndex[(len(workIndex)-1)]])
-    print("The working index contains %s items." % len(workIndex))
+    print("The working index contains %s files." % len(workIndex))
 
 def buildBlocks():
     global blocks
@@ -799,7 +799,7 @@ if __name__ == "__main__":
         setup()
         exit()
     elif ns.rcv:
-        print("Tapestry is ready to recover your files. Please insert the first disk.")
+        print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")
         input("Press any key to continue")
         usedBlocks = []
         loadKey()
