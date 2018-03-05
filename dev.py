@@ -352,15 +352,21 @@ def genKey():
         os.mkdir(ns.drop)
     os.chdir(ns.drop)
     pubOut = gpg.export_keys(fp)
-    keyOut = gpg.export_keys(fp, True)
     pubFile = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
     pubHandle = os.fdopen(pubFile, "w")
     pubHandle.write(str(pubOut))
     pubHandle.close()
-    keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
-    keyHandle = os.fdopen(keyFile, "w")
-    keyHandle.write(str(keyOut))
-    keyHandle.close()
+    try:
+        keyOut = gpg.export_keys(fp, True)
+        keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
+        keyHandle = os.fdopen(keyFile, "w")
+        keyHandle.write(str(keyOut))
+        keyHandle.close()
+    except ValueError: # Most Probable cause for this is that the version of the gnupg module is outdated, so we need our alternate handler.
+        print("An error has occured which has prevented the private side of the disaster recovery key from being exported.")
+        print("This error is likely caused by this system's version of the python-gnupg module being outdated.")
+        print("You can export the key manually using the method of your choice.")
+
     print("The exported keys have been saved in the output folder. Please move them to removable media or other backup.")
 
 
