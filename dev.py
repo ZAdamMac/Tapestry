@@ -17,6 +17,7 @@ import os.path
 import pickle
 import platform
 import shutil
+import sys
 import tarfile
 import uuid
 
@@ -66,6 +67,7 @@ class tapBlock(object):
         global tasks
         for file in self.contents:
             tasks.put(buildTasker(self.label, file, self.contents[file], self.index))
+            ns.sumJobs += 1
 
 
 class tapProc(mp.Process):
@@ -103,6 +105,8 @@ class buildTasker(object):
             tar.add(self.b, arcname=self.a, recursive=False)
             tar.close()
             fLock.release()
+            ns.jobsDone += 1
+            statusPrint()
 
 class comTasker(object):
     def __init__(self, t, lvl):
@@ -117,6 +121,8 @@ class comTasker(object):
             data = b.read()
             bz2f.write(data)
             bz2f.close()
+            ns.jobsDone += 1
+            statusPrint()
         pass
 
 class encTasker(object):
@@ -140,6 +146,8 @@ class encTasker(object):
                 debugPrint("Encryption Success.")
             elif not k.ok:
                 debugPrint(str(k.status)) #Displays the specific encryption error encountered if encryption fails
+            ns.jobsDone += 1
+            statusPrint()
 
 
 class sigTasker(object):
@@ -153,6 +161,8 @@ class sigTasker(object):
             tgtOutput = self.block + ".sig"
             debugPrint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True)
+            ns.jobsDone += 1
+            statusPrint()
 
 
 class recTask(object):
@@ -198,6 +208,15 @@ def debugPrint(foo):
     if ns.debug:
         print(str(foo))
 
+def statusPrint(): # Prettyprinter of status to keep the system busy.
+    global ns
+    lengthBar = 15.0
+    doneBar = int(round((ns.jobsDone/ns.sumJobs)*lengthBar))
+    doneBarPrint = str("#"*int(doneBar)+"-"*int(round((lengthBar-doneBar))))
+    percent = int(round((ns.jobsDone/ns.sumJobs)*100))
+    text = ("\r{0}: [{1}] {2}%" .format(ns.task, doneBarPrint, percent))
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 def announce():
     if __name__ == '__main__':
@@ -593,23 +612,32 @@ def processBlocks():  # signblocks is in here now
         locks = []
         for i in range(ns.numConsumers):
             consumers.append(tapProc(tasks))
+        ns.task = "Tarfile Generation"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         for b in blocks:
             b.pack()
             locks.append(master.Lock())
-        print("Packed Blocks")
         for w in consumers:
             w.start()
         tasks.join()
+        print("\nPacked Blocks")
+        ns.task = "Compression"
+        ns.jobsDone = 0
         if ns.compress: # Compression structured differently to force only MAIN to do it.
             compressionQueue = []
             for foo, bar, tars in os.walk(ns.workDir):
                 for tar in tars:
                     if tar.endswith(".tar"):
                         compressionQueue.append(comTasker(tar, ns.compressLevel))
-        print("Compression Enqueued")
+        print("\nCompression Enqueued")
+        ns.sumJobs = len(compressionQueue)
         for foo in compressionQueue:
             foo()
 
+        ns.task = "Encryption"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         for foo, bar, files in os.walk(ns.workDir):
             if not ns.compress:
                 suffix = ".tar"
@@ -618,13 +646,19 @@ def processBlocks():  # signblocks is in here now
             for file in files:
                 if file.endswith(suffix):
                     tasks.put(encTasker(file, ns.activeFP))
-        print("Encryption enqueued")
+                    ns.sumJobs += 1
+        print("\nEncryption enqueued")
         tasks.join()
+        ns.task = "Signing"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         if ns.signing:
             for foo, bar, taps in os.walk(ns.drop):
                 for tap in taps:
                     if tap.endswith(".tap"):
                         tasks.put(sigTasker(tap, ns.sigFP))
+                        ns.sumJobs += 1
+        print("\nSigning Enqueued")
         for w in consumers: #Finally, poison pill the worker processes to terminate them.
             tasks.put(None)
         tasks.join()
@@ -707,6 +741,9 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.keysize = config.getint("Environment Variables", "keysize")
         ns.compress = config.getboolean("Environment Variables", "Use Compression")
         ns.compressLevel = config.getint("Environment Variables", "Compression Level")
+        ns.step = "none"
+        ns.sumJobs = 0
+        ns.jobsDone = 0
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
