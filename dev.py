@@ -346,6 +346,7 @@ def genKey():
     keypair = gpg.gen_key(inp)
     fp = keypair.fingerprint  # Changes the value of FP to the new key
     config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
+    ns.activeFP = keypair.fingerprint
     with open(cfg, "w") as cf:
         config.write(cf)
     if not os.path.isdir(ns.drop):
@@ -373,8 +374,8 @@ def genKey():
 def loadKey():
     if ns.genKey:
         genKey()
-    debugPrint("Fetching key %s from Keyring" % ns.expectedFP)
-    ns.activeFP = ns.expectedFP
+    ns.activeFP = config.get("Environment Variables", "Expected FP")
+    debugPrint("Fetching key %s from Keyring" % ns.activeFP)
     debugPrint(ns.activeFP)
 
 
