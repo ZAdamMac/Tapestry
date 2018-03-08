@@ -24,7 +24,7 @@ class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
         self.loggerfile.write("\n\n\n")
         self.loggerfile.write("===============")
         global host
-        self.loggerfile.write("Test Host: %s \n" % host)
+        self.loggerfile.write("\nTest Host: %s \n" % host)
         cores = os.cpu_count()
         self.loggerfile.write("Cores Available: %s \n" % cores)
         RAM = os.popen("free -m").readlines()[1].split()[1]
