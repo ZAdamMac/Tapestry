@@ -139,7 +139,7 @@ for foo, bar, files in os.walk(pathControl):
         with open(testfile, "rb") as f:
             hashTest.update(f.readall())
 
-        if hashControl != hashTest:
+        if hashControl.hexdigest() != hashTest.hexdigest():
             print("Mismatch detected!")
             log.log("Mismatch detected with file: %s" % testfile)
             counterMismatch += 1
