@@ -441,6 +441,8 @@ def decryptBlock():
         outputTGT = str(os.path.join(ns.workDir, block))
         with open(block, "rb") as kfile:
             baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
+            if not baz.ok: # Weird Include to actually force the system to finish computing the value of baz without waiting for debugprint to do its job.
+                pass
             with open(outputTGT, "rb") as dropped:
                 signature = dropped.read(3)
                 if signature.startswith(b"BZh"):
