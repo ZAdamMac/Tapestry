@@ -156,6 +156,7 @@ else:
 print("Beginning Signature Verification.")
 log.log("\n\nBeginning of Signature Verification Test.")
 failures = 0
+os.chdir(out)
 for foo, bar, files in os.walk(out):
     for file in files:
         if file.endswith(".tap.sig"):
