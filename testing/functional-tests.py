@@ -101,6 +101,7 @@ log.log("--inc completed in %s" % elapse)
 log.log("--inc returned the following information: %s" % waiting)
 
 cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
+cfg.set("Environment Variables", "recovery path", os.path.join(out, "Inc"))
 docs = cfg.get("Default Locations/Nix", "docs")
 cfg.set("Default Locations/Nix", "docs", docs.replace("Control", "Test"))
 pics = cfg.get("Default Locations/Nix", "photos")
