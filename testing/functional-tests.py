@@ -125,13 +125,13 @@ print("Sample generation complete!")
 
 #  Identity Testing -- Hash to Hash
 print("\n\nStarting Identity Test")
-hashControl = hashlib.md5()
-hashTest = hashlib.md5()
 counterMismatch = 0
 identical = False
 
 for foo, bar, files in os.walk(pathControl):
     for file in files:
+        hashControl = hashlib.md5()
+        hashTest = hashlib.md5()
         absfile = os.path.join(foo, file)
         testfile = absfile.replace("Control", "Test")
         with open(absfile, "rb") as f:
@@ -150,6 +150,8 @@ if counterMismatch == 0:
     log.log("Identity test passed with no mismatching detected.")
 else:
     identical = False
+    print("Multiple Mismatches Detected - See the log for details.")
+    log.log("Identity test failed.")
 
 #  Encryption and Signing Passing
     # Test if Signatures are Valid
