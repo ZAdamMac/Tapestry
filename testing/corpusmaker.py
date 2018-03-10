@@ -6,7 +6,7 @@
 import os.path
 import random
 
-global dest; dest = "/home/patches/Desktop/Tapestry Testbed/Control/Corpus" # some pathlike destination to be root
+global dest; dest = "/home/patches/Desktop/Tapestry FT Data/Control/Corpus" # some pathlike destination to be root
 global num; num = 10 #Number of files to include per category
 global sizeEach; sizeEach = 1000000 # Desired file size in lines
 global subdirs; subdirs = ["documents", "photos", "music", "videos"]
