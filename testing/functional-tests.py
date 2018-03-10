@@ -107,7 +107,7 @@ cfg.set("Default Locations/Nix", "docs", docs.replace("Control", "Test"))
 pics = cfg.get("Default Locations/Nix", "photos")
 cfg.set("Default Locations/Nix", "photos", pics.replace("Control", "Test"))
 vids = cfg.get("Additional Locations/Nix", "video")
-cfg.set("Default Locations/Nix", "video", vids.replace("Control", "Test"))
+cfg.set("Additional Locations/Nix", "video", vids.replace("Control", "Test"))
 cfg.remove_option("Additional Locations/Nix", "Music") # This should still wind up in corpus if you didn't break directionless recovery.
 with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
