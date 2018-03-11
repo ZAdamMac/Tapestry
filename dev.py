@@ -173,6 +173,7 @@ class recTask(object):
         self.pathend = pathend
 
     def __call__(self):
+        statusPrint()
         absTar = os.path.join(ns.workDir, self.tar)
         pathEnd = self.pathend.strip('~/')
         absFile = os.path.join(self.catdir,pathEnd)
@@ -182,6 +183,7 @@ class recTask(object):
         placed = os.path.join(placement, self.fid)
         os.rename(placed, absFile)  # and now it's named correctly.
         debugPrint("Placed " + str(pathEnd))
+        ns.jobsDone += 1
 
 class recProc(mp.Process):
     def __init__(self, qTask):
@@ -497,6 +499,9 @@ def unpackBlocks():
     if __name__ == '__main__':
         global tasker
         tasker = mp.JoinableQueue()
+        ns.task = "Unpacking Files"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         for foo, bar, files in os.walk(ns.workDir):
             for file in files:
                 if file.endswith(".tap"):
@@ -511,6 +516,7 @@ def unpackBlocks():
                                 catdir = os.path.join(ns.drop, cat)
                             pathend = recPaths[item]
                             tasker.put(recTask(file, item, catdir, pathend))
+                            ns.sumJobs += 1
         global workers; workers = []
         for i in range(ns.numConsumers):
             workers.append(recProc(tasker))
