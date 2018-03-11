@@ -66,8 +66,8 @@ class tapBlock(object):
         os.chdir(ns.drop)
         global tasks
         for file in self.contents:
-            tasks.put(buildTasker(self.label, file, self.contents[file], self.index))
             ns.sumJobs += 1
+            tasks.put(buildTasker(self.label, file, self.contents[file], self.index))
 
 
 class tapProc(mp.Process):
@@ -522,8 +522,9 @@ def unpackBlocks():
                             except KeyError:
                                 catdir = os.path.join(ns.drop, cat)
                             pathend = recPaths[item]
-                            tasker.put(recTask(file, item, catdir, pathend))
                             ns.sumJobs += 1
+                            tasker.put(recTask(file, item, catdir, pathend))
+
         global workers; workers = []
         for i in range(ns.numConsumers):
             workers.append(recProc(tasker))
@@ -667,8 +668,8 @@ def processBlocks():  # signblocks is in here now
                 suffix = ".bz2"
             for file in files:
                 if file.endswith(suffix):
-                    tasks.put(encTasker(file, ns.activeFP))
                     ns.sumJobs += 1
+                    tasks.put(encTasker(file, ns.activeFP))
         print("\nEncryption enqueued")
         tasks.join()
         ns.task = "Signing"
@@ -678,8 +679,8 @@ def processBlocks():  # signblocks is in here now
             for foo, bar, taps in os.walk(ns.drop):
                 for tap in taps:
                     if tap.endswith(".tap"):
-                        tasks.put(sigTasker(tap, ns.sigFP))
                         ns.sumJobs += 1
+                        tasks.put(sigTasker(tap, ns.sigFP))
         print("\nSigning Enqueued")
         for w in consumers: #Finally, poison pill the worker processes to terminate them.
             tasks.put(None)
