@@ -894,7 +894,7 @@ if __name__ == "__main__":
         makeIndex()
         buildBlocks()
         processBlocks()
-        print("The processing has completed. Your .tap files are here:")
+        print("\nThe processing has completed. Your .tap files are here:")
         print(str(ns.drop))
         print("Please archive these expediently.")
         cleardown()
