@@ -6,12 +6,15 @@ This document is intended to lay out a brief explanation of the correct use of `
 ## Preparing the Test Environment and tapestry-test.cfg
 `funtional-tests.py` relies on a testing environment to run its target script against. That environment can be constructed relatively simply using the included `corpusmaker.py`. The method of preparing this environment is simple:
 
-1. Create some directory `~/Tapestry Testbed/` on your testing machine's filesystem.
+1. Create some directory `~/Tapestry FT Data/` on your testing machine's filesystem.
 2. Under this functional root, create `/Control` and `/Test/`.
-3. Edit `corpusmaker.py` such that its `dest` global variable points at some sub-directory Corpus, ie `~/Tapestry Testbed/Control/Corpus`.
+3. Edit `corpusmaker.py` such that its `dest` global variable points at some sub-directory Corpus, ie `~/Tapestry FT Data/Control/Corpus`.
 4. Run corpusmaker. Depending on your system specifications this operation may take up to an hour to complete - you are generating a considerable amount of data after all.
 5. After running corpusmaker, you must configure the `tapestry-test.cfg`. This is simply a version of an ordinary tapestry config file. If you downloaded the test.cfg file from the repo, simply edit its paths so that they point at your test environment instead of some guy named Patches'.
 6. Create the following known-good samples: `Non-Inc Media` and `Inc-Media`, consisting of the output .tap and .tap.sig files of an inclusive and non-inclusive run respectively. These are used in some tests. You should also manually unpack the recovery-pkl file from one of these and leave it under the `~/Control` as some tests require it.
+
+## Special Case: The --ssg flag
+A special `--ssg` flag has been added to the test script to be used only under the following circumstance: a known-good sample data set already exists, and the testing script is instead being run as part of a process to test/debug newly-added tests. If this flag is set at runtime, functional-tests.py will skip its sample generation step and instead go directly to the tests themselves. A note is made of this flag in the logs.
 
 ## Testing a Development Build
 In order to test some variation of `dev.py`, simply copy it into the testing directory locally and run functionaltests.py. Testing can take a considerable amount of time, during the early stages of which the developer will need to be semi-present. A future version may obviate these requirements. In particular, the following sequences will require user intervention:
@@ -68,7 +71,7 @@ Some extant features of Tapestry are not explicitly tested for. In most cases, t
 If your PR/development arc includes adding new functionality to the program that is not explicitly tested for, contact `tapestry@psavlabs.com` to discuss adding a test. It may be possible to construct your own under most circumstances.
 
 ## My Tests Passed!
-Congratulations! Please include the passed output `test-$somedate.log` in your PR for public review.
+Congratulations! Please include the passed output `test-$somedate.log` in your PR for public review. It is appreciated if you could sign your code and the test log as well.
 
 *"The difference between science and screwing around is writing it down!"
 -- Adam Savage*
