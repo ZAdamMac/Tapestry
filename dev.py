@@ -97,6 +97,7 @@ class buildTasker(object):
         self.index = index #index number of the appropriate mutex
 
     def __call__(self):
+        statusPrint()
         os.chdir(ns.workDir)
         if os.path.exists(self.tarf): #we need to know if we're starting a new file or not.
             fLock = locks[self.index] #Aquires the lock indicated in the index value from the master
@@ -106,7 +107,6 @@ class buildTasker(object):
             tar.close()
             fLock.release()
             ns.jobsDone += 1
-            statusPrint()
 
 class comTasker(object):
     def __init__(self, t, lvl):
@@ -114,6 +114,7 @@ class comTasker(object):
         self.level = lvl
 
     def __call__(self):
+        statusPrint()
         os.chdir(ns.workDir)
         with open(self.tarf, "rb") as b:
             bz2d = self.tarf+".bz2"
@@ -132,6 +133,7 @@ class encTasker(object):
 
     def __call__(self):
         with open(self.tarf, "r") as p:
+            statusPrint()
             os.chdir(ns.workDir)
             tstring = self.tarf
             if not ns.compress:
@@ -156,6 +158,7 @@ class sigTasker(object):
         self.fp = sigfp
 
     def __call__(self):
+        statusPrint()
         os.chdir(ns.drop)
         with open(self.block, "rb") as p:
             tgtOutput = self.block + ".sig"
