@@ -107,6 +107,7 @@ class buildTasker(object):
             tar.close()
             fLock.release()
             ns.jobsDone += 1
+            statusPrint()
 
 class comTasker(object):
     def __init__(self, t, lvl):
