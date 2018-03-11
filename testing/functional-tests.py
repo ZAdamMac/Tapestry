@@ -135,9 +135,9 @@ for foo, bar, files in os.walk(pathControl):
         absfile = os.path.join(foo, file)
         testfile = absfile.replace("Control", "Test")
         with open(absfile, "rb") as f:
-            hashControl.update(f.readall())
+            hashControl.update(f)
         with open(testfile, "rb") as f:
-            hashTest.update(f.readall())
+            hashTest.update(f)
 
         if hashControl.hexdigest() != hashTest.hexdigest():
             print("Mismatch detected!")
