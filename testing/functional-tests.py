@@ -2,6 +2,7 @@
 #  For full commentary and documentation view TESTDOCS.md in the repo.
 
 #  Import Modules
+import argparse
 import configparser as cp
 from datetime import date
 import gnupg
@@ -67,6 +68,10 @@ pathControl = out.replace("Test", "Control")
 
 gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
 
+parser = argparse.ArgumentParser(description="Testing Framework for development of Tapestry Specialist Backup Tool")
+parser.add_argument('--ssg', help="Skip sample generation. Invalidates test, but useful for debugging new tests.", action="store_true")
+args = parser.parse_args()
+
 #  Establish a Logger for Test Output
 if not os.path.isdir((logs)):
     os.mkdir(logs)
@@ -76,52 +81,56 @@ log = simpleLogger(logs, logname)
 
 
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
-if not os.path.isdir(os.path.join(out, "Non-Inc")):
-    os.mkdir(os.path.join(out, "Non-Inc"))
-log.log("Now beginning the --genKey test.")
-print("Now Beginning the --genKey test")
-start = time.monotonic()
-waiting = subprocess.run(("python3.6", "dev.py", "--genKey"))
-elapse = elapsed(start)
-print("--genKey completed in %s" % elapse)
-log.log("--genKey completed in %s" % elapse)
-log.log("Run returned with the following information: %s" % waiting)
+if not args.ssg:
+    if not os.path.isdir(os.path.join(out, "Non-Inc")):
+        os.mkdir(os.path.join(out, "Non-Inc"))
+    log.log("Now beginning the --genKey test.")
+    print("Now Beginning the --genKey test")
+    start = time.monotonic()
+    waiting = subprocess.run(("python3.6", "dev.py", "--genKey"))
+    elapse = elapsed(start)
+    print("--genKey completed in %s" % elapse)
+    log.log("--genKey completed in %s" % elapse)
+    log.log("Run returned with the following information: %s" % waiting)
 
-cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
-with open("tapestry-test.cfg", "w") as warp:
-    cfg.write(warp)
+    cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
+    with open("tapestry-test.cfg", "w") as warp:
+        cfg.write(warp)
 
-print("Now beginning --inc test.")
-log.log("Now beginning --inc test.")
-start = time.monotonic()
-waiting = subprocess.run(("python3.6", "dev.py", "--inc"))
-elapse = elapsed(start)
-print("--inc completed in %s" % elapse)
-log.log("--inc completed in %s" % elapse)
-log.log("--inc returned the following information: %s" % waiting)
+    print("Now beginning --inc test.")
+    log.log("Now beginning --inc test.")
+    start = time.monotonic()
+    waiting = subprocess.run(("python3.6", "dev.py", "--inc"))
+    elapse = elapsed(start)
+    print("--inc completed in %s" % elapse)
+    log.log("--inc completed in %s" % elapse)
+    log.log("--inc returned the following information: %s" % waiting)
 
-cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
-cfg.set("Environment Variables", "recovery path", os.path.join(out, "Inc"))
-docs = cfg.get("Default Locations/Nix", "docs")
-cfg.set("Default Locations/Nix", "docs", docs.replace("Control", "Test"))
-pics = cfg.get("Default Locations/Nix", "photos")
-cfg.set("Default Locations/Nix", "photos", pics.replace("Control", "Test"))
-vids = cfg.get("Additional Locations/Nix", "video")
-cfg.set("Additional Locations/Nix", "video", vids.replace("Control", "Test"))
-cfg.remove_option("Additional Locations/Nix", "Music") # This should still wind up in corpus if you didn't break directionless recovery.
-with open("tapestry-test.cfg", "w") as warp:
-    cfg.write(warp)
+    cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
+    cfg.set("Environment Variables", "recovery path", os.path.join(out, "Inc"))
+    docs = cfg.get("Default Locations/Nix", "docs")
+    cfg.set("Default Locations/Nix", "docs", docs.replace("Control", "Test"))
+    pics = cfg.get("Default Locations/Nix", "photos")
+    cfg.set("Default Locations/Nix", "photos", pics.replace("Control", "Test"))
+    vids = cfg.get("Additional Locations/Nix", "video")
+    cfg.set("Additional Locations/Nix", "video", vids.replace("Control", "Test"))
+    cfg.remove_option("Additional Locations/Nix", "Music") # This should still wind up in corpus if you didn't break directionless recovery.
+    with open("tapestry-test.cfg", "w") as warp:
+        cfg.write(warp)
 
-print("Now beginning --rcv test.")
-start = time.monotonic()
-waiting = subprocess.run(("python3.6", "dev.py", "--rcv"))
-elapse = elapsed(start)
-print("--rcv completed in %s" % elapse)
-log.log("--rcv completed in %s" % elapse)
-log.log("--rcv returned the following information: %s" % waiting)
+    print("Now beginning --rcv test.")
+    start = time.monotonic()
+    waiting = subprocess.run(("python3.6", "dev.py", "--rcv"))
+    elapse = elapsed(start)
+    print("--rcv completed in %s" % elapse)
+    log.log("--rcv completed in %s" % elapse)
+    log.log("--rcv returned the following information: %s" % waiting)
 
-shutil.copy("tapestry-test.cfg.bak", "tapestry-test.cfg")
-print("Sample generation complete!")
+    shutil.copy("tapestry-test.cfg.bak", "tapestry-test.cfg")
+    print("Sample generation complete!")
+else:
+    print("Skipping Sample Generation. This test is not valid.")
+    log.log("Invalid Test: Sample Generation Was Skipped.")
 
 #  Identity Testing -- Hash to Hash
 print("\n\nStarting Identity Test")
