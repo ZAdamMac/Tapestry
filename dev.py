@@ -162,6 +162,7 @@ class sigTasker(object):
         statusPrint()
         os.chdir(ns.drop)
         with open(self.block, "rb") as p:
+            statusPrint()
             tgtOutput = self.block + ".sig"
             debugPrint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True)
