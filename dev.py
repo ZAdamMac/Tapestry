@@ -183,8 +183,6 @@ class recTask(object):
         pathEnd = self.pathend.strip('~/')
         absFile = os.path.join(self.catdir,pathEnd)
         placement, nameProper = os.path.split(absFile)  # split the pathend component into the subpath from the category dir, and the original filename.
-        if not os.path.isdir(placement):
-            os.mkdir(placement)
         with tarfile.open(absTar, "r") as tf:
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
         placed = os.path.join(placement, self.fid)
@@ -521,6 +519,9 @@ def unpackBlocks():
                                 catdir = dirActual[cat]
                             except KeyError:
                                 catdir = os.path.join(ns.drop, cat)
+                            finally:
+                                if not os.path.isdir(catdir):
+                                    os.mkdir(catdir)
                             pathend = recPaths[item]
                             ns.sumJobs += 1
                             tasker.put(recTask(file, item, catdir, pathend))
