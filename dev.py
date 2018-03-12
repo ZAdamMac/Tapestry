@@ -442,7 +442,7 @@ def validateBlock():
                 exit()
 
 
-def decryptBlock():
+def decryptBlock(): # TODO this is slow and memory-thirsty, tidy it up.
     global foundBlocks
     for block in foundBlocks:
         outputTGT = str(os.path.join(ns.workDir, block))

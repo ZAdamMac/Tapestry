@@ -71,6 +71,7 @@ gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
 parser = argparse.ArgumentParser(description="Testing Framework for development of Tapestry Specialist Backup Tool")
 parser.add_argument('--ssg', help="Skip sample generation. Invalidates test, but useful for debugging new tests.", action="store_true")
 args = parser.parse_args()
+ssg = args.ssg
 
 #  Establish a Logger for Test Output
 if not os.path.isdir((logs)):
@@ -81,7 +82,7 @@ log = simpleLogger(logs, logname)
 
 
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
-if not args.ssg:
+if not ssg:
     if not os.path.isdir(os.path.join(out, "Non-Inc")):
         os.mkdir(os.path.join(out, "Non-Inc"))
     log.log("Now beginning the --genKey test.")
@@ -137,16 +138,16 @@ print("\n\nStarting Identity Test")
 counterMismatch = 0
 identical = False
 
-for foo, bar, files in os.walk(pathControl):
+for foo, bar, files in os.walk(os.path.join(pathControl,"Corpus")):
     for file in files:
         hashControl = hashlib.md5()
         hashTest = hashlib.md5()
         absfile = os.path.join(foo, file)
         testfile = absfile.replace("Control", "Test")
         with open(absfile, "rb") as f:
-            hashControl.update(bytearray(f))
+            hashControl.update(f.read())
         with open(testfile, "rb") as f:
-            hashTest.update(bytearray(f))
+            hashTest.update(f.read())
 
         if hashControl.hexdigest() != hashTest.hexdigest():
             print("Mismatch detected!")
