@@ -168,13 +168,14 @@ else:
 print("Beginning Signature Verification.")
 log.log("\n\nBeginning of Signature Verification Test.")
 failures = 0
+out = cfg.get("Environment Variables", "output path")
 os.chdir(out)
 for foo, bar, files in os.walk(out):
     for file in files:
         if file.endswith(".tap.sig"):
             with open(file, "rb") as sig:
-                verified = gpg.verify_file(sig, file.lstrip(".sig"))
-                if verified.trust_level >= verified.TRUST_FULLY:
+                verified = gpg.verify_file(sig, file.rstrip(".sig"))
+                if verified.trust_level is not None and verified.trust_level >= verified.TRUST_FULLY:
                     print("Signature at %s verified." % file)
                 else:
                     print("WARNING: Signature at %s insufficiently trusted." % file)
