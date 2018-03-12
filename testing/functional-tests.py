@@ -247,7 +247,7 @@ for foo, bar, files in os.walk(out):
     for file in files:
         if file.endswith(".tap"):
             size = os.path.getsize(os.path.join(foo, file))
-            if size > blockSize:
+            if int(size) > int(blockSize):
                 print("Error: %s is larger than blocksize!" % file)
                 passing = False
 
