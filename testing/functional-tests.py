@@ -60,10 +60,6 @@ blockSize = cfg.get("Environment Variables", "blocksize")
 
 shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup of the config to restore to after testing.
 
-cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc")) # TODO move
-with open("tapestry-test.cfg", "w") as warp:
-    cfg.write(warp)
-
 pathControl = out.replace("Test", "Control")
 
 gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
@@ -83,6 +79,9 @@ log = simpleLogger(logs, logname)
 
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
 if not ssg:
+    cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
+    with open("tapestry-test.cfg", "w") as warp:
+        cfg.write(warp)
     if not os.path.isdir(os.path.join(out, "Non-Inc")):
         os.mkdir(os.path.join(out, "Non-Inc"))
     log.log("Now beginning the --genKey test.")
