@@ -60,7 +60,7 @@ blockSize = cfg.get("Environment Variables", "blocksize")
 
 shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup of the config to restore to after testing.
 
-cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
+cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc")) # TODO move
 with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
 
@@ -229,8 +229,8 @@ tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
 os.chdir(out)
 tfTest.extract("recovery-pkl")
 
-pklControl = pickle.load(os.path.join(pathControl, "control-pkl"))
-pklTest = pickle.load(os.path.join(out, "recovery-pkl"))
+pklControl = pickle.load(open(os.path.join(pathControl, "control-pkl"), "rb"))
+pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
 if len(pklControl) == len(pklTest):
     print("Recovery Files have Matching Structure!")
     log.log("No changes detected in recovery-pkl structure.")
