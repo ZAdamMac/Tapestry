@@ -172,8 +172,10 @@ os.chdir(out)
 for foo, bar, files in os.walk(out):
     for file in files:
         if file.endswith(".tap.sig"):
-            with open(file, "rb") as sig:
+            with open(os.path.join(foo, file), "rb") as sig:
+                os.chdir(foo)
                 verified = gpg.verify_file(sig, file.rstrip(".sig"))
+                os.chdir(out)
                 if verified.trust_level is not None and verified.trust_level >= verified.TRUST_FULLY:
                     print("Signature at %s verified." % file)
                 else:
