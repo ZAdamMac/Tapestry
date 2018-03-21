@@ -5,15 +5,15 @@
 Tapestry is a reasonably lightweight and flexible script in its essence, but it does involve some basic requirements.
 
 **Suggested Minimum Hardware Requirements**
-- 6GB RAM
+- 6GB RAM (or 1.5*Blocksize, if changing blocksize)
 - 3.0 GHz, 64-Bit Dual-Core Processor (or equivalent)
 - 10 GB or more unusued Hard Drive Space
 
 **Software Requirements**
 - 64-bit Linux/Unix-Based OS (Recommended)
 - Python v3.7
-- Python-GnuPG, Latest Version
-- GnuPG, Latest Version
+- Python-GnuPG, v.0.4.2 or later
+- GnuPG 2.1.11
 
 ### Other Considerations
 Tapestry runs are fairly long - on the order of 20 minutes for a single 5GB block, or longer, depending on your system resources and the amount of other processes running concurrently. Accordingly it's considered helpful to use cron jobs or other automation in order to run the backup overnight or during other periods of low-activity uptime.
