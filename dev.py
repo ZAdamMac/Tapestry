@@ -442,7 +442,7 @@ def validateBlock():
                 exit()
 
 
-def decryptBlock(): # TODO this is slow and memory-thirsty, tidy it up.
+def decryptBlock():
     global foundBlocks
     for block in foundBlocks:
         outputTGT = str(os.path.join(ns.workDir, block))
@@ -827,7 +827,7 @@ def buildOpsList():
 
     ns.dirActual = dirActual #This last value needs to go to namespace because it is needed by the worker processes too.
 
-def calcConsumers(): #  Simple function, returns an appropriate number of consumers based on available RAM and available processor cores. TODO add win compat
+def calcConsumers(): #  Simple function, returns an appropriate number of consumers based on available RAM and available processor cores.
     cielCores = os.cpu_count()
     global blockSizeActual
     cielRAM = math.floor(int(os.popen("free -m").readlines()[1].split()[1])/blockSizeActual)
