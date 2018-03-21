@@ -233,113 +233,10 @@ def announce():
         print("Please watch the repo for news and updates about this feature.")
         exit()
 
-def init(): # TODO Deprecate or Update
+def init():
     print("Configuration file not found.")
-    print("Beginning first-time setup.")
-    print("To begin with, please provide your username on this system.")
-    uid = input("Username:")
-    config.set("Environment Variables", "uid", str(uid))
-    print("Next, enter a label to uniquely identify this computer.")
-    compID = input("CompID:")
-    config.set("Environment Variables", "compID", str(compID))
-    print("Please enter the desired blocksize in MB.")
-    blockSize = input("(4000)")
-    config.set("Environment Variables", "compID", blockSize)
-    print("If you have a signing key you wish to use, please enter it, else 0.")
-    sigFP = input("FP: ")
-    config.set("Environment Variables", "signing fp", str(sigFP))
-    if sigFP != "0":
-        config.set("Environment Variables", "sign by default", str(True))
-    else:
-        config.set("Environment Variables", "sign by default", str(False))
-    print("Excellent. Tapestry will now create a default configuration file here:")
-    print(str(os.getcwd()))
-    config.set("Default Locations/Nix", "Docs", "/home/" + uid + "/Documents")
-    config.set("Default Locations/Nix", "Photos", "/home/" + uid + "/Pictures")
-    config.set("Additional Locations/Nix", "Video", "/home/" + uid + "/Videos")
-    config.set("Additional Locations/Nix", "Music", "/home/" + uid + "/Music")
-    config.set("Default Locations/Win", "Docs", "C:/Users/" + uid + "/My Documents")
-    config.set("Default Locations/Win", "Photos", "C:/Users/" + uid + "/My Pictures")
-    config.set("Additional Locations/Win", "Video", "C:/Users/" + uid + "/My Videos")
-    config.set("Additional Locations/Win", "Music", "C:/Users/" + uid + "/My Music")
-    print("Please review this file. If you need to make any changes to the included backup")
-    print("locations, please run the program again with the flag --setup.")
-    with open("tapestry.cfg", "w") as cfg:
-        config.write(cfg)
-    print("As this is the first time we are using tapestry we will now drop to the key generation function.")
-    genKey()
+    print("Please obtain a new copy of tapestry.cfg from the repo, or ensure that your copy is stored in the same directory as the tapestry script file you are running.")
     exit()
-
-def setup(): #TODO deprecate
-    global setupMode
-    setupMode = True
-    print("Entering the setup menu")
-    while setupMode:
-        print("Please Select from the following options:")
-        print("1. Change User ID")
-        print("2. Change Machine Label")
-        print("3. Change Block Size")
-        print("4. Directory Management")
-        print("5. Key Options")
-        print("6. Quit")
-        func = input("Option:")
-        if func == "1":
-            print("Please enter the desired username.")
-            uid = input("Username:")
-            config.set("Environment Variables", "uid", str(uid))
-            print("New UID Set: " + uid)
-        elif func == "2":
-            print("The current machine label is: " + str(config.get("environment Variables", "compID")))
-            print("Please enter the new label.")
-            compID = input("Machine Label:")
-            config.set("Environment Variables", "compID", str(compID))
-            print("The new label was set to :" + compID)
-        elif func == "3":
-            print("The Blocksize determines the maximum size in MB a .tap block can be.")
-            print("It is recommended to choose a value 100 MB less than the capacity of your media.")
-            print("Please enter a new blocksize in MB.")
-            newSize = input("Default is 4000:")
-            config.set("Environment Variables", "blockSize", newSize)
-        elif func == "4":
-            print("The directory management function is under construction.")
-            print("Your configuration file is at:")
-            locationConfig = os.path.join(ns.homeDir, "tapestry.cfg")
-            print(str(locationConfig))
-            print("Please edit this file directly to add, remove, or change target directories and their labels.")
-        elif func == "5":
-            print("Tapestry can sign your blocks for you, to prevent tampering.")
-            if ns.signing:
-                print("Default signing is currently on.")
-            else:
-                print("Default signing is currently off.")
-            print("Blocks will be signed with the key with the following fingerprint:")
-            print(str(ns.sigFP))
-            print("You can:")
-            print("1. Toggle Default Signing")
-            print("2. Assign a new signing key")
-            print("3. Go Back")
-            subfunc = input("Choice?")
-            if subfunc == "1":
-                if ns.signing:
-                    ns.signing = False
-                    config.set("Environment Variables", "sign by default", str(False))
-                else:
-                    ns.signing = True
-                    config.set("Environment Variables", "sign by default", str(True))
-            elif subfunc == "2":
-                print("Please enter the fingerprint of the new key.")
-                sigFP =input("FP: ")
-                config.set("Environment Variables", "signing fp", str(sigFP))
-            else:
-                pass
-        elif func == "6":
-            print("Exiting Setup.")
-            setupMode = False
-            with open("tapestry.cfg", "w") as cfg:
-                config.write(cfg)
-        else:
-            print("Your entry was not a valid option.")
-            print("Please enter the number of the option you wish to execute.")
 
 def genKey():
     print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
@@ -705,7 +602,6 @@ def parseArgs():  # mounts argparser, crawls it and then assigns to the managed 
     if __name__ == "__main__":
         parser = argparse.ArgumentParser(description="Automatically backup or restore personal files from the system.")
         parser.add_argument('--rcv', help="Recover a previous archive from disk.", action="store_true")
-        parser.add_argument('--setup', help="Loads the program in user configuration mode", action="store_true")
         parser.add_argument('--inc', help="Tells the system to include non-default sections in the backup process.",
                             action="store_true")
         parser.add_argument('--debug', help="Increase output verbosity.", action="store_true")
@@ -714,7 +610,6 @@ def parseArgs():  # mounts argparser, crawls it and then assigns to the managed 
         args = parser.parse_args()
 
         ns.rcv = args.rcv
-        ns.setup = args.setup
         ns.inc = args.inc
         ns.debug = args.debug
         ns.genKey = args.genKey
@@ -855,9 +750,6 @@ if __name__ == "__main__":
     startGPG()
     if uninit:
         init()
-        exit()
-    elif ns.setup:
-        setup()
         exit()
     elif ns.rcv:
         print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")

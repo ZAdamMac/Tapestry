@@ -21,7 +21,9 @@ Tapestry runs are fairly long - on the order of 20 minutes for a single 5GB bloc
 It is currently required due to software limitations that the recent version of GnuPG is installed as the primary instance. That is to say, a call to `gpg` should instantiate the latest version of it installed.
 
 ## Complete Explanation of Configuration
-*Tapestry stores its user-adjustable configuration files in `tapestry.cfg` which it expects to find in the same directory. If you are testing against a development version of tapestry, it will instead look for `tapestry-test.cfg` in the same area.
+Tapestry stores its user-adjustable configuration files in `tapestry.cfg` which it expects to find in the same directory. If you are testing against a development version of tapestry, it will instead look for `tapestry-test.cfg` in the same area.
+
+*As of version 1.0 the use of the --init and --setup functions to modify or generate the configuration files was considered deprecated and future versions will not include like function. When modifying configuration the current best practice is to use the text editor of choice.*
 
 ### Environment Variables
 
