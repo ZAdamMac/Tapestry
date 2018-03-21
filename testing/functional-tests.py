@@ -217,14 +217,20 @@ print("Beginning Recovery File Completion Check")
 log.log("\n\n\nBeginning Recovery File Comparison")
 if identical:
     print("Decrypting a tapfile to run test against.")
+    found = False
     for foo, bar, files in os.walk(out):
-        for file in files:
-            if file.endswith(".tap"):
-                with open(file, "rb") as k:
-                    decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
-                    if decrypted.ok:
-                        break
-        break
+        if not found:
+            for file in files:
+                if file.endswith(".tap"):
+                    with open(os.path.join(foo, file), "rb") as k:
+                        decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
+                        if not decrypted.ok:
+                            pass
+                        else:
+                            found = True
+                            break
+        else:
+            break
 print("Extracting recovery pickle from the tapfile.")
 tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
 os.chdir(out)
