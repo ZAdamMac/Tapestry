@@ -228,9 +228,6 @@ if identical:
                             pass
                         else:
                             found = True
-                            break
-        else:
-            break
 print("Extracting recovery pickle from the tapfile.")
 tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
 os.chdir(out)
