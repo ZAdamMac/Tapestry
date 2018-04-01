@@ -262,7 +262,7 @@ def genKey():
     pubHandle.write(str(pubOut))
     pubHandle.close()
     try:
-        keyOut = gpg.export_keys(fp, True)
+        keyOut = gpg.export_keys(fp, True, expect_passphrase=False)
         keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
         keyHandle = os.fdopen(keyFile, "w")
         keyHandle.write(str(keyOut))
