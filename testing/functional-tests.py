@@ -224,10 +224,8 @@ if identical:
                 if file.endswith(".tap"):
                     with open(os.path.join(foo, file), "rb") as k:
                         decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
-                        if not decrypted.ok:
-                            pass
-                        else:
-                            found = True
+                    if decrypted.ok:
+                        pass
 print("Extracting recovery pickle from the tapfile.")
 tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
 os.chdir(out)
@@ -285,19 +283,20 @@ else:
 #  Key Export Check
 print("Checking if keys were correctly exported!")
 log.log("\n\n\nBeginning key export test.")
-os.chdir(out)
+os.chdir(os.path.join(out,"Non-Inc"))
 keysExpected = ["DRPub.key", "DR.key"]
 passing = True
 
 for key in keysExpected:
-    with open(key) as k:
-        keyIn = gpg.import_keys(k)
-        if not keyIn.ok:
-            print(keyIn.ok_reason)
-            log.log("WARNING: %s failed to import because: %s" % (key, keyIn.ok_reason))
-            passing = False
-        else:
-            print("%s imported successfully." % key)
+    if os.path.isfile(key):
+        with open(key, "r") as k:
+            keyIn = gpg.import_keys(k)
+            if not keyIn.ok:
+                print(keyIn.ok_reason)
+                log.log("WARNING: %s failed to import because: %s" % (key, keyIn.ok_reason))
+                passing = False
+            else:
+                print("%s imported successfully." % key)
 if passing:
     print("Keys were exported successfully!")
     log.log("Test passed!")
