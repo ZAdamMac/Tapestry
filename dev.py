@@ -5,6 +5,7 @@ global version; version = 'DevBuild'  # Sets the version to display. "DevBuild" 
 
 # Importing Modules
 import argparse
+import bz2
 import configparser
 import datetime
 from datetime import date
@@ -16,6 +17,7 @@ import os.path
 import pickle
 import platform
 import shutil
+import sys
 import tarfile
 import uuid
 
@@ -64,6 +66,7 @@ class tapBlock(object):
         os.chdir(ns.drop)
         global tasks
         for file in self.contents:
+            ns.sumJobs += 1
             tasks.put(buildTasker(self.label, file, self.contents[file], self.index))
 
 
@@ -94,6 +97,7 @@ class buildTasker(object):
         self.index = index #index number of the appropriate mutex
 
     def __call__(self):
+        statusPrint()
         os.chdir(ns.workDir)
         if os.path.exists(self.tarf): #we need to know if we're starting a new file or not.
             fLock = locks[self.index] #Aquires the lock indicated in the index value from the master
@@ -102,6 +106,26 @@ class buildTasker(object):
             tar.add(self.b, arcname=self.a, recursive=False)
             tar.close()
             fLock.release()
+            ns.jobsDone += 1
+            statusPrint()
+
+class comTasker(object):
+    def __init__(self, t, lvl):
+        self.tarf = t
+        self.level = lvl
+
+    def __call__(self):
+        statusPrint()
+        os.chdir(ns.workDir)
+        with open(self.tarf, "rb") as b:
+            bz2d = self.tarf+".bz2"
+            bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=ns.compressLevel)
+            data = b.read()
+            bz2f.write(data)
+            bz2f.close()
+            ns.jobsDone += 1
+            statusPrint()
+        pass
 
 class encTasker(object):
     def __init__(self, t, fp):
@@ -110,9 +134,13 @@ class encTasker(object):
 
     def __call__(self):
         with open(self.tarf, "r") as p:
+            statusPrint()
             os.chdir(ns.workDir)
             tstring = self.tarf
-            tapped = self.tarf.replace(".tar", ".tap")
+            if not ns.compress:
+                tapped = self.tarf.replace(".tar", ".tap")
+            else:
+                tapped = self.tarf.replace(".tar.bz2", ".tap")
             tgtOutput = os.path.join(ns.drop, tapped)
             debugPrint("Encrypting - sending block to: " + tgtOutput)
             with open(tstring, "rb") as tgt:
@@ -121,6 +149,8 @@ class encTasker(object):
                 debugPrint("Encryption Success.")
             elif not k.ok:
                 debugPrint(str(k.status)) #Displays the specific encryption error encountered if encryption fails
+            ns.jobsDone += 1
+            statusPrint()
 
 
 class sigTasker(object):
@@ -129,11 +159,15 @@ class sigTasker(object):
         self.fp = sigfp
 
     def __call__(self):
+        statusPrint()
         os.chdir(ns.drop)
         with open(self.block, "rb") as p:
+            statusPrint()
             tgtOutput = self.block + ".sig"
             debugPrint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True)
+            ns.jobsDone += 1
+            statusPrint()
 
 
 class recTask(object):
@@ -144,6 +178,7 @@ class recTask(object):
         self.pathend = pathend
 
     def __call__(self):
+        statusPrint()
         absTar = os.path.join(ns.workDir, self.tar)
         pathEnd = self.pathend.strip('~/')
         absFile = os.path.join(self.catdir,pathEnd)
@@ -153,6 +188,7 @@ class recTask(object):
         placed = os.path.join(placement, self.fid)
         os.rename(placed, absFile)  # and now it's named correctly.
         debugPrint("Placed " + str(pathEnd))
+        ns.jobsDone += 1
 
 class recProc(mp.Process):
     def __init__(self, qTask):
@@ -179,126 +215,32 @@ def debugPrint(foo):
     if ns.debug:
         print(str(foo))
 
+def statusPrint(): # Prettyprinter of status to keep the system busy.
+    global ns
+    lengthBar = 15.0
+    doneBar = int(round((ns.jobsDone/ns.sumJobs)*lengthBar))
+    doneBarPrint = str("#"*int(doneBar)+"-"*int(round((lengthBar-doneBar))))
+    percent = int(round((ns.jobsDone/ns.sumJobs)*100))
+    text = ("\r{0}: [{1}] {2}%" .format(ns.task, doneBarPrint, percent))
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 def announce():
     if __name__ == '__main__':
         print("Welcome to Tapestry Backup Tool Version " + version)
     if platform.system() == "Windows":
-        print("Unfortunately, windows functionality is currently blocked for incompletion.")
+        print("Unfortunately, windows functionality is currently due to flaws in the current program structure.")
         print("Please watch the repo for news and updates about this feature.")
         exit()
 
 def init():
     print("Configuration file not found.")
-    print("Beginning first-time setup.")
-    print("To begin with, please provide your username on this system.")
-    uid = input("Username:")
-    config.set("Environment Variables", "uid", str(uid))
-    print("Next, enter a label to uniquely identify this computer.")
-    compID = input("CompID:")
-    config.set("Environment Variables", "compID", str(compID))
-    print("Please enter the desired blocksize in MB.")
-    blockSize = input("(4000)")
-    config.set("Environment Variables", "compID", blockSize)
-    print("If you have a signing key you wish to use, please enter it, else 0.")
-    sigFP = input("FP: ")
-    config.set("Environment Variables", "signing fp", str(sigFP))
-    if sigFP != "0":
-        config.set("Environment Variables", "sign by default", str(True))
-    else:
-        config.set("Environment Variables", "sign by default", str(False))
-    print("Excellent. Tapestry will now create a default configuration file here:")
-    print(str(os.getcwd()))
-    config.set("Default Locations/Nix", "Docs", "/home/" + uid + "/Documents")
-    config.set("Default Locations/Nix", "Photos", "/home/" + uid + "/Pictures")
-    config.set("Additional Locations/Nix", "Video", "/home/" + uid + "/Videos")
-    config.set("Additional Locations/Nix", "Music", "/home/" + uid + "/Music")
-    config.set("Default Locations/Win", "Docs", "C:/Users/" + uid + "/My Documents")
-    config.set("Default Locations/Win", "Photos", "C:/Users/" + uid + "/My Pictures")
-    config.set("Additional Locations/Win", "Video", "C:/Users/" + uid + "/My Videos")
-    config.set("Additional Locations/Win", "Music", "C:/Users/" + uid + "/My Music")
-    print("Please review this file. If you need to make any changes to the included backup")
-    print("locations, please run the program again with the flag --setup.")
-    with open("tapestry.cfg", "w") as cfg:
-        config.write(cfg)
-    print("As this is the first time we are using tapestry we will now drop to the key generation function.")
-    genKey()
+    print("Please obtain a new copy of tapestry.cfg from the repo, or ensure that your copy is stored in the same directory as the tapestry script file you are running.")
     exit()
-
-def setup():
-    global setupMode
-    setupMode = True
-    print("Entering the setup menu")
-    while setupMode:
-        print("Please Select from the following options:")
-        print("1. Change User ID")
-        print("2. Change Machine Label")
-        print("3. Change Block Size")
-        print("4. Directory Management")
-        print("5. Key Options")
-        print("6. Quit")
-        func = input("Option:")
-        if func == "1":
-            print("Please enter the desired username.")
-            uid = input("Username:")
-            config.set("Environment Variables", "uid", str(uid))
-            print("New UID Set: " + uid)
-        elif func == "2":
-            print("The current machine label is: " + str(config.get("environment Variables", "compID")))
-            print("Please enter the new label.")
-            compID = input("Machine Label:")
-            config.set("Environment Variables", "compID", str(compID))
-            print("The new label was set to :" + compID)
-        elif func == "3":
-            print("The Blocksize determines the maximum size in MB a .tap block can be.")
-            print("It is recommended to choose a value 100 MB less than the capacity of your media.")
-            print("Please enter a new blocksize in MB.")
-            newSize = input("Default is 4000:")
-            config.set("Environment Variables", "blockSize", newSize)
-        elif func == "4":
-            print("The directory management function is under construction.")
-            print("Your configuration file is at:")
-            locationConfig = os.path.join(ns.homeDir, "tapestry.cfg")
-            print(str(locationConfig))
-            print("Please edit this file directly to add, remove, or change target directories and their labels.")
-        elif func == "5":
-            print("Tapestry can sign your blocks for you, to prevent tampering.")
-            if ns.signing:
-                print("Default signing is currently on.")
-            else:
-                print("Default signing is currently off.")
-            print("Blocks will be signed with the key with the following fingerprint:")
-            print(str(ns.sigFP))
-            print("You can:")
-            print("1. Toggle Default Signing")
-            print("2. Assign a new signing key")
-            print("3. Go Back")
-            subfunc = input("Choice?")
-            if subfunc == "1":
-                if ns.signing:
-                    ns.signing = False
-                    config.set("Environment Variables", "sign by default", str(False))
-                else:
-                    ns.signing = True
-                    config.set("Environment Variables", "sign by default", str(True))
-            elif subfunc == "2":
-                print("Please enter the fingerprint of the new key.")
-                sigFP =input("FP: ")
-                config.set("Environment Variables", "signing fp", str(sigFP))
-            else:
-                pass
-        elif func == "6":
-            print("Exiting Setup.")
-            setupMode = False
-            with open("tapestry.cfg", "w") as cfg:
-                config.write(cfg)
-        else:
-            print("Your entry was not a valid option.")
-            print("Please enter the number of the option you wish to execute.")
 
 def genKey():
     print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
-    print("This key will be a %s -bit RSA Keypair with the credentials you specify.", ns.keysize)
+    print(("This key will be a %s -bit RSA Key Pair with the credentials you specify." % ns.keysize))
     print("This key will not expire by default. If you need this functionality, add it in GPG.")
     nameKey = str(input("User/Organization Name: "))
     contactKey = str(input("Recovery Contact Email: "))
@@ -308,29 +250,36 @@ def genKey():
     keypair = gpg.gen_key(inp)
     fp = keypair.fingerprint  # Changes the value of FP to the new key
     config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
+    ns.activeFP = keypair.fingerprint
     with open(cfg, "w") as cf:
         config.write(cf)
     if not os.path.isdir(ns.drop):
         os.mkdir(ns.drop)
     os.chdir(ns.drop)
     pubOut = gpg.export_keys(fp)
-    keyOut = gpg.export_keys(fp, True)
     pubFile = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
     pubHandle = os.fdopen(pubFile, "w")
     pubHandle.write(str(pubOut))
     pubHandle.close()
-    keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
-    keyHandle = os.fdopen(keyFile, "w")
-    keyHandle.write(str(keyOut))
-    keyHandle.close()
+    try:
+        keyOut = gpg.export_keys(fp, True, expect_passphrase=False)
+        keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
+        keyHandle = os.fdopen(keyFile, "w")
+        keyHandle.write(str(keyOut))
+        keyHandle.close()
+    except ValueError: # Most Probable cause for this is that the version of the gnupg module is outdated, so we need our alternate handler.
+        print("An error has occured which has prevented the private side of the disaster recovery key from being exported.")
+        print("This error is likely caused by this system's version of the python-gnupg module being outdated.")
+        print("You can export the key manually using the method of your choice.")
+
     print("The exported keys have been saved in the output folder. Please move them to removable media or other backup.")
 
 
 def loadKey():
     if ns.genKey:
         genKey()
-    debugPrint("Fetching key from Keyring")
-    ns.activeFP = ns.expectedFP
+    ns.activeFP = config.get("Environment Variables", "Expected FP")
+    debugPrint("Fetching key %s from Keyring" % ns.activeFP)
     debugPrint(ns.activeFP)
 
 
@@ -340,20 +289,18 @@ def createDIRS():
     if not os.path.exists(ns.drop):
         os.mkdir(ns.drop)
 
-
-# noinspection PyGlobalUndefined
 def findblock():  # Time to go grepping for taps!
     os.chdir(ns.media)
+    global foundBlocks; foundBlocks = []
     for foo, bar, files in os.walk(ns.media):
         for file in files:
             if file.endswith(".tap"):
                 os.chdir(foo)
-                global foundBlock;  foundBlock = file
+                foundBlocks.append(file)
 
 
-# noinspection PyGlobalUndefined
 def validateBlock():
-    print("Checking the validity of this disk's signature.")
+    print("Checking the validity of this tapfile's signature.")
     global valid
     global sig; sig = None
     for dont, care, files in os.walk(ns.media):
@@ -382,7 +329,7 @@ def validateBlock():
             print("This block has been verified by %s, which is sufficiently trusted." % verified.username)
         else:
             print("This block claims to have been signed by %s." % verified.username)
-            print("The signature is %s. Continue?" % verified.trust_text)
+            print("The signature's trust level is %s. Continue?" % verified.trust_text)
             go = input("y/n?")
             if go.lower() == "y":
                 valid = True
@@ -393,23 +340,37 @@ def validateBlock():
 
 
 def decryptBlock():
-    global foundBlock
-    outputTGT = str(os.path.join(ns.workDir, foundBlock))
-    with open(foundBlock, "rb") as kfile:
-        baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
-        if not baz.ok:
-            debugPrint("Decryption Error: " + str(baz.status))
-            print("Tapestry could not decrypt the block. Shutting down.")
-            cleardown()
-            exit()
+    global foundBlocks
+    for block in foundBlocks:
+        outputTGT = str(os.path.join(ns.workDir, block))
+        with open(block, "rb") as kfile:
+            baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
+            if not baz.ok: # Weird Include to actually force the system to finish computing the value of baz without waiting for debugprint to do its job.
+                pass
+            with open(outputTGT, "rb") as dropped:
+                signature = dropped.read(3)
+                if signature.startswith(b"BZh"):
+                    # we need to add some code here to swap the file we just spat out with a decompressed version.
+                    shutil.copy(outputTGT, (outputTGT+".temp"))
+                    with bz2.BZ2File(outputTGT+".temp", "rb") as compressed:
+                        with open(outputTGT, "wb") as uncompressed:
+                            uncompressed.write(compressed.read())
+                    pass
+            if not baz.ok:
+                debugPrint("Decryption Error: " + str(baz.status))
+                print("A decryption error was encountered. Tapestry will now shut down.")
+                cleardown()
+                exit()
 
-# noinspection PyGlobalUndefined,PyGlobalUndefined,PyGlobalUndefined
 def openPickle():
     for foo, bar, files in os.walk(ns.workDir):
         for file in files:
             if file.endswith(".tap"):
                 with tarfile.open(os.path.join(foo, file), "r") as tfile:
                     tfile.extract("recovery-pkl", path=ns.workDir)
+                    break
+        break
+
     for a, b, files in os.walk(ns.workDir):
         for file in files:
             if file == "recovery-pkl":
@@ -425,23 +386,24 @@ def openPickle():
         print("Found Recovery Table 1")
     else:
         print(
-            "There was a problem finding the file 'recPaths' on the disk. Please reload this program and try again, being careful to use Disk 1.")
+            "There was a problem finding the file 'recovery-pkl' on the disk. Please reload this program and try again.")
         cleardown()  # Deletes temporary files to prevent system bloat
         exit()
     if len(recSections) > 0:
         print("Found Recovery Table 2")
     else:
         print(
-            "There was a problem finding the file 'recovery.pkl' on the disk. Please reload this program and try again, being careful to use Disk 1.")
+            "There was a problem finding the file 'recovery-pkl' on the disk. Please reload this program and try again.")
         cleardown()
         exit()
 
-
-# noinspection PyGlobalUndefined
 def unpackBlocks():
     if __name__ == '__main__':
         global tasker
         tasker = mp.JoinableQueue()
+        ns.task = "Unpacking Files"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         for foo, bar, files in os.walk(ns.workDir):
             for file in files:
                 if file.endswith(".tap"):
@@ -454,8 +416,13 @@ def unpackBlocks():
                                 catdir = dirActual[cat]
                             except KeyError:
                                 catdir = os.path.join(ns.drop, cat)
+                            finally:
+                                if not os.path.isdir(catdir):
+                                    os.mkdir(catdir)
                             pathend = recPaths[item]
+                            ns.sumJobs += 1
                             tasker.put(recTask(file, item, catdir, pathend))
+
         global workers; workers = []
         for i in range(ns.numConsumers):
             workers.append(recProc(tasker))
@@ -508,6 +475,7 @@ def makeIndex():  # does some operations to the working dictionaries to remove i
             del workIndex[int(item)]
     global smallest
     smallest = int(listSizes[workIndex[(len(workIndex)-1)]])
+    print("The working index contains %s files." % len(workIndex))
 
 def buildBlocks():
     global blocks
@@ -565,25 +533,53 @@ def processBlocks():  # signblocks is in here now
         locks = []
         for i in range(ns.numConsumers):
             consumers.append(tapProc(tasks))
+        ns.task = "Tarfile Generation"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         for b in blocks:
             b.pack()
             locks.append(master.Lock())
-        debugPrint("Packed Blocks")
         for w in consumers:
             w.start()
         tasks.join()
+        print("\nPacked Blocks")
+        ns.task = "Compression"
+        ns.jobsDone = 0
+        if ns.compress: # Compression structured differently to force only MAIN to do it.
+            compressionQueue = []
+            for foo, bar, tars in os.walk(ns.workDir):
+                for tar in tars:
+                    if tar.endswith(".tar"):
+                        compressionQueue.append(comTasker(tar, ns.compressLevel))
+        print("\nCompression Enqueued")
+        ns.sumJobs = len(compressionQueue)
+        for foo in compressionQueue:
+            foo()
 
+        ns.task = "Encryption"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         for foo, bar, files in os.walk(ns.workDir):
+            if not ns.compress:
+                suffix = ".tar"
+            else:
+                suffix = ".bz2"
             for file in files:
-                if file.endswith(".tar"):
+                if file.endswith(suffix):
+                    ns.sumJobs += 1
                     tasks.put(encTasker(file, ns.activeFP))
-                    debugPrint("Encryption enqueued")
+        print("\nEncryption enqueued")
         tasks.join()
+        ns.task = "Signing"
+        ns.jobsDone = 0
+        ns.sumJobs = 0
         if ns.signing:
             for foo, bar, taps in os.walk(ns.drop):
                 for tap in taps:
                     if tap.endswith(".tap"):
+                        ns.sumJobs += 1
                         tasks.put(sigTasker(tap, ns.sigFP))
+        print("\nSigning Enqueued")
         for w in consumers: #Finally, poison pill the worker processes to terminate them.
             tasks.put(None)
         tasks.join()
@@ -600,15 +596,12 @@ def buildMaster():  # summons the master process and builds its corresponding na
         ns.currentOS = platform.system()  # replaces old global var currentOS
         ns.date = datetime.date
         ns.home = os.getcwd()
-        ns.numConsumers = os.cpu_count()  # The practical limit of consumer processes during multiprocessed blocks.
-        #ns.numConsumers = 1 # existed purely for debugging purposes.
         ns.secret = None  # Placeholder so that we can use this value later as needed. Needs to explicitly be none in case no password is used.
 
 def parseArgs():  # mounts argparser, crawls it and then assigns to the managed namespace
     if __name__ == "__main__":
         parser = argparse.ArgumentParser(description="Automatically backup or restore personal files from the system.")
         parser.add_argument('--rcv', help="Recover a previous archive from disk.", action="store_true")
-        parser.add_argument('--setup', help="Loads the program in user configuration mode", action="store_true")
         parser.add_argument('--inc', help="Tells the system to include non-default sections in the backup process.",
                             action="store_true")
         parser.add_argument('--debug', help="Increase output verbosity.", action="store_true")
@@ -617,7 +610,6 @@ def parseArgs():  # mounts argparser, crawls it and then assigns to the managed 
         args = parser.parse_args()
 
         ns.rcv = args.rcv
-        ns.setup = args.setup
         ns.inc = args.inc
         ns.debug = args.debug
         ns.genKey = args.genKey
@@ -666,6 +658,11 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.signing = config.getboolean("Environment Variables", "Sign by Default")
         ns.sigFP = config.get("Environment Variables", "Signing FP")
         ns.keysize = config.getint("Environment Variables", "keysize")
+        ns.compress = config.getboolean("Environment Variables", "Use Compression")
+        ns.compressLevel = config.getint("Environment Variables", "Compression Level")
+        ns.step = "none"
+        ns.sumJobs = 0
+        ns.jobsDone = 0
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
@@ -674,7 +671,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         global compid; compid = config.get("Environment Variables", "compid")
         global driveletter
         driveletter = config.get("Environment Variables",
-                                 "drive letter")  # The windows drive letter of the removable disk mount point. Used for rcv mode.
+                                 "recovery path")  #path to the removable disk mount point. Used mostly for testing.
         global uid
         uid = config.get("Environment Variables", "uid")  # Not sure actually used anywhere!
 
@@ -682,14 +679,15 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.workDir = "/tmp/Tapestry/"
         ns.desktop = str("/home/" + uid + "/Desktop")
         ns.gpgDir = str("/home/" + uid + "/.gnupg")
-        ns.media = "/media/"
+        ns.media = driveletter
     elif ns.currentOS == "Windows":
         ns.workDir = "C:/Windows/Temp"
         ns.desktop = str("C:/Users/" + uid + "/Desktop")
         ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
         ns.media = driveletter
-    ns.drop = ns.desktop + "/Tapestry Outputs/"
-
+    ns.drop = config.get("Environment Variables", "Output Path")
+    ns.numConsumers = calcConsumers()
+    debugPrint("I am operating with %s consumers." % ns.numConsumers)
 
 def startLogger():
     global skiplogger
@@ -724,6 +722,15 @@ def buildOpsList():
 
     ns.dirActual = dirActual #This last value needs to go to namespace because it is needed by the worker processes too.
 
+def calcConsumers(): #  Simple function, returns an appropriate number of consumers based on available RAM and available processor cores.
+    cielCores = os.cpu_count()
+    global blockSizeActual
+    cielRAM = math.floor(int(os.popen("free -m").readlines()[1].split()[1])/blockSizeActual)
+    if cielCores < cielRAM:
+        if cielRAM > 1:
+            print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
+    return cielCores
+
 #We're gonna need some globals
 global counterFID; counterFID = 0
 global sumSize; sumSize = 0
@@ -744,12 +751,10 @@ if __name__ == "__main__":
     if uninit:
         init()
         exit()
-    elif ns.setup:
-        setup()
-        exit()
     elif ns.rcv:
-        print("Tapestry is ready to recover your files. Please insert the first disk.")
+        print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")
         input("Press any key to continue")
+        usedBlocks = []
         loadKey()
         buildOpsList()
         createDIRS()
@@ -758,7 +763,10 @@ if __name__ == "__main__":
         decryptBlock()
         openPickle()
         print("This backup exists in %d blocks." % numBlocks)
-        for i in range(numBlocks - 1):
+        for foo, bar, found in os.walk(ns.workDir):
+            countBlocks = len(found)-1
+        print("So far, you have supplied %d blocks." % countBlocks)
+        while countBlocks < numBlocks:
             input("Please insert the next disk and press enter to continue.")
             findblock()
             validateBlock()
@@ -773,21 +781,13 @@ if __name__ == "__main__":
         buildOpsList()
         print("Tapestry is configuring itself. Please wait.")
         loadKey()
-        print("Confirm this session will use the following key:")
-        print(str(ns.activeFP))
-        print("The expected FP is:")
-        print(str(ns.activeFP))
-        qContinue = input("Continue? y/n>")
-        if qContinue.lower() != "y":
-            cleardown()
-            exit()
         print("Tapestry is preparing the backup index. This may take a few moments.")
         for category in listRun:
             getContents(category, listRun[category])
         makeIndex()
         buildBlocks()
         processBlocks()
-        print("The processing has completed. Your .tap files are here:")
+        print("\nThe processing has completed. Your .tap files are here:")
         print(str(ns.drop))
         print("Please archive these expediently.")
         cleardown()

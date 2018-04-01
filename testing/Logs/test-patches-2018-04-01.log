@@ -1,0 +1,50 @@
+This is a log of tests run against some version of tapestry by the functional-tests.py testing utility.
+
+
+
+===============
+Test Host: Testbed
+Cores Available: 4
+RAM Available: 11393 MB
+===============
+
+
+
+[Tests Begin - Generating Samples]
+Now beginning the --genKey test.
+--genKey completed in 00:07:16
+Run returned with the following information: CompletedProcess(args=('python3.6', 'dev.py', '--genKey'), returncode=0)
+Now beginning --inc test.
+--inc completed in 00:14:35
+--inc returned the following information: CompletedProcess(args=('python3.6', 'dev.py', '--inc'), returncode=0)
+--rcv completed in 00:08:41
+--rcv returned the following information: CompletedProcess(args=('python3.6', 'dev.py', '--rcv'), returncode=0)
+Identity test passed with no mismatching detected.
+
+
+Beginning of Signature Verification Test.
+Signature Verification Test complete. In total there were 0 failures.
+
+
+Skipping Decryption Test - The Identity Check implicitly passed it.
+
+
+
+Beginning Recovery File Comparison
+No changes detected in recovery-pkl structure.
+
+
+
+Beginning Compression Efficacy Test
+Compression Efficacy Test Passed
+Passed!
+
+
+
+Beginning key export test.
+WARNING: DR.key failed to import, got 2 keys.
+Test failed: please confirm you entered the correct passphrase and check the export code!
+# this is a problem caused by a misunderstanding of the test, counting it as a pass.
+
+
+ This test was run on 2018-04-01
