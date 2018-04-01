@@ -16,7 +16,7 @@ Tapestry is a reasonably lightweight and flexible script in its essence, but it 
 - GnuPG 2.1.11
 
 ### Other Considerations
-Tapestry runs are fairly long - on the order of 20 minutes for a single 5GB block, or longer, depending on your system resources and the amount of other processes running concurrently. Accordingly it's considered helpful to use cron jobs or other automation in order to run the backup overnight or during other periods of low-activity uptime.
+Tapestry runs are fairly long - on the order of twenty minutes per default-sized block, depending on your system resources and the amount of other processes running concurrently. Accordingly it's considered helpful to use cron jobs or other automation in order to run the backup overnight or during other periods of low-activity uptime.
 
 It is currently required due to software limitations that the recent version of GnuPG is installed as the primary instance. That is to say, a call to `gpg` should instantiate the latest version of it installed.
 
