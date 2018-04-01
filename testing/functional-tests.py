@@ -284,16 +284,16 @@ else:
 print("Checking if keys were correctly exported!")
 log.log("\n\n\nBeginning key export test.")
 os.chdir(os.path.join(out,"Non-Inc"))
-keysExpected = ["DRPub.key", "DR.key"]
+keysExpected = ["DR.key", "DRPub.key"]
 passing = True
 
 for key in keysExpected:
     if os.path.isfile(key):
         with open(key, "r") as k:
-            keyIn = gpg.import_keys(k)
-            if not keyIn.ok:
-                print(keyIn.ok_reason)
-                log.log("WARNING: %s failed to import because: %s" % (key, keyIn.ok_reason))
+            keyIn = gpg.import_keys(k.read())
+            if keyIn.count != 1:
+                print("Keys imported: %s count, expected 1." % keyIn.count)
+                log.log("WARNING: %s failed to import, got %s keys." % (key, keyIn.count))
                 passing = False
             else:
                 print("%s imported successfully." % key)
@@ -310,5 +310,5 @@ log.save()
 print("After passing this confirmation screen, the test result material will be deleted (except the log). If you need to dissect further, leave this session open or delete the items manually yourself.")
 carryOn = input("Press any key to continue. > ")
 shutil.rmtree(out)
-remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"), secret=True)
+remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"), secret=True, expect_passphrase=False)
 remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"))
