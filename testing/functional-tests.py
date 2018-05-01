@@ -304,6 +304,30 @@ else:
     print("Some keys did not pass correctly.")
     log.log("Test failed: please confirm you entered the correct passphrase and check the export code!")
 
+# Certificate Check Tests
+## Test Server Rejection
+
+## Test Server Acceptance
+
+## Test Client Rejection - Necessary to ensure graceful failure
+
+## Test Client Acceptance
+
+# Metadata Tests
+## Output Format Confirmation Test
+
+## Reception Comparison Test
+
+# FTP Tests - Must Run After Corpus Generation
+## Test HTTPS/FTP Handoff
+
+## Test Send Function to Server
+### Spin up simple test server
+### Take Checksum of Block to Send
+### Send the File to "server"
+### Send the File Back
+### Compare All 3 Checksums
+
 #  Clear Down!
 log.save()
 
