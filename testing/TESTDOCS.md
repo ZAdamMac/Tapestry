@@ -52,11 +52,6 @@ The testing script has generated both inclusive and exclusive sets of .tap files
 #### Blocksize Compression Test
 The testing script compares the size of all of its output blocks (the .tap files) to the blocksize defined in `tapestry-test.cfg`. If none exceed, the test passes.
 
-#### Random Noise Failure Test
-In the event that the Blocksize Compression Test fails, a special test is run where a .tap file is decrypted, and decompressed. The decrypted version is compared in size to the decompressed version. If the decrypted version is in fact larger than the decompressed version, this test fails.
-
-The failure of this test indicates that the test corpus data was insufficiently structured to compress properly. It's a special case test to deal with a mode of failure encountered during the design of 0.3.0.
-
 ### Export Test
 The testing script looks for, and attempts to import, DR.key and DRpub.key. If either fail, the corresponding test also fails.
 
