@@ -370,15 +370,43 @@ controlMDOutput = json.loads('''
 ''')
 
 for key, value in controlMDOutput:
-    if value == sampleMDOutput[key]:
-        print("Metadata Output Testing - %s - PASSED" % key)
-        log.log("Metadata Output Testing - %s - PASSED" % key)
-    else:
-        print("Metadata Output Testing - %s - FAILED" % key)
-        print("Metadata Output Testing - %s - FAILED" % key)
+    try:
+        if value == sampleMDOutput[key]:
+            print("Metadata Output Testing - %s - PASSED" % key)
+            log.log("Metadata Output Testing - %s - PASSED" % key)
+        else:
+            print("Metadata Output Testing - %s - FAILED" % key)
+            log.log("Metadata Output Testing - %s - FAILED" % key)
+    except KeyError:
+        print("Metadata Output Error - %s Not Found In Test Output" % key)
+        log.log("Metadata Output Testing - %s - FAILED: Not Present" % key)
 
 ## Reception Comparison Test
 sampleMDInput = dev.rxMetadata(True, test=True) # In this configurations sends the metadata request string to testServerGood's port.
+controlMDInput = json.loads('''
+{
+    "version" : "test",
+    "size" : 1337
+    "inclusive" : False
+    "included" : ["docs", "photos", "testing"]
+    "compiled" : "1498-08-17"
+    "org" : "Tapestry Development Team"
+    "machine" : "TestRig"
+    "signatory" : "Borgia, Cesare"
+}
+''')
+
+for key, value in controlMDInput:
+    try:
+        if value == sampleMDOutput[key]:
+            print("Metadata Input Testing - %s - PASSED" % key)
+            log.log("Metadata Input Testing - %s - PASSED" % key)
+        else:
+            print("Metadata Input Testing - %s - FAILED" % key)
+            log.log("Metadata Input Testing - %s - FAILED" % key)
+    except KeyError:
+        print("Error: Key %s not found in observed output" % key)
+        log.log("Metadata Input Testing - %s - FAILED: Not Present" % key)
 
 # FTP Tests - Must Run After Corpus Generation
 ## Test HTTPS/FTP Handoff
