@@ -5,14 +5,18 @@
 import argparse
 import configparser as cp
 from datetime import date
+import dev
 import gnupg
 import hashlib
+import json
 import os
 import pickle
 import shutil
+import ssl
 import subprocess
 import tarfile
 import time
+
 
 #  Stash classes and functions here if necessary.
 class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
@@ -305,18 +309,76 @@ else:
     log.log("Test failed: please confirm you entered the correct passphrase and check the export code!")
 
 # Certificate Check Tests
+print("Beginning Networking Tests -- SSL Authentication Checks!")
+log.log("\n\n\nBeginning Network Testing Block")
+os.chwd(permaHome)
+os.system("python3.6 testServerBad.py") #TODO Create Server Script
+os.system("python3.6 testServerGood.py")
+os.system("python3.6 testFTP.py")
+
 ## Test Server Rejection
+sslcontext = dev.getSSLContext("test")
+sock = dev.establishRemote('localhost', 49152, sslcontext)
+
+if sock == False:
+    print("Tapestry correctly rejected testServerBad")
+    log.log("HTTPS Failure Test - PASSED")
+elif sock == isinstance(http.server.socket): # TODO correct this class
+    print("Tapestry incorrectly accepted testServerBad's bad SSL Cert.")
+    log.log("HTTPS Failure Test - FAILED")
+else:
+    print("Tapestry's establishRemote method provided an unexpected return.")
+    log.log("HTTPS Failure TEST - FAILED (Unexpected Item In Bagging Area)")
 
 ## Test Server Acceptance
+sock = dev.establishRemote('localhost', 49153, sslcontext)
 
-## Test Client Rejection - Necessary to ensure graceful failure
+if sock == isinstance(http.server.socket):
+    print("Tapestry correctly accepted testServerGood")
+    log.log("HTTPS Success Test - PASSED")
+elif sock == False: # TODO correct this class
+    print("Tapestry incorrectly rejected testServerGood")
+    log.log("HTTPS Success Test - FAILED")
+else:
+    print("Tapestry's establishRemote method provided an unexpected return.")
+    log.log("HTTPS Success TEST - FAILED (Unexpected Item In Bagging Area)")
 
-## Test Client Acceptance
+## Graceful Failure Test
+proceed = dev.checkConnection(False)
+
+if proceed.go == True:
+    print("Tapestry will crash if the SSL handshake fails")
+    log.log("HTTPS Graceful Failure Test - FAILED")
+else:
+    print("Tapestry will enter graceful failure mode if SSL handshake fails.")
+    log.log("HTTPS Graceful Failure Test - PASSED")
 
 # Metadata Tests
 ## Output Format Confirmation Test
+sampleMDOutput = dev.sendMetadata(True, test=True) # if test, build a default metadata object instead of doing it properly.
+controlMDOutput = json.loads('''
+{
+    "version" : "test",
+    "size" : 1337
+    "inclusive" : False
+    "included" : ["docs", "photos", "testing"]
+    "compiled" : "1498-08-17"
+    "org" : "Tapestry Development Team"
+    "machine" : "TestRig"
+    "signatory" : "Borgia, Cesare"
+}
+''')
+
+for key, value in controlMDOutput:
+    if value == sampleMDOutput[key]:
+        print("Metadata Output Testing - %s - PASSED" % key)
+        log.log("Metadata Output Testing - %s - PASSED" % key)
+    else:
+        print("Metadata Output Testing - %s - FAILED" % key)
+        print("Metadata Output Testing - %s - FAILED" % key)
 
 ## Reception Comparison Test
+sampleMDInput = dev.rxMetadata(True, test=True) # In this configurations sends the metadata request string to testServerGood's port.
 
 # FTP Tests - Must Run After Corpus Generation
 ## Test HTTPS/FTP Handoff
