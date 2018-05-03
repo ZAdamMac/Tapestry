@@ -411,7 +411,7 @@ for key, value in controlMDInput:
 
 # FTP Tests - Must Run After Corpus Generation
 ## Test HTTPS/FTP Handoff
-conFTP = dev.switchToFTP('localhost', 49154) # Switches over to connect to the FTP test server.
+conFTP = dev.switchToFTP(sock) # Switches over to connect to the FTP test server.
 if isinstance(conFTP, ftp.FTP()):
     print("FTP Handover Testing - PASSED")
     log.log("FTP Handover Testing - PASSED")
