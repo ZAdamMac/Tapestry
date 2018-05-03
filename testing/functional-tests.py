@@ -6,6 +6,7 @@ import argparse
 import configparser as cp
 from datetime import date
 import dev
+import ftplib as ftp
 import gnupg
 import hashlib
 import json
@@ -410,6 +411,17 @@ for key, value in controlMDInput:
 
 # FTP Tests - Must Run After Corpus Generation
 ## Test HTTPS/FTP Handoff
+conFTP = dev.switchToFTP('localhost', 49154) # Switches over to connect to the FTP test server.
+if conFTP == isinstance(ftp.FTP()):
+    print("FTP Handover Testing - PASSED")
+    log.log("FTP Handover Testing - PASSED")
+    passFTP = True
+else:
+    print("FTP Handover Testing - FAILED")
+    print("Skipping remaining FTP Tests")
+    log.log("FTP Handover Testing - FAILED")
+    log.log("Skipping remaining FTP Tests.")
+    passFTP = False
 
 ## Test Send Function to Server
 ### Spin up simple test server
