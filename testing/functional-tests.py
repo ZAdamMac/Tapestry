@@ -324,7 +324,7 @@ sock = dev.establishRemote('localhost', 49152, sslcontext)
 if sock == False:
     print("Tapestry correctly rejected testServerBad")
     log.log("HTTPS Failure Test - PASSED")
-elif sock == isinstance(http.server.socket): # TODO correct this class
+elif isinstance(sock, http.server.socket): # TODO correct this class
     print("Tapestry incorrectly accepted testServerBad's bad SSL Cert.")
     log.log("HTTPS Failure Test - FAILED")
 else:
@@ -334,7 +334,7 @@ else:
 ## Test Server Acceptance
 sock = dev.establishRemote('localhost', 49153, sslcontext)
 
-if sock == isinstance(http.server.socket):
+if isinstance(sock, http.server.socket):
     print("Tapestry correctly accepted testServerGood")
     log.log("HTTPS Success Test - PASSED")
 elif sock == False: # TODO correct this class
@@ -412,7 +412,7 @@ for key, value in controlMDInput:
 # FTP Tests - Must Run After Corpus Generation
 ## Test HTTPS/FTP Handoff
 conFTP = dev.switchToFTP('localhost', 49154) # Switches over to connect to the FTP test server.
-if conFTP == isinstance(ftp.FTP()):
+if isinstance(conFTP, ftp.FTP()):
     print("FTP Handover Testing - PASSED")
     log.log("FTP Handover Testing - PASSED")
     passFTP = True
