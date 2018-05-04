@@ -423,13 +423,35 @@ else:
     log.log("Skipping remaining FTP Tests.")
     passFTP = False
 
-## Test Send Function to Server
-### Spin up simple test server
-### Take Checksum of Block to Send
-### Send the File to "server"
-### Send the File Back
-### Compare All 3 Checksums
+if passFTP:
+    ## Test Send Function to Server
+    fileTest = os.path.join(pathControl, "controlBlock.tap")
+    ### Take Checksum of Block to Send
+    controlHash = hashlib.md5()
+    controlHash.update(open(fileTest, "r").read())
+    ### Send the File to "server"
+    dev.sendBlock(fileTest)
+    testTxHash = hashlib.md5()
+    testTxHash.update(open(fileTest.replace("Control", "Test"), "r").read())
 
+    ### Pull the File Back
+    testRxHash = hashlib.md5()
+    testRxHash.update(dev.getBlock("controlBlock.tap").read())
+
+    ### Compare All 3 Checksums
+    if controlHash == testRxHash:
+        print("FTP Recieve Test - PASSED")
+        log.log("FTP Receive Test - PASSED")
+    else:
+        print("FTP Receive Test - FAILED")
+        log.log("FTP Recieve Test - FAILED")
+
+    if controlHash == testTxHash:
+        print("FTP Push Test - PASSED")
+        log.log("FTP Push Test - PASSED")
+    else:
+        print("FTP Push Test - FAILED")
+        log.log("FTP Push Test - FAILED")
 #  Clear Down!
 log.save()
 
