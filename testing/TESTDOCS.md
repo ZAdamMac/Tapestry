@@ -55,6 +55,16 @@ The testing script compares the size of all of its output blocks (the .tap files
 ### Export Test
 The testing script looks for, and attempts to import, DR.key and DRpub.key. If either fail, the corresponding test also fails.
 
+### Networking Tests
+#### Certificate Validity Tests
+Two tests run sequentially which first ensure Tapestry will reject an invalid certificate and accept a valid one.
+
+#### Metadata Tests
+Two tests run concurrently which first trigger the export metadata funnction and compare its output to a known-good control, and which then pass a known-good control to the import metadata function and confirm it is not mangled.
+
+#### FTP Tests
+A simple test to handoff the connection to the FTP server itself, then back-and-forth tests, with hash comparison to make sure the files are unaltered in the process. Quite simple.
+
 ## What about $some_feature?
 ### Extant Features
 Some extant features of Tapestry are not explicitly tested for. In most cases, their tests are implicit:
