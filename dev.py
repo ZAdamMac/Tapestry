@@ -663,6 +663,9 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.step = "none"
         ns.sumJobs = 0
         ns.jobsDone = 0
+        ns.modeNetwork = config.get("Networking Options", "mode")
+        ns.addrNet = config.get("Networking Options", "server")
+        ns.portNet = config.getint("Networking Options", "port")
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
