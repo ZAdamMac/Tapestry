@@ -313,9 +313,9 @@ else:
 print("Beginning Networking Tests -- SSL Authentication Checks!")
 log.log("\n\n\nBeginning Network Testing Block")
 os.chwd(permaHome)
-os.system("python3.6 testServerBad.py") #TODO Create Server Script
+os.system("python3.6 testServerBad.py")
 os.system("python3.6 testServerGood.py")
-os.system("python3.6 testFTP.py")
+
 
 ## Test Server Rejection
 sslcontext = dev.getSSLContext("test")
@@ -411,6 +411,7 @@ for key, value in controlMDInput:
 
 # FTP Tests - Must Run After Corpus Generation
 ## Test HTTPS/FTP Handoff
+## TODO Rewrite as HTTP-Based
 conFTP = dev.switchToFTP(sock) # Switches over to connect to the FTP test server.
 if isinstance(conFTP, ftp.FTP()):
     print("FTP Handover Testing - PASSED")
