@@ -62,8 +62,8 @@ Two tests run sequentially which first ensure Tapestry will reject an invalid ce
 #### Metadata Tests
 Two tests run concurrently which first trigger the export metadata funnction and compare its output to a known-good control, and which then pass a known-good control to the import metadata function and confirm it is not mangled.
 
-#### FTP Tests
-A simple test to handoff the connection to the FTP server itself, then back-and-forth tests, with hash comparison to make sure the files are unaltered in the process. Quite simple.
+#### File Transfer Tests
+Back-and-forth tests, with hash comparison to make sure the files are unaltered in the process. Quite simple. A hash is taken of a sample .tap file, which is then transfered to a "remote" server, and retrieved from it. The hashes of all three copies are compared and any deviations reported as failures.
 
 ## What about $some_feature?
 ### Extant Features
