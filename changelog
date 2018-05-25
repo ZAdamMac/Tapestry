@@ -74,3 +74,6 @@ v1.0 (legacy):
 
 v1.0.1 (release):
     -Fixed an issue with the globally-declared "version" variable which prevented the program from functioning.
+
+v1.1.0 (dev):
+    - Added a shebang to tapestry to make it immediately executable similar to a bash script.
