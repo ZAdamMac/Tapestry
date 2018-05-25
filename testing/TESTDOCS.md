@@ -65,6 +65,9 @@ Two tests run concurrently which first trigger the export metadata funnction and
 #### File Transfer Tests
 Back-and-forth tests, with hash comparison to make sure the files are unaltered in the process. Quite simple. A hash is taken of a sample .tap file, which is then transfered to a "remote" server, and retrieved from it. The hashes of all three copies are compared and any deviations reported as failures.
 
+#### Loom-Specific Tests
+In anticipation of the upcoming release of the companion project "Loom", new tests were added to satisfy the requirements of loom-specific features. Technically this includes the above metadata test, but as file transfer can now be done via either FTP or loom's HTTPS, both are required.
+
 ## What about $some_feature?
 ### Extant Features
 Some extant features of Tapestry are not explicitly tested for. In most cases, their tests are implicit:

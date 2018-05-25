@@ -410,8 +410,6 @@ for key, value in controlMDInput:
         log.log("Metadata Input Testing - %s - FAILED: Not Present" % key)
 
 # FTP Tests - Must Run After Corpus Generation
-## Test HTTPS/FTP Handoff
-## TODO Rewrite as HTTP-Based
 conFTP = dev.switchToFTP(sock) # Switches over to connect to the FTP test server.
 if isinstance(conFTP, ftp.FTP()):
     print("FTP Handover Testing - PASSED")
@@ -453,6 +451,43 @@ if passFTP:
     else:
         print("FTP Push Test - FAILED")
         log.log("FTP Push Test - FAILED")
+
+# Loom-Specific Tests
+
+## Loom SSAT Exchange
+
+certFile = cfg.get("Networking Options", "Certificate Path")
+sessionChallenge = b"0xDEADBEEF"
+sessionKey = dev.authLoom(certfile, sessionChallenge, testing=True)
+
+## Loom Upload Function Test
+fileTest = os.path.join(pathControl, "controlBlock.tap")
+controlHash = hashlib.md5()
+controlHash.update(open(fileTest, "r").read())
+
+dev.loomUpload(fileTest, sessionKey, 'localhost', 49153)
+fileTest = os.path.join(pathControl.replace("Control", "Test"), "recievedUp.tap")
+uploadHash = hashlib.md5.update(open(fileTest, "r").read())
+
+if controlHash == uploadHash:
+    print("Loom Upload Test - PASSED")
+    log.log("Loom Upload Test - PASSED")
+else:
+    print("Loom Upload Test - FAILED - Mismatched File Recieved")
+    log.log("Loom Upload Test - FAILED - Mismatched File Recieved")
+
+## Loom Download Function Test
+dev.loomDownload("recievedUp.tap", sessionKey, 'localhost', 49153)
+fileTest = os.path.join(pathControl.replace("Control", "Test"), "recievedDown.tap")
+downloadHash = hashlib.md5.update(open(fileTest, "r").read())
+
+if controlHash == downloadHash:
+    print("Loom Download Test - PASSED")
+    log.log("Loom Download Test - PASSED")
+else:
+    print("Loom Download Test - FAILED - Mismatched File Recieved")
+    log.log("Loom Download Test - FAILED - Mismatched File Recieved")
+
 #  Clear Down!
 log.save()
 

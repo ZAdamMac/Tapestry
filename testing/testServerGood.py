@@ -1,5 +1,7 @@
 # A simple HTTPS server to test the ability of Tapestry to appropriately accept a good connection.
 
+# TODO should be enhanced to support a loom-like upload and download
+
 import http.server as hs
 import ssl
 
