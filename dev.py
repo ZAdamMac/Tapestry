@@ -1,3 +1,4 @@
+#! /usr/bin/env python3.6
 # Tapestry Backup Automation Tool
 # Coded in python3 at Patch Savage Labs
 # git: ~/ZAdamMac/Patchs-Tapestry
