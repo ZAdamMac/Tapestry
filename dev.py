@@ -603,7 +603,7 @@ def buildMaster():  # summons the master process and builds its corresponding na
 
 def parseArgs():  # mounts argparser, crawls it and then assigns to the managed namespace
     if __name__ == "__main__":
-        parser = argparse.ArgumentParser(description="Automatically backup or restore personal files from the system.")
+        parser = argparse.ArgumentParser(description="Automatically backup or restore personal files from the system. \n Full documentation at https://github.com/ZAdamMac/Tapestry/blob/master/DOCUMENTATION.md")
         parser.add_argument('--rcv', help="Recover a previous archive from disk.", action="store_true")
         parser.add_argument('--inc', help="Tells the system to include non-default sections in the backup process.",
                             action="store_true")
