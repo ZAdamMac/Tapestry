@@ -167,11 +167,13 @@ class sigTasker(object):
             tgtOutput = self.block + ".sig"
             debugPrint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True)
+            if not sis.ok:
+                print("[Error] Something went wrong in signing %s." % self.block)
             ns.jobsDone += 1
             statusPrint()
 
 
-class recTask(object):
+class recTask(object): #todo exception handles
     def __init__(self, tar, fid, catdir, pathend):
         self.tar = tar
         self.fid = fid
