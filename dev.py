@@ -631,30 +631,6 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
             config.read(cfg)
             global uninit
             uninit = False
-        else:  # the finished version should include a tapestry.cfg file by default for clarity, but in a pinch we can assign some defaults.
-            uninit = True
-            config.add_section("Environment Variables")
-            config.add_section("Default Locations/Nix")
-            config.add_section("Additional Locations/Nix")
-            config.add_section("Default Locations/Win")
-            config.add_section("Additional Locations/Win")
-            config.set("Environment Variables", "blockSize", "4000")
-            config.set("Environment Variables", "keysize", "2048")
-            config.set("Environment Variables", "expected fp", "0")
-            config.set("Environment Variables", "compid", "uninit")
-            config.set("Environment Variables", "sign by default", str(True))
-            config.set("Environment Variables", "signing fp", "0")
-            config.set("Envrionment Variables", "Drive Letter", "D:/")
-            config.set("Environment Variables", "uid",
-                       "uninit")  # as a portable function this should work in both Linux and Windows
-            if platform.system() == "Linux":  # Some defaults could be better
-                uname = os.uname()
-                config.set("Environment Variables", "compid",
-                           str(uname[1]))  # gets the nodeid and sets it as the computer's name.
-            configFile = os.open("tapestry.cfg", os.O_CREAT | os.O_RDWR)
-            os.close(configFile)
-            with open(cfg, "r+") as t:
-                config.write(t)
 
         ns.expectedFP = config.get("Environment Variables", "Expected FP")
         ns.fp = config.get("Environment Variables", "Expected FP")  # Can be changed during the finding process.
