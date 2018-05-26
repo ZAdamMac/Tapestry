@@ -77,3 +77,4 @@ v1.0.1 (release):
 
 v1.1.0 (dev):
     - Added a shebang to tapestry to make it immediately executable similar to a bash script.
+    - Improved error handling to close issue #1
