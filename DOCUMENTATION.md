@@ -109,3 +109,15 @@ python3 tapestry.py --genKey --inc
 4. Follow the onscreen directions to generate your first disaster-recovery key.
 5. (Optional) Take the time now to generate a signing key if you don't already have one, as well as the revocation certificates for both. Be sure to back these up and store them securely.
 6. Store your keyfiles and the generated inclusive backup safely and securely.
+
+## Network Storage Mode
+Tapestry is designed to use three different networking modes - Networked File Systems, FTP, and the purpose-designed Loom service.
+
+### Using Tapestry with NFS
+Using Tapestry with any variation of a network filesystem is as simple as ensuring the desired device or drive is mounted to the local filesystem and setting the desired output directory on that device as Tapestry's output directory. No other networking configuration is necessary.
+
+### Using Tapestry with FTP
+ # TODO Do This.
+ 
+### Using Tapestry with Loom
+ # TODO explain in full.
