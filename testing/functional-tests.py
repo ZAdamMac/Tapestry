@@ -318,7 +318,7 @@ os.system("python3.6 testServerGood.py")
 
 
 ## Test Server Rejection
-sslcontext = dev.getSSLContext("test")
+sslcontext = dev.getSSLContext(test=True)
 sock = dev.establishRemote('localhost', 49152, sslcontext)
 
 if sock == False:

@@ -11,6 +11,7 @@ import configparser
 import datetime
 from datetime import date
 import gnupg
+import http
 import math
 import multiprocessing as mp
 import os
@@ -18,6 +19,7 @@ import os.path
 import pickle
 import platform
 import shutil
+import ssl
 import sys
 import tarfile
 import uuid
@@ -713,6 +715,18 @@ def calcConsumers(): #  Simple function, returns an appropriate number of consum
             print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
     return cielCores
 
+def getSSLContext(test=False):  # Construct and return an appropriately-configured SSL Context object.
+    tlsContext = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS)
+    tlsContext.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+    if ns.modeNetwork.lower() == "loom":
+        tlsContext.load_cert_chain("client_cert.pem")
+    if test:
+        tlsContext.load_verify_locations(cafile="test_cert.pem")
+    return tlsContext
+
+def establishRemote(address, port, sslContext): # Establish a connection to a designated remote host given an ssl context.
+
+
 #We're gonna need some globals
 global counterFID; counterFID = 0
 global sumSize; sumSize = 0
@@ -769,8 +783,16 @@ if __name__ == "__main__":
         makeIndex()
         buildBlocks()
         processBlocks()
-        print("\nThe processing has completed. Your .tap files are here:")
-        print(str(ns.drop))
-        print("Please archive these expediently.")
-        cleardown()
-        exit()
+        if ns.modeNetwork.lower() == "none":
+            print("\nThe processing has completed. Your .tap files are here:")
+            print(str(ns.drop))
+            print("Please archive these expediently.")
+            cleardown()
+            exit()
+        elif ns.modeNetwork.lower() == "Loom":
+            print("\n The file processing is completed. Connect to Loom Service for upload?")
+            go = input("(y/n)> ")
+            if str(go).lower() == y:
+                print("Connecting to the Loom Server at %" % ns.addrNet)
+                context = getSSLContext(test=False)
+                link = establishRemote(ns.addrNet, ns.portNet, context)
