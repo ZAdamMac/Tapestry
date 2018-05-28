@@ -726,7 +726,9 @@ def getSSLContext(test=False):  # Construct and return an appropriately-configur
 
 def establishRemote(address, port, sslContext): # Establish a connection to a designated remote host given an ssl context.
     remote = http.HTTPSConnection(address,port=port, context=sslContext)
-    return remote
+    r0 = remote.request('GET', "/loomservice/gettoken.cgi").getresponse()
+    sessionKey = r0.read()
+    return sessionKey
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
@@ -796,6 +798,4 @@ if __name__ == "__main__":
             if str(go).lower() == y:
                 print("Connecting to the Loom Server at %" % ns.addrNet)
                 context = getSSLContext(test=False)
-                link = establishRemote(ns.addrNet, ns.portNet, context)
-                sessionChallenge = link.request('GET', "/loomservice/gettoken.cgi").getresponse()
-                sessionKey = authLoom(ns.clientCert, sessionChallenge, testing=False)
+                sessionKey = establishRemote(ns.addrNet, ns.portNet, context)

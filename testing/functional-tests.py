@@ -456,9 +456,7 @@ if passFTP:
 
 ## Loom SSAT Exchange
 
-certFile = cfg.get("Networking Options", "Certificate Path")
-sessionChallenge = b"0xDEADBEEF"
-sessionKey = dev.authLoom(certFile, sessionChallenge, testing=True)
+sessionKey = b"0xDEADBEEF"
 
 ## Loom Upload Function Test
 fileTest = os.path.join(pathControl, "controlBlock.tap")
