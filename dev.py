@@ -11,7 +11,7 @@ import configparser
 import datetime
 from datetime import date
 import gnupg
-import http
+import http.client as http
 import math
 import multiprocessing as mp
 import os
@@ -725,7 +725,8 @@ def getSSLContext(test=False):  # Construct and return an appropriately-configur
     return tlsContext
 
 def establishRemote(address, port, sslContext): # Establish a connection to a designated remote host given an ssl context.
-
+    remote = http.HTTPSConnection(address,port=port, context=sslContext)
+    return remote
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
