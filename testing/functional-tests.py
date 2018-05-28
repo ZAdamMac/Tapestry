@@ -458,7 +458,7 @@ if passFTP:
 
 certFile = cfg.get("Networking Options", "Certificate Path")
 sessionChallenge = b"0xDEADBEEF"
-sessionKey = dev.authLoom(certfile, sessionChallenge, testing=True)
+sessionKey = dev.authLoom(certFile, sessionChallenge, testing=True)
 
 ## Loom Upload Function Test
 fileTest = os.path.join(pathControl, "controlBlock.tap")

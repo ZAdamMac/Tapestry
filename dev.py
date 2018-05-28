@@ -719,7 +719,7 @@ def getSSLContext(test=False):  # Construct and return an appropriately-configur
     tlsContext = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS)
     tlsContext.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
     if ns.modeNetwork.lower() == "loom":
-        tlsContext.load_cert_chain("client_cert.pem")
+        tlsContext.load_cert_chain(ns.clientCert)
     if test:
         tlsContext.load_verify_locations(cafile="test_cert.pem")
     return tlsContext
@@ -797,3 +797,5 @@ if __name__ == "__main__":
                 print("Connecting to the Loom Server at %" % ns.addrNet)
                 context = getSSLContext(test=False)
                 link = establishRemote(ns.addrNet, ns.portNet, context)
+                sessionChallenge = link.request('GET', "/loomservice/gettoken.cgi").getresponse()
+                sessionKey = authLoom(ns.clientCert, sessionChallenge, testing=False)
