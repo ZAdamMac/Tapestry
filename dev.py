@@ -284,6 +284,18 @@ def loadKey():
     if ns.genKey:
         genKey()
     ns.activeFP = config.get("Environment Variables", "Expected FP")
+    keys = gpg.search_keys(ns.activeFP)
+    try:
+        location = keys[ns.activeFP] # If the key is in the dictionary, hooray!
+        found = True
+    except KeyError:
+        found = False
+    if found is False:
+        print('''"Unable to locate the key with fingerprint "%s"''' % ns.activeFP)
+        print("This could be due to either a configuration error, or the key needs to be re-imported.")
+        print("Please double-check your configuration and keyring and try again.")
+        cleardown()
+        exit()
     debugPrint("Fetching key %s from Keyring" % ns.activeFP)
     debugPrint(ns.activeFP)
 
