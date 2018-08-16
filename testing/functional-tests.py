@@ -410,18 +410,6 @@ for key, value in controlMDInput:
         log.log("Metadata Input Testing - %s - FAILED: Not Present" % key)
 
 # FTP Tests - Must Run After Corpus Generation
-conFTP = dev.switchToFTP(sock) # Switches over to connect to the FTP test server.
-if isinstance(conFTP, ftp.FTP()):
-    print("FTP Handover Testing - PASSED")
-    log.log("FTP Handover Testing - PASSED")
-    passFTP = True
-else:
-    print("FTP Handover Testing - FAILED")
-    print("Skipping remaining FTP Tests")
-    log.log("FTP Handover Testing - FAILED")
-    log.log("Skipping remaining FTP Tests.")
-    passFTP = False
-
 if passFTP:
     ## Test Send Function to Server
     fileTest = os.path.join(pathControl, "controlBlock.tap")
