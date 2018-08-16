@@ -410,69 +410,34 @@ for key, value in controlMDInput:
         log.log("Metadata Input Testing - %s - FAILED: Not Present" % key)
 
 # FTP Tests - Must Run After Corpus Generation
-if passFTP:
-    ## Test Send Function to Server
-    fileTest = os.path.join(pathControl, "controlBlock.tap")
-    ### Take Checksum of Block to Send
-    controlHash = hashlib.md5()
-    controlHash.update(open(fileTest, "r").read())
-    ### Send the File to "server"
-    dev.sendBlock(fileTest)
-    testTxHash = hashlib.md5()
-    testTxHash.update(open(fileTest.replace("Control", "Test"), "r").read())
-
-    ### Pull the File Back
-    testRxHash = hashlib.md5()
-    testRxHash.update(dev.getBlock("controlBlock.tap").read())
-
-    ### Compare All 3 Checksums
-    if controlHash == testRxHash:
-        print("FTP Recieve Test - PASSED")
-        log.log("FTP Receive Test - PASSED")
-    else:
-        print("FTP Receive Test - FAILED")
-        log.log("FTP Recieve Test - FAILED")
-
-    if controlHash == testTxHash:
-        print("FTP Push Test - PASSED")
-        log.log("FTP Push Test - PASSED")
-    else:
-        print("FTP Push Test - FAILED")
-        log.log("FTP Push Test - FAILED")
-
-# Loom-Specific Tests
-
-## Loom SSAT Exchange
-
-sessionKey = b"0xDEADBEEF"
-
-## Loom Upload Function Test
+## Test Send Function to Server
 fileTest = os.path.join(pathControl, "controlBlock.tap")
+### Take Checksum of Block to Send
 controlHash = hashlib.md5()
 controlHash.update(open(fileTest, "r").read())
+### Send the File to "server"
+dev.sendBlock(fileTest)
+testTxHash = hashlib.md5()
+testTxHash.update(open(fileTest.replace("Control", "Test"), "r").read())
 
-dev.loomUpload(fileTest, sessionKey, 'localhost', 49153)
-fileTest = os.path.join(pathControl.replace("Control", "Test"), "recievedUp.tap")
-uploadHash = hashlib.md5.update(open(fileTest, "r").read())
+### Pull the File Back
+testRxHash = hashlib.md5()
+testRxHash.update(dev.getBlock("controlBlock.tap").read())
 
-if controlHash == uploadHash:
-    print("Loom Upload Test - PASSED")
-    log.log("Loom Upload Test - PASSED")
+### Compare All 3 Checksums
+if controlHash == testRxHash:
+    print("FTP Recieve Test - PASSED")
+    log.log("FTP Receive Test - PASSED")
 else:
-    print("Loom Upload Test - FAILED - Mismatched File Recieved")
-    log.log("Loom Upload Test - FAILED - Mismatched File Recieved")
+    print("FTP Receive Test - FAILED")
+    log.log("FTP Recieve Test - FAILED")
 
-## Loom Download Function Test
-dev.loomDownload("recievedUp.tap", sessionKey, 'localhost', 49153)
-fileTest = os.path.join(pathControl.replace("Control", "Test"), "recievedDown.tap")
-downloadHash = hashlib.md5.update(open(fileTest, "r").read())
-
-if controlHash == downloadHash:
-    print("Loom Download Test - PASSED")
-    log.log("Loom Download Test - PASSED")
+if controlHash == testTxHash:
+    print("FTP Push Test - PASSED")
+    log.log("FTP Push Test - PASSED")
 else:
-    print("Loom Download Test - FAILED - Mismatched File Recieved")
-    log.log("Loom Download Test - FAILED - Mismatched File Recieved")
+    print("FTP Push Test - FAILED")
+    log.log("FTP Push Test - FAILED")
 
 #  Clear Down!
 log.save()
