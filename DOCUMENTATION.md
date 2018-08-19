@@ -97,7 +97,7 @@ Tapestry treats every location defined in its configuration file as the top of a
 The specific locations you select are entirely up to you. At time of writing I personally use the documents and photos default folders in my default locations list, with my additional locations list including videos, music, and a subset of the hidden configuration directories.
 
 ## Example Runsheet: First-Time Setup
-0. Download the latest version of tapestry from the github repo (at time of writing, 0.3.1), and verify it against its own signature. To do this you will need a copy of [this key](https://pgp.mit.edu/pks/lookup?op=vindex&search=0xF373FF4B43FC742F).
+0. Download the latest version of tapestry from the github repo (at time of writing, 1.1.0), and verify it against its own signature. To do this you will need a copy of [this key](https://pgp.mit.edu/pks/lookup?op=vindex&search=0xF373FF4B43FC742F).
 1. Unpack the verified tar of Tapestry. It should contain Tapestry.py, README.md, DOCUMENTATION.md (versions 1.0 and up), and an example tapestry.cfg file.
 2. Open up tapestry.cfg in your text editor of choice and adjust the configuration as follows:
  - Refer to the configuration table above for explanations of the environment variables, and;
@@ -118,6 +118,3 @@ Using Tapestry with any variation of a network filesystem is as simple as ensuri
 
 ### Using Tapestry with FTP
  # TODO Do This.
- 
-### Using Tapestry with Loom
- # TODO explain in full.
