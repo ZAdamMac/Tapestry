@@ -26,22 +26,19 @@ class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
         if not os.path.exists(landingdir):
             os.makedirs(landingdir)
         self.loggerfile = open(landingAbs, "w")  # This will REPLACE the existing logfile with the new one so be careful
-        self.loggerfile.write("This is a log of tests run against some version of tapestry by the functional-tests.py testing utility. \n")
-        self.loggerfile.write("\n\n\n")
-        self.loggerfile.write("===============")
-        global host
-        self.loggerfile.write("\nTest Host: %s \n" % host)
+        self.loggerfile.write("===============================================================================\nThis is a log of tests run against some version of Tapestry by the \nfunctional-tests.py testing utility. The date is indicated in the filename. \nIt should be made clear that these tests do not indicate any sort of warranty \nor guarantee of merchantability.\n\n=======TEST MACHINE SPECS=======\n")
         cores = os.cpu_count()
         self.loggerfile.write("Cores Available: %s \n" % cores)
         RAM = os.popen("free -m").readlines()[1].split()[1]
         self.loggerfile.write("RAM Available: %s MB \n" % RAM)
-        self.loggerfile.write("===============\n\n\n\n[Tests Begin - Generating Samples]\n")
+        self.loggerfile.write("================================\n\n\n\n================================BEGIN TESTING==================================\n")
 
     def log(self, foo):  # Formats foo nicely and adds it to the log
         self.loggerfile.write(foo + '\n')
 
     def save(self):  # saves the file to disk. Once used you have to re-instance the logger
-        self.loggerfile.write("\n")
+        self.loggerfile.write("\n\n===============================[END OF TESTING]===============================")
+        self.loggerfile.write("\n Tester Comments: ")
         self.loggerfile.write("\n This test was run on " + str(date.today()))
         self.loggerfile.flush()
         self.loggerfile.close()
@@ -85,33 +82,32 @@ log = simpleLogger(logs, logname)
 
 
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
+log.log("------------------------------[SAMPLE GENERATION]------------------------------")
 if not ssg:
     cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
     with open("tapestry-test.cfg", "w") as warp:
         cfg.write(warp)
     if not os.path.isdir(os.path.join(out, "Non-Inc")):
         os.mkdir(os.path.join(out, "Non-Inc"))
-    log.log("Now beginning the --genKey test.")
     print("Now Beginning the --genKey test")
     start = time.monotonic()
     waiting = subprocess.run(("python3.6", "dev.py", "--genKey"))
     elapse = elapsed(start)
     print("--genKey completed in %s" % elapse)
-    log.log("--genKey completed in %s" % elapse)
-    log.log("Run returned with the following information: %s" % waiting)
+    log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
+    log.log(str(waiting))
 
     cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
     with open("tapestry-test.cfg", "w") as warp:
         cfg.write(warp)
 
     print("Now beginning --inc test.")
-    log.log("Now beginning --inc test.")
     start = time.monotonic()
     waiting = subprocess.run(("python3.6", "dev.py", "--inc"))
     elapse = elapsed(start)
     print("--inc completed in %s" % elapse)
-    log.log("--inc completed in %s" % elapse)
-    log.log("--inc returned the following information: %s" % waiting)
+    log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
+    log.log(str(waiting))
 
     cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
     cfg.set("Environment Variables", "recovery path", os.path.join(out, "Inc"))
@@ -130,17 +126,26 @@ if not ssg:
     waiting = subprocess.run(("python3.6", "dev.py", "--rcv"))
     elapse = elapsed(start)
     print("--rcv completed in %s" % elapse)
-    log.log("--rcv completed in %s" % elapse)
-    log.log("--rcv returned the following information: %s" % waiting)
+    log.log("ecovery Mode Test Completed in %s - Returned:" % elapse)
+    log.log("%s" % waiting)
 
     shutil.copy("tapestry-test.cfg.bak", "tapestry-test.cfg")
     print("Sample generation complete!")
 else:
     print("Skipping Sample Generation. This test is not valid.")
-    log.log("Invalid Test: Sample Generation Was Skipped.")
+    log.log("""In this instance the Sample Generation stage of testing was skipped. This is    \n
+usually done to enable developers to test the testing framework itself. As most \n
+of the tests are designed to run against a freshly-generated sample corpus, in  \n
+order to verify that the functions used to create that corpus are working as    \n
+intended, this test is not considered valid for purposes of merging a PR to the \n
+Master branch. This feature is included only to facilitate testing of newly-    \n
+added tests for features which are to be added to the test corpus. See the test \n
+documents for details.""")
+log.log("-------------------------------------------------------------------------------")
 
 #  Identity Testing -- Hash to Hash
 print("\n\nStarting Identity Test")
+log.log("\n\n-------------------------------[INTEGRITY TESTS]-------------------------------")
 counterMismatch = 0
 identical = False
 
@@ -157,22 +162,25 @@ for foo, bar, files in os.walk(os.path.join(pathControl,"Corpus")):
 
         if hashControl.hexdigest() != hashTest.hexdigest():
             print("Mismatch detected!")
-            log.log("Mismatch detected with file: %s" % testfile)
+            log.log("Mismatch detected in file: %s" % testfile)
             counterMismatch += 1
 
 if counterMismatch == 0:
     identical = True
     print("Identity test passed with no mismatching detected.")
-    log.log("Identity test passed with no mismatching detected.")
+    log.log("[PASSED] All files from the results of the recovery mode run were determined to \nmatch the original test corpus by means of md5 hash comparison.")
 else:
     identical = False
     print("Multiple Mismatches Detected - See the log for details.")
-    log.log("Identity test failed.")
+    log.log('''[FAILED] The identity test has passed failed as one or more files listed above  \n
+were determined via hash comparison not to match their original source files.   \n
+This sort of error is not acceptable in a file backup utility. See the testing  \n
+documentation for advice on possible causes of this failure.''')
 
 #  Encryption and Signing Passing
     # Test if Signatures are Valid
 print("Beginning Signature Verification.")
-log.log("\n\nBeginning of Signature Verification Test.")
+log.log("\n\n-------------------------------[SIGNATURE TESTS]-------------------------------")
 failures = 0
 out = cfg.get("Environment Variables", "output path")
 os.chdir(out)
@@ -187,15 +195,26 @@ for foo, bar, files in os.walk(out):
                     print("Signature at %s verified." % file)
                 else:
                     print("WARNING: Signature at %s insufficiently trusted." % file)
-                    log.log("%s has failed verification: insufficient trust." % file)
+                    log.log("Signature mismatch in file: %s" % file)
                     failures =+ 1
-print("Signature verification completed with %s failures." % failures)
-log.log("Signature Verification Test complete. In total there were %s failures." % failures)
+print("Signature verification completed with %s failures." % failures) # TODO fix for pass/fail
+if failures < 1:
+    log.log('''[PASSED] All of the signatures compared in the signature testing were trusted,  \n
+and matched the expected value for their source document.                       \n''')
+else:
+    log.log('''[FAILED] One or more signatures in this test were corrupt, absent, or not       \n
+sufficiently trusted. See the above for a list of failed signatures, and check  \n
+that your GPG instance considers the test signature key a trusted key.          \n''')
+
+log.log("-------------------------------------------------------------------------------")
 
     # If Identity failed, test encryption
 if identical:
     print("Decryption Test Skipped - Identity Check Passed.")
-    log.log("\n\nSkipping Decryption Test - The Identity Check implicitly passed it.")
+    log.log('''\n\n-----------------------------[ENCRYPTION TESTING]------------------------------\n
+[PASSED] Due to the passing of the Identity Test, it is not necessary to then\n
+test the cryptographic properties of the test blocks - their successful\n
+decryption is implied by the passage of the identity test.\n''')
 else:
     print("Beginning Decryption Test")
     log.log("\n\nBeginning Decryption Test")
@@ -217,11 +236,18 @@ else:
                         log.log("%s has failed to decrypt: %s" % (file, decrypted.ok_reason))
                         failures = + 1
     print("Decryption Testing completed with %s failures." % failures)
-    log.log("Decryption Test complete. In total there were %s failures." % failures)
+    if failures < 1:
+        log.log("[PASSED] The decryption test was run - none of the test materials failed to\ndecrypt, which also validates that they were encrypted correctly.")
+    else:
+        log.log('''[FAILED] A total of %s files failed to decrypt as expected. This is most
+commonly caused by the loss of key material. Double-check this result manually
+using GPG to rule out an error in the cryptographic engine itself.''' % str(failures))
+    log.log("-------------------------------------------------------------------------------")
+
 
 #  Version Specificity
 print("Beginning Recovery File Completion Check")
-log.log("\n\n\nBeginning Recovery File Comparison")
+log.log("\n\n------------------------[RECOVERY FILE STRUCTURE TEST]-------------------------")
 if identical:
     print("Decrypting a tapfile to run test against.")
     found = False
@@ -242,15 +268,20 @@ pklControl = pickle.load(open(os.path.join(pathControl, "control-pkl"), "rb"))
 pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
 if len(pklControl) == len(pklTest):
     print("Recovery Files have Matching Structure!")
-    log.log("No changes detected in recovery-pkl structure.")
+    log.log("[PASSED] No structural changes detected in the recovery file generated by the\ncode under test. This indicates that the version under test is non-breaking.")
 else:
     print("WARNING: Recovery Files are mismatched!")
     print("This could indicate a break in version compatibility.")
-    log.log("Pickle Comparison Failed: Test case does not match control. Possible break in version compatibility. Please test manually.")
+    log.log('''[FAILED] Structural changes were detected in the recovery file! This must be\n
+carefully inspected for the nature of such changes and error handling controls\n
+should be verified to avoid breaking reverse compatibility with older tapfiles.\n
+If you feel these changes were necessary, contact the project team for\n
+consultation on additional testing and approval.''')
+log.log("-------------------------------------------------------------------------------")
 
 #  Compression Testing
 print("Beginning Compression Efficacy Test!")
-log.log("\n\n\nBeginning Compression Efficacy Test")
+log.log("\n\n--------------------------[COMPRESSION EFFICACY TEST]--------------------------")
 passing = True
 for foo, bar, files in os.walk(out):
     for file in files:
@@ -262,16 +293,18 @@ for foo, bar, files in os.walk(out):
 
 if passing:
     print("All tapfiles are smaller than the specified blocksize!")
-    log.log("Compression Efficacy Test Passed")
+    log.log("[PASSED] All files generated are smaller than their original blocksize.")
 else:
     print("Compression Efficacy Test failed. Check compression code or increase compression level.")
-    log.log("Compression Efficacy Test Failed. Check compression code or increase compression level.")
+    log.log("[FAILED] One or more output blockfiles were larger than expected. Revise the\ncompression level setting and run again.")
+log.log("------------------------------------------------------------------------------")
 
 #Inclusive/Exclusive Differentiation Test
 sizePoolInclusive = 0
 sizePoolExclusive = 0
 
 print("Beginning Inclusive/Exclusive Size Test")
+log.log("\n\n------------------------[INCLUSIVE/EXCLUSIVE COMPARISON]-----------------------")
 for foo, bar, file in os.walk(os.path.join(out,"Non-Inc")):
     for file in files:
         sizePoolExclusive += os.path.getsize(os.path.join(foo, file))
@@ -282,14 +315,19 @@ for foo, bar, files in os.walk(os.path.join(out,"Inc")):
 
 if sizePoolExclusive < sizePoolInclusive:
     print("Inclusive/Exclusive Comparison Test Passed")
-    log.log("Passed!")
+    log.log('''[PASSED] The output of the Inclusive Mode run was larger than the Key\n
+Generation Mode Run. This indicates that the inclusive mode is likely working\n
+correctly''')
 else:
     print("Inclusive/Exclusive sizes are mismatched!")
-    log.log("Failed: Exclusive run produced equal or larger output to the inclusive run. Check relevant code and run again.")
+    log.log('''[FAILED] The output of the Inclusive Mode run was not larger than the Exclusive\n
+Mode Run. This indicates that the Inclusive Mode trigger is being ignored or\n
+there is a problem with adding the inclusive-run directories to the runlist.''')
+log.log("-------------------------------------------------------------------------------")
 
 #  Key Export Check
 print("Checking if keys were correctly exported!")
-log.log("\n\n\nBeginning key export test.")
+log.log("\n\n---------------------------[KEY IMPORT/EXPORT TEST]----------------------------")
 os.chdir(os.path.join(out,"Non-Inc"))
 keysExpected = ["DR.key", "DRPub.key"]
 passing = True
@@ -300,20 +338,20 @@ for key in keysExpected:
             keyIn = gpg.import_keys(k.read())
             if keyIn.count != 1:
                 print("Keys imported: %s count, expected 1." % keyIn.count)
-                log.log("WARNING: %s failed to import, got %s keys." % (key, keyIn.count))
+                log.log("[FAILED] One or Both of the expected keyfiles were not present, or failed to\nimport.")
                 passing = False
             else:
                 print("%s imported successfully." % key)
 if passing:
     print("Keys were exported successfully!")
-    log.log("Test passed!")
+    log.log("[PASSED] The expected keyfiles were located and imported successfully.")
 else:
     print("Some keys did not pass correctly.")
-    log.log("Test failed: please confirm you entered the correct passphrase and check the export code!")
+log.log("-------------------------------------------------------------------------------")
 
 # Certificate Check Tests
 print("Beginning Networking Tests")
-log.log("\n\n\nBeginning Network Testing Block")
+log.log("\n\n-------------------------[NETWORK CONNECTIVITY TESTS]--------------------------")
 os.chwd(permaHome)
 
 # We use popen not to block the test script while the servers are running, but we need to close them later, so we catch the processes in some vars.
@@ -325,43 +363,45 @@ testcontext = ssl.SSLContext().load_verify_locations(cafile="testcert.pem")
 # TODO generate testcert.pem
 
 try:
-    instFTP = dev.connectFTP("localhost", 55055, testcontext, user=test_FTP_user, pw=test_FTP_pw)
+    instFTP = dev.connectFTP("localhost", 21, testcontext, user=test_FTP_user, pw=test_FTP_pw)
     print("Malicious Connection Test - FAIL - Connection Accepted.")
-    log.log("Malicious Connection Test - FAIL - Connection Accepted.")
+    log.log("[FAILED] Tapestry connected to the 'malicious' server and accepted it as a\nlegitimate connection.")
 except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
     print("Malicious Connection Test - PASS - Connection Refused.")
-    log.log("Malicious Connection Test - PASS - Connection Refused.")
+    log.log("[PASSED] The 'malicious' server was correctly rejected by Tapestry's connection\nestablishment function.")
 
 srvBad.terminate()
 
 #Now the Good Link
 
 try:
-    instFTP = dev.connectFTP("localhost", 55056, testcontext)
+    instFTP = dev.connectFTP("localhost", 21, testcontext)
     print("Benign Connection Test - PASS - Connection Accepted.")
-    log.log("Benign Connection Test - PASS - Connection Accepted.")
+    log.log("[PASSED] The 'valid' server was accepted by the connection establishment\nfunction and a valid connection object is being passed to the next test.")
 except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
     print("Benign Connection Test - FAIL - Connection Refused.")
-    log.log("Benign Connection Test - FAIL - Connection Refused.")
+    log.log("[FAILED] The 'valid' server was rejected by the connection establishment\nfunction and the next test must be skipped.")
+log.log("-------------------------------------------------------------------------------")
 
 #Transfer Tests
+log.log("\n\n--------------------------[NETWORK PUSH/PULL TEST]-----------------------------")
 if instFTP is None:
     print("Skipping Transfer Tests - No FTP Connection could be Established.")
-    log.log("Couldn't test FTP transfers - No FTP Connection")
+    log.log("[FAILED] The network transfer tests could not be passed as no connection was\nestablished. Verify that vsftpd is configured correctly on the test machine and\nthat tapestry-test.cfg contains the correct credentials for the FTP test user.")
 else:
     print("Beginning file transfer tests using inert transfer article.")
-    log.log("Begin File Transfer Tests")
     dev.sendFile(instFTP, "testblock.txt")
     dev.retrFile(instFTP, "testblock.txt")
     hashControlFTP = hashlib.md5().update(open("testblock.txt", "rb").readall())
     hashRelayFTP = hashlib.md5().update(open(os.path.join(out, "testblock.txt")).readall())
     if hashRelayFTP == hashControlFTP:
         print("File Transfer Success")
-        log.log("File Transfer Hashing Test - PASS - Hashes Match")
+        log.log("[PASSED] A file was successfully uploaded to the test server, retrieved, and\ncompared to the original file by its md5 hash.")
     else:
         print("Error in File Transfer - Hashes Don't Match")
-        print("Retrieve the testblock.txt file from the FTP on port 55056 for comparison.")
-        log.log("File Transfer Hashing Test - FAIL - Mismatched in hashing.")
+        print("Retrieve the testblock.txt file from the FTP server for comparison.")
+        log.log("[FAILED] A file which was uploaded to the test server, and subsequently\nretrieved, did not match its original condition. Test this manually to ensure\nno problem exists in vsftpd and then re-examine the transfer functions in\nTapestry.")
+log.log("------------------------------------------------------------------------------")
 
 #  Clear Down!
 log.save()
