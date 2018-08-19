@@ -58,7 +58,7 @@ out = cfg.get("Environment Variables", "output path")
 uid = cfg.get("Environment Variables", "uid")
 host = cfg.get("Environment Variables", "compID")
 test_FTP_user = cfg.get("Network Configuration", "username")
-test_FTP_pw = cfg.get("Network Configuration", "password")
+test_FTP_pw = input("Enter password for FTP testing: ")
 logs = os.path.join(permaHome, "Logs")
 blockSize = cfg.get("Environment Variables", "blocksize")
 
