@@ -804,10 +804,3 @@ if __name__ == "__main__":
             print("Please archive these expediently.")
             cleardown()
             exit()
-        elif ns.modeNetwork.lower() == "Loom":
-            print("\n The file processing is completed. Connect to Loom Service for upload?")
-            go = input("(y/n)> ")
-            if str(go).lower() == y:
-                print("Connecting to the Loom Server at %" % ns.addrNet)
-                context = getSSLContext(test=False)
-                sessionKey = establishRemote(ns.addrNet, ns.portNet, context)
