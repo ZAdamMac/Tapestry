@@ -390,7 +390,7 @@ if instFTP is None:
 else:
     print("Beginning file transfer tests using inert transfer article.")
     dev.sendFile(instFTP, "testblock.txt")
-    dev.retrFile(instFTP, "testblock.txt")
+    dev.retrFile(instFTP, "testblock.txt") # TODO replace with a local function
     hashControlFTP = hashlib.md5().update(open("testblock.txt", "rb").readall())
     hashRelayFTP = hashlib.md5().update(open(os.path.join(out, "testblock.txt")).readall())
     if hashRelayFTP == hashControlFTP:
