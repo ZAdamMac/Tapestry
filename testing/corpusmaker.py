@@ -13,6 +13,7 @@ global subdirs; subdirs = ["documents", "photos", "music", "videos"]
 
 if not os.path.exists(dest):
 	os.mkdir(dest)
+os.system("""echo "this is a test" > testblock.txt""")
 os.chdir(dest)
 
 src = open("/usr/share/dict/words", "r").read().splitlines()
