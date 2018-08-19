@@ -60,6 +60,8 @@ cfg.read("tapestry-test.cfg")
 out = cfg.get("Environment Variables", "output path")
 uid = cfg.get("Environment Variables", "uid")
 host = cfg.get("Environment Variables", "compID")
+test_FTP_user = cfg.get("Network Configuration", "username")
+test_FTP_pw = cfg.get("Network Configuration", "password")
 logs = os.path.join(permaHome, "Logs")
 blockSize = cfg.get("Environment Variables", "blocksize")
 
@@ -310,17 +312,65 @@ else:
     log.log("Test failed: please confirm you entered the correct passphrase and check the export code!")
 
 # Certificate Check Tests
-print("Beginning Networking Tests -- SSL Authentication Checks!")
+print("Beginning Networking Tests")
 log.log("\n\n\nBeginning Network Testing Block")
 os.chwd(permaHome)
 
+# We use popen not to block the test script while the servers are running, but we need to close them later, so we catch the processes in some vars.
+srvBad = subprocess.Popen(args="vsftpd vsftpd-bad.config", shell=True, stdout=subprocess.DEVNULL)
+srvGood = subprocess.Popen(args="python3.6 vsftpd-good.config.py", shell=True, stdout=subprocess.DEVNULL)
 
+#Test the Bad Link First
+testcontext = ssl.SSLContext().load_verify_locations(cafile="testcert.pem")
+# TODO generate testcert.pem
+
+try:
+    instFTP = dev.connectFTP("localhost", 55055, testcontext, user=test_FTP_user, pw=test_FTP_pw)
+    print("Malicious Connection Test - FAIL - Connection Accepted.")
+    log.log("Malicious Connection Test - FAIL - Connection Accepted.")
+except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
+    print("Malicious Connection Test - PASS - Connection Refused.")
+    log.log("Malicious Connection Test - PASS - Connection Refused.")
+
+srvBad.terminate()
+
+#Now the Good Link
+
+try:
+    instFTP = dev.connectFTP("localhost", 55056, testcontext)
+    print("Benign Connection Test - PASS - Connection Accepted.")
+    log.log("Benign Connection Test - PASS - Connection Accepted.")
+except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
+    print("Benign Connection Test - FAIL - Connection Refused.")
+    log.log("Benign Connection Test - FAIL - Connection Refused.")
+
+#Transfer Tests
+if instFTP is None:
+    print("Skipping Transfer Tests - No FTP Connection could be Established.")
+    log.log("Couldn't test FTP transfers - No FTP Connection")
+else:
+    print("Beginning file transfer tests using inert transfer article.")
+    log.log("Begin File Transfer Tests")
+    dev.sendFile(instFTP, "testblock.txt")
+    dev.retrFile(instFTP, "testblock.txt")
+    hashControlFTP = hashlib.md5().update(open("testblock.txt", "rb").readall())
+    hashRelayFTP = hashlib.md5().update(open(os.path.join(out, "testblock.txt")).readall())
+    if hashRelayFTP == hashControlFTP:
+        print("File Transfer Success")
+        log.log("File Transfer Hashing Test - PASS - Hashes Match")
+    else:
+        print("Error in File Transfer - Hashes Don't Match")
+        print("Retrieve the testblock.txt file from the FTP on port 55056 for comparison.")
+        log.log("File Transfer Hashing Test - FAIL - Mismatched in hashing.")
 
 #  Clear Down!
 log.save()
 
-print("After passing this confirmation screen, the test result material will be deleted (except the log). If you need to dissect further, leave this session open or delete the items manually yourself.")
+print("After passing this confirmation screen, the test result material will be deleted (except the log), including files on the FTP server. If you need to dissect further, leave this session open or delete the items manually yourself.")
 carryOn = input("Press any key to continue. > ")
 shutil.rmtree(out)
+if instFTP is not None:
+    instFTP.delete("testblock.txt")
+srvGood.terminate()
 remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"), secret=True, expect_passphrase=False)
 remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"))
