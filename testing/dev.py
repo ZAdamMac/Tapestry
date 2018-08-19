@@ -656,9 +656,11 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.step = "none"
         ns.sumJobs = 0
         ns.jobsDone = 0
-        ns.modeNetwork = config.get("Networking Options", "mode")
-        ns.addrNet = config.get("Networking Options", "server")
-        ns.portNet = config.getint("Networking Options", "port")
+        ns.modeNetwork = config.get("Network Configuration", "mode")
+        ns.addrNet = config.get("Network Configuration", "server")
+        ns.portNet = config.getint("Network Configuration", "port")
+        ns.nameNet = config.get("Network Configuration", "username")
+        ns.nameNet = config.get("Network Configuration", "remote drop location")
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
@@ -733,14 +735,9 @@ def getSSLContext(test=False):  # Construct and return an appropriately-configur
     if ns.modeNetwork.lower() == "loom":
         tlsContext.load_cert_chain(ns.clientCert)
     if test:
-        tlsContext.load_verify_locations(cafile="test_cert.pem")
+        tlsContext.load_verify_locations(cafile="testcert.pem")
     return tlsContext
 
-def establishRemote(address, port, sslContext): # Establish a connection to a designated remote host given an ssl context.
-    remote = http.HTTPSConnection(address,port=port, context=sslContext)
-    r0 = remote.request('GET', "/loomservice/gettoken.cgi").getresponse()
-    sessionKey = r0.read()
-    return sessionKey
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
@@ -763,8 +760,11 @@ if __name__ == "__main__":
         init()
         exit()
     elif ns.rcv:
-        print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")
-        input("Press any key to continue")
+        if ns.modeNetwork.lower() == "ftp":
+            input("Tapestry is presently configured to an FTP drop. Please ensure you have retrieved the files from the FTP server and press any key to continue.")
+        else:
+            print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")
+            input("Press any key to continue")
         usedBlocks = []
         loadKey()
         buildOpsList()
@@ -802,5 +802,31 @@ if __name__ == "__main__":
             print("\nThe processing has completed. Your .tap files are here:")
             print(str(ns.drop))
             print("Please archive these expediently.")
+            cleardown()
+            exit()
+        elif ns.modeNetwork.lower() == "ftp":
+            print("\nTapestry has been configured to use an FTP drop for file output.")
+            print("The program will now connect to %s as user %s and place the files in %s" % (ns.addrNet, ns.nameNet, ns.netDrop))
+            pw = input("Enter the FTP password now (if required): ")
+            instFTP = connectFTP(ns.addrNet, ns.portNet, getSSLContext(test=False), ns.nameNet, pw)
+            for foo, bar, files in os.walk(ns.drop):
+                for file in files:
+                    if file.endswith(".tap") or file.endswith(".sig"):
+                        sendFile(instFTP, file)
+            instFTP.quit()
+            print("All files have been successfully uploaded to the FTP except as indicated.")
+        if ns.retainLocal:
+            print("Your files are also being retained locally, and are here:")
+            print(str(ns.drop))
+            cleardown()
+            exit()
+        else:
+            print("Your network configuration is set such that files have not been retained locally.")
+            for foo, bar, files in os.walk(ns.drop):
+                for file in files:
+                    if file.lower() != "skipped files":
+                        os.chdir(ns.drop)
+                        os.remove(file)
+            print("The redundant files have been removed - Tapestry will now close.")
             cleardown()
             exit()

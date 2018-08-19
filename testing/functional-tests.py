@@ -360,10 +360,9 @@ srvGood = subprocess.Popen(args="python3.6 vsftpd-good.config.py", shell=True, s
 
 #Test the Bad Link First
 testcontext = ssl.SSLContext().load_verify_locations(cafile="testcert.pem")
-# TODO generate testcert.pem
 
 try:
-    instFTP = dev.connectFTP("localhost", 21, testcontext, user=test_FTP_user, pw=test_FTP_pw)
+    instFTP = dev.connectFTP("localhost", 21, testcontext, test_FTP_user, test_FTP_pw)
     print("Malicious Connection Test - FAIL - Connection Accepted.")
     log.log("[FAILED] Tapestry connected to the 'malicious' server and accepted it as a\nlegitimate connection.")
 except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
