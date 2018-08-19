@@ -1,7 +1,7 @@
 # Testing Documentation for Tapestry Project
-## Current as of release 1.0.0
+## Current as of release 1.1.0
 
-This document is intended to lay out a brief explanation of the correct use of `functional-tests.py` in testing Tapestry for use in development. **No fork may be pushed to Master until its version of dev.py passes all tests.** Functional Testing is the current best-fit method for testing Tapestry in a reproducible way during development and will likely remain such until the 2.0 rewrite.
+This document is intended to lay out a brief explanation of the correct use of `functional-tests.py` in testing Tapestry for use in development. **No fork may be pushed to Master until its version of dev.py passes all tests.** Functional Testing is the current best-fit method for testing Tapestry in a reproducible way during development and will likely remain such until the 2.0 rewrite. Going forward, new features should be added in such a way that they are unit-testable whenever possible.
 
 ## Preparing the Test Environment and tapestry-test.cfg
 `funtional-tests.py` relies on a testing environment to run its target script against. That environment can be constructed relatively simply using the included `corpusmaker.py`. The method of preparing this environment is simple:
@@ -12,9 +12,12 @@ This document is intended to lay out a brief explanation of the correct use of `
 4. Run corpusmaker. Depending on your system specifications this operation may take up to an hour to complete - you are generating a considerable amount of data after all.
 5. After running corpusmaker, you must configure the `tapestry-test.cfg`. This is simply a version of an ordinary tapestry config file. If you downloaded the test.cfg file from the repo, simply edit its paths so that they point at your test environment instead of some guy named Patches'.
 6. Create the following known-good samples: `Non-Inc Media` and `Inc-Media`, consisting of the output .tap and .tap.sig files of an inclusive and non-inclusive run respectively. These are used in some tests. You should also manually unpack the recovery-pkl file from one of these and leave it under the `~/Control` as some tests require it.
+7. If it is not already present, install vsftpd. vsftpd will be automatically invoked by the test framework itself; if desired, the developer may choose to disable vsftpd as a startup script. A dummy account should be created for ftp testing purposes so as not to interfere with the normal operation of users on the account (and allow account whitelisting for the security-conscious.)
 
 ## Special Case: The --ssg flag
 A special `--ssg` flag has been added to the test script to be used only under the following circumstance: a known-good sample data set already exists, and the testing script is instead being run as part of a process to test/debug newly-added tests. If this flag is set at runtime, functional-tests.py will skip its sample generation step and instead go directly to the tests themselves. A note is made of this flag in the logs.
+
+Running the tests in `--ssg` mode invalidates them as a marker of your branch of Tapestry's fitness to be included in the codebase and merged to master.
 
 ## Testing a Development Build
 In order to test some variation of `dev.py`, simply copy it into the testing directory locally and run functionaltests.py. Testing can take a considerable amount of time, during the early stages of which the developer will need to be semi-present. A future version may obviate these requirements. In particular, the following sequences will require user intervention:
@@ -59,14 +62,10 @@ The testing script looks for, and attempts to import, DR.key and DRpub.key. If e
 #### Certificate Validity Tests
 Two tests run sequentially which first ensure Tapestry will reject an invalid certificate and accept a valid one.
 
-#### Metadata Tests
-Two tests run concurrently which first trigger the export metadata funnction and compare its output to a known-good control, and which then pass a known-good control to the import metadata function and confirm it is not mangled.
 
 #### File Transfer Tests
-Back-and-forth tests, with hash comparison to make sure the files are unaltered in the process. Quite simple. A hash is taken of a sample .tap file, which is then transfered to a "remote" server, and retrieved from it. The hashes of all three copies are compared and any deviations reported as failures.
+Back-and-forth tests, with hash comparison to make sure the files are unaltered in the process. Quite simple. A hash is taken of a sample file, which is then transfered to a "remote" server, and retrieved from it. The hashes of the original and recieved copies are compared and any deviations reported as failures.
 
-#### Loom-Specific Tests
-In anticipation of the upcoming release of the companion project "Loom", new tests were added to satisfy the requirements of loom-specific features. Technically this includes the above metadata test, but as file transfer can now be done via either FTP or loom's HTTPS, both are required.
 
 ## What about $some_feature?
 ### Extant Features
