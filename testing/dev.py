@@ -10,8 +10,8 @@ import bz2
 import configparser
 import datetime
 from datetime import date
+import ftplib
 import gnupg
-import http.client as http
 import math
 import multiprocessing as mp
 import os
@@ -661,6 +661,7 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.portNet = config.getint("Network Configuration", "port")
         ns.nameNet = config.get("Network Configuration", "username")
         ns.nameNet = config.get("Network Configuration", "remote drop location")
+        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
@@ -737,6 +738,24 @@ def getSSLContext(test=False):  # Construct and return an appropriately-configur
     if test:
         tlsContext.load_verify_locations(cafile="testcert.pem")
     return tlsContext
+
+def connectFTP(url, port, ssl_context, username, password)
+    if username is not None:
+        if password is None:
+            password = ""
+    elif username is None:
+        username = ''
+    if port is None:
+        tgt = url
+    else:
+        tgt = url + ":" + str(port)
+    if ssl_context is None:
+        link = ftplib.FTP(host=tgt, user=username, passwd=password)
+    else:
+        link = ftplib.FTP_TLS(host=tgt, user=username, passwd=password, context=ssl_context)
+    if username != '':
+        link.login()
+    return link
 
 
 #We're gonna need some globals
