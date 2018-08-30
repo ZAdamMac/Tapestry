@@ -724,7 +724,7 @@ def buildOpsList():
 def calcConsumers(): #  Simple function, returns an appropriate number of consumers based on available RAM and available processor cores.
     cielCores = os.cpu_count()
     global blockSizeActual
-    cielRAM = math.floor(int(os.popen("free -m").readlines()[1].split()[1])/blockSizeActual)
+    cielRAM = math.floor(int(os.popen("free -m").readlines()[1].split()[6])/blockSizeActual)
     if cielCores < cielRAM:
         if cielRAM > 1:
             print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
@@ -779,7 +779,7 @@ if __name__ == "__main__":
         init()
         exit()
     elif ns.rcv:
-        if ns.modeNetwork.lower() == "ftp":
+        if ns.modeNetwork.lower() == "ftp": # Todo Fix this code (do some date-based parsing)
             input("Tapestry is presently configured to an FTP drop. Please ensure you have retrieved the files from the FTP server and press any key to continue.")
         else:
             print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")
