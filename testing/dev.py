@@ -769,6 +769,7 @@ global listSection; listSection = {}
 
 # Runtime
 if __name__ == "__main__":
+    global compid
     announce()
     buildMaster()
     parseArgs()
@@ -779,11 +780,26 @@ if __name__ == "__main__":
         init()
         exit()
     elif ns.rcv:
-        if ns.modeNetwork.lower() == "ftp": # Todo Fix this code (do some date-based parsing)
+        if ns.modeNetwork.lower() == "ftp":
             input("Tapestry is presently configured to an FTP drop. Please ensure you have retrieved the files from the FTP server and press any key to continue.")
         else:
-            print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")
-            input("Press any key to continue")
+            useDefaultCompID = input("Would you like to recover files for %s? (y/n)>" % compid).lower()
+            if useDefaultCompID == "n":
+                print("Please enter the name of the computer you wish to recover files for:")
+                compid = input("Case Sensitive: ")
+            print("Please enter the date for which you wish to recover files:")
+            tgtDate = input("YYYY-MM-DD")
+            pw = input("Enter the FTP password now (if required)") # TODO add password masking to both these functions.
+            ftp_link = connectFTP(ns.addrNet, ns.portNet, getSSLContext(), ns.nameNet, pw)
+            countBlocks, listBlocks = grepBlocks(compid, tgtDate, ftp_link)# TODO add a test for this function.
+            if countBlocks == 0:
+                print("No blocks for that date were found - check your records and try again.")
+                ftp_link.quit
+                exit()
+            else:
+                for block in listBlocks:
+                    fetchBlock(block, ftp_link, ns.media) # Todo add tests for function, if needed
+                    ftp_link.quit()
         usedBlocks = []
         loadKey()
         buildOpsList()
