@@ -739,7 +739,7 @@ def getSSLContext(test=False):  # Construct and return an appropriately-configur
         tlsContext.load_verify_locations(cafile="testcert.pem")
     return tlsContext
 
-def connectFTP(url, port, ssl_context, username, password)
+def connectFTP(url, port, ssl_context, username, password):  # Establish and return a valid FTP connection object.
     if username is not None:
         if password is None:
             password = ""
@@ -757,6 +757,8 @@ def connectFTP(url, port, ssl_context, username, password)
         link.login()
     return link
 
+def sendFTP(ftp_link, upload): # locate file at string "target" and send over FTP_link
+    ftp_link.storbinary("STOR %s" % upload, open(upload, "rb"))
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
