@@ -761,13 +761,17 @@ def sendFile(ftp_link, upload): # locate file at string "target" and send over F
     ftp_link.storbinary("STOR %s" % upload, open(upload, "rb"))
 
 def grepBlocks(label, date, ftp_connect):  # fetch the list of blocks from Label on Date.
-    index = ftp_link.nlst()
+    index = ftp_connect.nlst()
     lead = ( "%s-%s" % (label, date))
     listFetch = []
     for file in index:
         if file.startswith(lead):
             listFetch.append(file)
     return listFetch
+
+def fetchBlock(fname, ftp_connect, dirDestination): # fetch fname from the server
+    with open(os.path.join(dirDestination, fname), "wb") as fo:
+        ftp_connect.retrbinary(fname, fo)
 
 
 #We're gonna need some globals
@@ -793,8 +797,7 @@ if __name__ == "__main__":
         exit()
     elif ns.rcv:
         if ns.modeNetwork.lower() == "ftp":
-            input("Tapestry is presently configured to an FTP drop. Please ensure you have retrieved the files from the FTP server and press any key to continue.")
-        else:  # TODO Fix
+            input("Tapestry is presently configured to an FTP drop. Please ensure you have a connection, and press any key to continue.")
             useDefaultCompID = input("Would you like to recover files for %s? (y/n)>" % compid).lower()
             if useDefaultCompID == "n":
                 print("Please enter the name of the computer you wish to recover files for:")
@@ -809,6 +812,7 @@ if __name__ == "__main__":
                 ftp_link.quit
                 exit()
             else:
+                ns.media = ns.workDir
                 for block in listBlocks:
                     fetchBlock(block, ftp_link, ns.media) # Todo add tests for function, if needed
                     ftp_link.quit()
