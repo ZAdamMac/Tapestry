@@ -757,8 +757,18 @@ def connectFTP(url, port, ssl_context, username, password):  # Establish and ret
         link.login()
     return link
 
-def sendFTP(ftp_link, upload): # locate file at string "target" and send over FTP_link
+def sendFile(ftp_link, upload): # locate file at string "target" and send over FTP_link
     ftp_link.storbinary("STOR %s" % upload, open(upload, "rb"))
+
+def grepBlocks(label, date, ftp_connect):  # fetch the list of blocks from Label on Date.
+    index = ftp_link.nlst()
+    lead = ( "%s-%s" % (label, date))
+    listFetch = []
+    for file in index:
+        if file.startswith(lead):
+            listFetch.append(file)
+    return listFetch
+
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
@@ -784,7 +794,7 @@ if __name__ == "__main__":
     elif ns.rcv:
         if ns.modeNetwork.lower() == "ftp":
             input("Tapestry is presently configured to an FTP drop. Please ensure you have retrieved the files from the FTP server and press any key to continue.")
-        else:
+        else:  # TODO Fix
             useDefaultCompID = input("Would you like to recover files for %s? (y/n)>" % compid).lower()
             if useDefaultCompID == "n":
                 print("Please enter the name of the computer you wish to recover files for:")
