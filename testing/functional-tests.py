@@ -401,7 +401,7 @@ else:
         print("Error in File Transfer - Hashes Don't Match")
         print("Retrieve the testblock.txt file from the FTP server for comparison.")
         log.log("[FAILED] A file which was uploaded to the test server, and subsequently\nretrieved, did not match its original condition. Test this manually to ensure\nno problem exists in vsftpd and then re-examine the transfer functions in\nTapestry.")
-    if countPlaced == 1 and listPlaced = ["testblock-2001-01-01.txt"]:
+    if countPlaced == 1 and listPlaced == ["testblock-2001-01-01.txt"]:
         print("grepBlocks works for FTP")
         log.log("[PASSED] The function to search by label and date on the server is working.")
     else:
