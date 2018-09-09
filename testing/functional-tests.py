@@ -356,7 +356,7 @@ os.chwd(permaHome)
 
 # We use popen not to block the test script while the servers are running, but we need to close them later, so we catch the processes in some vars.
 srvBad = subprocess.Popen(args="vsftpd vsftpd-bad.config", shell=True, stdout=subprocess.DEVNULL)
-srvGood = subprocess.Popen(args="python3.6 vsftpd-good.config.py", shell=True, stdout=subprocess.DEVNULL)
+srvGood = subprocess.Popen(args="vsftpd vsftpd-good.config.py", shell=True, stdout=subprocess.DEVNULL)
 
 #Test the Bad Link First
 testcontext = ssl.SSLContext().load_verify_locations(cafile="testcert.pem")
@@ -374,7 +374,7 @@ srvBad.terminate()
 #Now the Good Link
 
 try:
-    instFTP = dev.connectFTP("localhost", 21, testcontext)
+    instFTP = dev.connectFTP("localhost", 21, testcontext, test_FTP_user, test_FTP_pw)
     print("Benign Connection Test - PASS - Connection Accepted.")
     log.log("[PASSED] The 'valid' server was accepted by the connection establishment\nfunction and a valid connection object is being passed to the next test.")
 except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
@@ -389,8 +389,9 @@ if instFTP is None:
     log.log("[FAILED] The network transfer tests could not be passed as no connection was\nestablished. Verify that vsftpd is configured correctly on the test machine and\nthat tapestry-test.cfg contains the correct credentials for the FTP test user.")
 else:
     print("Beginning file transfer tests using inert transfer article.")
-    dev.sendFile(instFTP, "testblock.txt")
-    dev.retrFile(instFTP, "testblock.txt") # TODO replace with a local function
+    dev.sendFile(instFTP, "testblock-2001-01-01.txt")
+    countPlaced, listPlaced = dev.grepBlocks("testblock", "2001-01-01", instFTP)
+    dev.fetchBlock("testblock.txt", instFTP, "/")
     hashControlFTP = hashlib.md5().update(open("testblock.txt", "rb").readall())
     hashRelayFTP = hashlib.md5().update(open(os.path.join(out, "testblock.txt")).readall())
     if hashRelayFTP == hashControlFTP:
@@ -400,6 +401,12 @@ else:
         print("Error in File Transfer - Hashes Don't Match")
         print("Retrieve the testblock.txt file from the FTP server for comparison.")
         log.log("[FAILED] A file which was uploaded to the test server, and subsequently\nretrieved, did not match its original condition. Test this manually to ensure\nno problem exists in vsftpd and then re-examine the transfer functions in\nTapestry.")
+    if countPlaced == 1 and listPlaced = ["testblock-2001-01-01.txt"]:
+        print("grepBlocks works for FTP")
+        log.log("[PASSED] The function to search by label and date on the server is working.")
+    else:
+        print("grepBlocks returned either the wrong count or list.")
+        log.log("[FAILED] The FTP search function is not operating correctly. It will not be \npossible to retrieve files from the FTP site at present.")
 log.log("------------------------------------------------------------------------------")
 
 #  Clear Down!

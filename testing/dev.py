@@ -767,7 +767,7 @@ def grepBlocks(label, date, ftp_connect):  # fetch the list of blocks from Label
     for file in index:
         if file.startswith(lead):
             listFetch.append(file)
-    return listFetch
+    return len(listFetch), listFetch
 
 def fetchBlock(fname, ftp_connect, dirDestination): # fetch fname from the server
     with open(os.path.join(dirDestination, fname), "wb") as fo:
@@ -809,13 +809,13 @@ if __name__ == "__main__":
             countBlocks, listBlocks = grepBlocks(compid, tgtDate, ftp_link)# TODO add a test for this function.
             if countBlocks == 0:
                 print("No blocks for that date were found - check your records and try again.")
-                ftp_link.quit
+                ftp_link.quit()
                 exit()
             else:
                 ns.media = ns.workDir
                 for block in listBlocks:
-                    fetchBlock(block, ftp_link, ns.media) # Todo add tests for function, if needed
-                    ftp_link.quit()
+                    fetchBlock(block, ftp_link, ns.media)
+                ftp_link.quit()
         usedBlocks = []
         loadKey()
         buildOpsList()
