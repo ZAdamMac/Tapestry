@@ -284,9 +284,9 @@ def loadKey():
     if ns.genKey:
         genKey()
     ns.activeFP = config.get("Environment Variables", "Expected FP")
-    keys = gpg.search_keys(ns.activeFP)
+    keys = gpg.list_keys(keys=ns.activeFP)
     try:
-        location = keys[ns.activeFP] # If the key is in the dictionary, hooray!
+        location = keys.key_map[ns.activeFP] # If the key is in the dictionary, hooray!
         found = True
     except KeyError:
         found = False
