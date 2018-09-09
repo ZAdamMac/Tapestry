@@ -169,7 +169,7 @@ class sigTasker(object):
             tgtOutput = self.block + ".sig"
             debugPrint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True)
-            if not sis.ok:
+            if bar.status != 'signature created':
                 print("[Error] Something went wrong in signing %s." % self.block)
             ns.jobsDone += 1
             statusPrint()
