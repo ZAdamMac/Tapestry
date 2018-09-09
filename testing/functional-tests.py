@@ -5,7 +5,7 @@
 import argparse
 import configparser as cp
 from datetime import date
-import dev
+from testing import dev
 import ftplib as ftp
 import gnupg
 import hashlib
