@@ -123,9 +123,7 @@ class comTasker(object):
         with open(self.tarf, "rb") as b:
             bz2d = self.tarf+".bz2"
             bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=ns.compressLevel)
-            for datum in b:
-                bz2f.write(datum)
-            bz2f.close()
+            shutil.copyfileobj(b, bz2f)
             ns.jobsDone += 1
             statusPrint()
         pass
@@ -371,8 +369,7 @@ def decryptBlock():
                     shutil.copy(outputTGT, (outputTGT+".temp"))
                     with bz2.BZ2File(outputTGT+".temp", "rb") as compressed:
                         with open(outputTGT, "wb") as uncompressed:
-                            for foo in compressed:
-                                uncompressed.write(foo)
+                            shutil.copyfileobj(compressed, uncompressed)
                     pass
             if not baz.ok:
                 debugPrint("Decryption Error: " + str(baz.status))
