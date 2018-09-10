@@ -371,7 +371,8 @@ def decryptBlock():
                     shutil.copy(outputTGT, (outputTGT+".temp"))
                     with bz2.BZ2File(outputTGT+".temp", "rb") as compressed:
                         with open(outputTGT, "wb") as uncompressed:
-                            uncompressed.write(compressed.read()) #TODO add elegance
+                            for foo in compressed:
+                                uncompressed.write(foo)
                     pass
             if not baz.ok:
                 debugPrint("Decryption Error: " + str(baz.status))
