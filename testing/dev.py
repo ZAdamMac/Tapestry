@@ -721,11 +721,6 @@ def buildOpsList():
 
 def calcConsumers(): #  Simple function, returns an appropriate number of consumers based on available RAM and available processor cores.
     cielCores = os.cpu_count()
-    global blockSizeActual
-    cielRAM = math.floor(int(os.popen("free -m").readlines()[1].split()[6])/blockSizeActual)
-    if cielCores < cielRAM:
-        if cielRAM > 1:
-            print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
     return cielCores
 
 def getSSLContext(test=False):  # Construct and return an appropriately-configured SSL Context object.
