@@ -123,8 +123,8 @@ class comTasker(object):
         with open(self.tarf, "rb") as b:
             bz2d = self.tarf+".bz2"
             bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=ns.compressLevel)
-            data = b.read()
-            bz2f.write(data)
+            for datum in b:
+                bz2f.write(datum)
             bz2f.close()
             ns.jobsDone += 1
             statusPrint()
