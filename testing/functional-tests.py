@@ -268,7 +268,7 @@ tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
 os.chdir(out)
 foo = tfTest.extract("recovery-pkl")
 
-pklControl = pickle.load(open(os.path.join(pathControl, "control-pkl"), "rb"))
+pklControl = pickle.load(open(os.path.join(permaHome, "control-pkl"), "rb"))
 pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
 if len(pklControl) == len(pklTest):
     print("Recovery Files have Matching Structure!")
@@ -420,7 +420,7 @@ print("After passing this confirmation screen, the test result material will be 
 carryOn = input("Press any key to continue. > ")
 shutil.rmtree(out)
 if instFTP is not None:
-    instFTP.delete("testblock.txt")
+    instFTP.delete("testblock-2001-01-01.txt")
 srvGood.terminate()
 remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"), secret=True, expect_passphrase=False)
 remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"))
