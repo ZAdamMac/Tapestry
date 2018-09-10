@@ -257,12 +257,16 @@ if identical:
                 if file.endswith(".tap"):
                     with open(os.path.join(foo, file), "rb") as k:
                         decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
-                    if decrypted.ok:
-                        pass
+                        waiting = True
+                    while waiting:
+                        if decrypted.ok:
+                            waiting = False
+                        else:
+                            continue
 print("Extracting recovery pickle from the tapfile.")
 tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
 os.chdir(out)
-tfTest.extract("recovery-pkl")
+foo = tfTest.extract("recovery-pkl")
 
 pklControl = pickle.load(open(os.path.join(pathControl, "control-pkl"), "rb"))
 pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
