@@ -6,10 +6,8 @@ import argparse
 import configparser as cp
 from datetime import date
 from testing import dev
-import ftplib as ftp
 import gnupg
 import hashlib
-import json
 import os
 import pickle
 import shutil
