@@ -64,8 +64,6 @@ shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup o
 
 pathControl = out.replace("Test", "Control")
 
-gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
-
 parser = argparse.ArgumentParser(description="Testing Framework for development of Tapestry Specialist Backup Tool")
 parser.add_argument('--ssg', help="Skip sample generation. Invalidates test, but useful for debugging new tests.", action="store_true")
 args = parser.parse_args()
@@ -207,6 +205,8 @@ that your GPG instance considers the test signature key a trusted key.          
 log.log("-------------------------------------------------------------------------------")
 
     # If Identity failed, test encryption
+
+gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
 if identical:
     print("Decryption Test Skipped - Identity Check Passed.")
     log.log('''\n\n-----------------------------[ENCRYPTION TESTING]------------------------------\n
@@ -260,12 +260,17 @@ if identical:
                         if decrypted.ok:
                             waiting = False
                         else:
-                            continue
-print("Extracting recovery pickle from the tapfile.")
-tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
-os.chdir(out)
-foo = tfTest.extract("recovery-pkl")
-
+                            pass
+extract = True
+while extract:
+    try:
+        print("Extracting recovery pickle from the tapfile.")
+        tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
+        os.chdir(out)
+        foo = tfTest.extract("recovery-pkl")
+        extract = False
+    except FileNotFoundError:
+        pass
 pklControl = pickle.load(open(os.path.join(permaHome, "control-pkl"), "rb"))
 pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
 if len(pklControl) == len(pklTest):
