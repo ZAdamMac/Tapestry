@@ -175,6 +175,7 @@ documentation for advice on possible causes of this failure.''')
 
 #  Encryption and Signing Passing
     # Test if Signatures are Valid
+gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
 print("Beginning Signature Verification.")
 log.log("\n\n-------------------------------[SIGNATURE TESTS]-------------------------------")
 failures = 0
@@ -206,7 +207,7 @@ log.log("-----------------------------------------------------------------------
 
     # If Identity failed, test encryption
 
-gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
+
 if identical:
     print("Decryption Test Skipped - Identity Check Passed.")
     log.log('''\n\n-----------------------------[ENCRYPTION TESTING]------------------------------\n
@@ -260,17 +261,13 @@ if identical:
                         if decrypted.ok:
                             waiting = False
                         else:
-                            pass
-extract = True
-while extract:
-    try:
-        print("Extracting recovery pickle from the tapfile.")
-        tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
-        os.chdir(out)
-        foo = tfTest.extract("recovery-pkl")
-        extract = False
-    except FileNotFoundError:
-        pass
+                            continue
+
+print("Extracting recovery pickle from the tapfile.")
+tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
+os.chdir(out)
+foo = tfTest.extract("recovery-pkl")
+
 pklControl = pickle.load(open(os.path.join(permaHome, "control-pkl"), "rb"))
 pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
 if len(pklControl) == len(pklTest):

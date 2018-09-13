@@ -452,6 +452,7 @@ def unpackBlocks():
 def cleardown():
     if os.path.exists(ns.workDir):
         shutil.rmtree(ns.workDir)
+        global gpg; gpg = None
 
 
 def getContents(category, tgt):
