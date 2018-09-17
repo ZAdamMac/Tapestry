@@ -68,7 +68,7 @@ log = simpleLogger(logs, logname)
 log.log("------------------------------[SAMPLE GENERATION]------------------------------")
 log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
 hasher = hashlib.sha256()
-hasher.update(open("dev.py", "r").read())
+hasher.update(open("dev.py", "rb").read())
 taphash = hasher.hexdigest()
 log.log("\n"+str(taphash)+"\n")
 
