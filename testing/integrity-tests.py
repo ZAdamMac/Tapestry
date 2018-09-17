@@ -65,7 +65,7 @@ if not os.path.isdir((logs)):
 logname = ("test-%s-%s.log" % (uid, str(date.today())))
 log = simpleLogger(logs, logname)
 
-
+pathControl = out.replace("Test", "Control")
 
 print("\n\nStarting Identity Test")
 log.log("\n\n-------------------------------[INTEGRITY TESTS]-------------------------------")
