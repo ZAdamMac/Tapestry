@@ -81,3 +81,4 @@ v1.1.0 (dev):
     - Improved log formatting in the functional-tests.py script.
     - Improved memory allocation during compression/decompression operations.
     - Removed the limitation on workers which was previously imposed by blocksize vs. available RAM.
+    - Rewrote the testing framework to close issue #5 - Hosts are now a suite, refer to the documenation.
