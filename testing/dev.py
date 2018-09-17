@@ -819,7 +819,7 @@ if __name__ == "__main__":
         decryptBlock()
         openPickle()
         print("This backup exists in %d blocks." % numBlocks)
-        for foo, bar, found in os.walk(ns.workDir):
+        for foo, bar, found in os.walk(ns.workDir): # TODO there's your bug.
             countBlocks = len(found)-1
         print("So far, you have supplied %d blocks." % countBlocks)
         while countBlocks < numBlocks:
