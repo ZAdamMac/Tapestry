@@ -5,13 +5,13 @@
 import configparser as cp
 from datetime import date
 from testing import dev
+import gnupg
 import hashlib
 import os
 import shutil
 import ssl
 import subprocess
 import time
-
 
 #  Stash classes and functions here if necessary.
 class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
@@ -66,8 +66,15 @@ if not os.path.isdir((logs)):
 logname = ("network_test-%s-%s.log" % (uid, str(date.today())))
 log = simpleLogger(logs, logname)
 
+gpg = gnupg.gpg(homedir="/home/"+uid+"/.gnupg")
+
 print("Beginning Networking Tests")
 log.log("\n\n-------------------------[NETWORK CONNECTIVITY TESTS]--------------------------")
+log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
+hasher = hashlib.sha256()
+hasher.update(open("dev.py", "r").read())
+taphash = hasher.hexdigest()
+log.log("\n"+str(taphash)+"\n")
 os.chwd(permaHome)
 
 # We use popen not to block the test script while the servers are running, but we need to close them later, so we catch the processes in some vars.

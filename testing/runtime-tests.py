@@ -4,6 +4,7 @@
 #  Imports Block
 import configparser as cp
 from datetime import date
+import hashlib
 import os
 import shutil
 import subprocess
@@ -66,6 +67,11 @@ log = simpleLogger(logs, logname)
 
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
 log.log("------------------------------[SAMPLE GENERATION]------------------------------")
+log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
+hasher = hashlib.sha256()
+hasher.update(open("dev.py", "r").read())
+taphash = hasher.hexdigest()
+log.log("\n"+str(taphash)+"\n")
 
 cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
 with open("tapestry-test.cfg", "w") as warp:

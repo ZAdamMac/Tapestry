@@ -64,6 +64,11 @@ pathControl = out.replace("Test", "Control")
 
 print("\n\nStarting Identity Test")
 log.log("\n\n-------------------------------[INTEGRITY TESTS]-------------------------------")
+log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
+hasher = hashlib.sha256()
+hasher.update(open("dev.py", "r").read())
+taphash = hasher.hexdigest()
+log.log("\n"+str(taphash)+"\n")
 counterMismatch = 0
 identical = False
 
