@@ -2,17 +2,12 @@
 #  For full commentary and documentation view TESTDOCS.md in the repo.
 
 #  Import Modules
-import argparse
 import configparser as cp
 from datetime import date
-from testing import dev
 import gnupg
 import hashlib
 import os
 import pickle
-import shutil
-import ssl
-import subprocess
 import tarfile
 import time
 
