@@ -57,7 +57,7 @@ blockSize = cfg.get("Environment Variables", "blocksize")
 if not os.path.isdir((logs)):
     os.mkdir(logs)
 
-logname = ("test-%s-%s.log" % (uid, str(date.today())))
+logname = ("integrity_test-%s-%s.log" % (uid, str(date.today())))
 log = simpleLogger(logs, logname)
 
 pathControl = out.replace("Test", "Control")
