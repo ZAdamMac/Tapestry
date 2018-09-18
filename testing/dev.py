@@ -434,18 +434,16 @@ def unpackBlocks():
                             except KeyError:
                                 catdir = os.path.join(ns.drop, cat)
                             finally:
-                                if not os.path.isdir(os.path.join(ns.drop,catdir)):
-                                    os.mkdir(os.path.join(ns.drop,catdir))
+                                if not os.path.isdir(catdir):
+                                    os.mkdir(catdir)
                             pathend = recPaths[item]
                             ns.sumJobs += 1
                             tasker.put(recTask(file, item, catdir, pathend))
         global workers; workers = []
         for i in range(ns.numConsumers):
-            workers.append(tapProc(tasker))
+            workers.append(recProc(tasker))
         for w in workers:
             w.start()
-        tasker.join()
-        statusPrint()
         for foo in range(ns.numConsumers):
             tasker.put(None)  # seed poison pills at the end of the queue to kill the damn consumers
         tasker.join()
