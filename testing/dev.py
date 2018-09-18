@@ -744,7 +744,7 @@ def connectFTP(url, port, ssl_context, username, password):  # Establish and ret
     if ssl_context is None:
         link = ftplib.FTP()
     else:
-        link = ftplib.FTP_TLS(context=ssl_context)
+        link = ftplib.FTP_TLS()
         link.connect(host=url, port=port)
         link.auth()
         link.prot_p()
