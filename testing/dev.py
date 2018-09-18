@@ -314,31 +314,28 @@ def findblock():  # Time to go grepping for taps!
                 foundBlocks.append(file)
 
 
-def validateBlock():
+def validateBlock(block): #Checks the validity of block's sig, and ret t/f accordingly.
+    #  Block shall be the fully qualified path of a tapfile, as a string.
     print("Checking the validity of this tapfile's signature.")
-    global valid
-    global sig; sig = None
-    for dont, care, files in os.walk(ns.media):
-        for file in files:
-            debugPrint("Looking for a sig at file: " + file)
-            if file.endswith(".sig"):
-                sig = os.path.join(dont, file)
-            elif file.endswith(".tap"):
-                data = os.path.join(dont, file)
-            else:
-                continue
+    valid = False # Begin with the assumption someone's messing with us.
+    signame = (str(block)+".sig")
+    debugPrint("Looking for the signature: %s" % signame)
+    try:
+        sig = open(signame,"rb")
+    except FileNotFoundError:
+        sig = None
+
     if sig is None:
         print("No signature is available for this block. Continue?")
         go = input("y/n?")
         if go.lower() == "y":
             valid = True
         else:
-            print("Aborting backup.")
-            cleardown()
-            exit()
+            print("Okay, rejecting this block.")
+            return valid
     else:
-        with open(sig, "rb") as fsig:
-            verified = gpg.verify_file(fsig, data)
+        with open(block, "rb") as data:
+            verified = gpg.verify_file(sig, data)
         if verified.trust_level is not None and verified.trust_level >= verified.TRUST_FULLY:
             valid = True
             print("This block has been verified by %s, which is sufficiently trusted." % verified.username)
@@ -349,9 +346,9 @@ def validateBlock():
             if go.lower() == "y":
                 valid = True
             else:
-                print("Aborting backup.")
-                cleardown()
-                exit()
+                print("Okay, rejecting this block.")
+                return valid
+    return valid
 
 
 def decryptBlock():
