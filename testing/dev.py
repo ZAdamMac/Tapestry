@@ -192,6 +192,7 @@ class recTask(object): #todo exception handles
         os.rename(placed, absFile)  # and now it's named correctly.
         debugPrint("Placed " + str(pathEnd))
         ns.jobsDone += 1
+        statusPrint()
 
 class recProc(mp.Process):
     def __init__(self, qTask):
@@ -334,8 +335,7 @@ def validateBlock(block): #Checks the validity of block's sig, and ret t/f accor
             print("Okay, rejecting this block.")
             return valid
     else:
-        with open(block, "rb") as data:
-            verified = gpg.verify_file(sig, data)
+        verified = gpg.verify_file(sig, block)
         if verified.trust_level is not None and verified.trust_level >= verified.TRUST_FULLY:
             valid = True
             print("This block has been verified by %s, which is sufficiently trusted." % verified.username)
@@ -439,7 +439,8 @@ def unpackBlocks():
                             pathend = recPaths[item]
                             ns.sumJobs += 1
                             tasker.put(recTask(file, item, catdir, pathend))
-
+        print(str(ns.sumJobs))
+        print(str(ns.numConsumers))
         global workers; workers = []
         for i in range(ns.numConsumers):
             workers.append(recProc(tasker))
