@@ -83,8 +83,7 @@ srvGood = subprocess.Popen(args="vsftpd vsftpd-good.config.py", shell=True, stdo
 instFTP = None
 
 #Test the Bad Link First
-testcontext = ssl.SSLContext()
-testcontext.load_verify_locations(cafile="testcert.pem")
+testcontext = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH, cafile="testcert.pem")
 
 try:
     instFTP = dev.connectFTP("localhost", 201, testcontext, test_FTP_user, test_FTP_pw)
