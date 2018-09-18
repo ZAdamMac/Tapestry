@@ -85,7 +85,7 @@ srvGood = subprocess.Popen(args="vsftpd vsftpd-good.config.py", shell=True, stdo
 testcontext = ssl.SSLContext().load_verify_locations(cafile="testcert.pem")
 
 try:
-    instFTP = dev.connectFTP("127.0.0.1", 21, testcontext, test_FTP_user, test_FTP_pw)
+    instFTP = dev.connectFTP("127.0.0.1", 201, testcontext, test_FTP_user, test_FTP_pw)
     print("Malicious Connection Test - FAIL - Connection Accepted.")
     log.log("[FAILED] Tapestry connected to the 'malicious' server and accepted it as a\nlegitimate connection.")
 except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
@@ -97,7 +97,7 @@ srvBad.terminate()
 #Now the Good Link
 
 try:
-    instFTP = dev.connectFTP("127.0.0.1", 21, testcontext, test_FTP_user, test_FTP_pw)
+    instFTP = dev.connectFTP("127.0.0.1", 211, testcontext, test_FTP_user, test_FTP_pw)
     print("Benign Connection Test - PASS - Connection Accepted.")
     log.log("[PASSED] The 'valid' server was accepted by the connection establishment\nfunction and a valid connection object is being passed to the next test.")
 except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
