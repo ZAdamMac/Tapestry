@@ -740,15 +740,16 @@ def connectFTP(url, port, ssl_context, username, password):  # Establish and ret
     elif username is None:
         username = ''
     if port is None:
-        tgt = url
-    else:
-        tgt = url + ":" + str(port)
+        port = 21
     if ssl_context is None:
-        link = ftplib.FTP(host=tgt, user=username, passwd=password)
+        link = ftplib.FTP()
     else:
-        link = ftplib.FTP_TLS(host=tgt, user=username, passwd=password, context=ssl_context)
+        link = ftplib.FTP_TLS(context=ssl_context)
+        link.connect(host=url, port=port)
+        link.auth()
+        link.prot_p()
     if username != '':
-        link.login()
+        link.login(user=username, passwd=password)
     return link
 
 def sendFile(ftp_link, upload): # locate file at string "target" and send over FTP_link
