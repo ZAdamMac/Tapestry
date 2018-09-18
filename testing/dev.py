@@ -188,11 +188,11 @@ class recTask(object): #todo exception handles
         placement, nameProper = os.path.split(absFile)  # split the pathend component into the subpath from the category dir, and the original filename.
         with tarfile.open(absTar, "r") as tf:
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
-        placed = os.path.join(placement, self.fid)
-        os.rename(placed, absFile)  # and now it's named correctly.
-        debugPrint("Placed " + str(pathEnd))
-        ns.jobsDone += 1
-        statusPrint()
+            placed = os.path.join(placement, self.fid)
+            os.rename(placed, absFile)  # and now it's named correctly.
+            debugPrint("Placed " + str(pathEnd))
+            ns.jobsDone += 1
+            statusPrint()
 
 class recProc(mp.Process):
     def __init__(self, qTask):
@@ -439,14 +439,13 @@ def unpackBlocks():
                             pathend = recPaths[item]
                             ns.sumJobs += 1
                             tasker.put(recTask(file, item, catdir, pathend))
-        print(str(ns.sumJobs))
-        print(str(ns.numConsumers))
         global workers; workers = []
         for i in range(ns.numConsumers):
             workers.append(recProc(tasker))
         for w in workers:
             w.start()
         tasker.join()
+        statusPrint()
         for foo in range(ns.numConsumers):
             tasker.put(None)  # seed poison pills at the end of the queue to kill the damn consumers
         tasker.join()
