@@ -80,6 +80,7 @@ os.chdir(permaHome)
 # We use popen not to block the test script while the servers are running, but we need to close them later, so we catch the processes in some vars.
 srvBad = subprocess.Popen(args="vsftpd vsftpd-bad.config", shell=True, stdout=subprocess.DEVNULL)
 srvGood = subprocess.Popen(args="vsftpd vsftpd-good.config.py", shell=True, stdout=subprocess.DEVNULL)
+instFTP = None
 
 #Test the Bad Link First
 testcontext = ssl.SSLContext()
