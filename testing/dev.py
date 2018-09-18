@@ -818,8 +818,11 @@ if __name__ == "__main__":
         decryptBlock()
         openPickle()
         print("This backup exists in %d blocks." % numBlocks)
-        for foo, bar, found in os.walk(ns.workDir): # TODO there's your bug.
-            countBlocks = len(found)-1
+        for foo, bar, found in os.walk(ns.workDir):
+            countBlocks = 0
+            for i in found:
+                if i.endswith(".tap"):
+                    countBlocks+=1
         print("So far, you have supplied %d blocks." % countBlocks)
         while countBlocks < numBlocks:
             input("Please insert the next disk and press enter to continue.")
