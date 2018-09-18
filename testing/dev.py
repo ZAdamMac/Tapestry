@@ -800,7 +800,7 @@ if __name__ == "__main__":
             tgtDate = input("YYYY-MM-DD")
             pw = input("Enter the FTP password now (if required)") # TODO add password masking to both these functions.
             ftp_link = connectFTP(ns.addrNet, ns.portNet, getSSLContext(), ns.nameNet, pw)
-            countBlocks, listBlocks = grepBlocks(compid, tgtDate, ftp_link)# TODO add a test for this function.
+            countBlocks, listBlocks = grepBlocks(compid, tgtDate, ftp_link)
             if countBlocks == 0:
                 print("No blocks for that date were found - check your records and try again.")
                 ftp_link.quit()
