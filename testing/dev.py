@@ -817,7 +817,6 @@ if __name__ == "__main__":
         buildOpsList()
         createDIRS()
         findblock()
-        validateBlock()
         decryptBlock()
         openPickle()
         print("This backup exists in %d blocks." % numBlocks)
@@ -827,7 +826,6 @@ if __name__ == "__main__":
         while countBlocks < numBlocks:
             input("Please insert the next disk and press enter to continue.")
             findblock()
-            validateBlock()
             decryptBlock()
         unpackBlocks()
         print("Any files with uncertain placement were moved to the output folder.")
