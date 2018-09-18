@@ -434,14 +434,14 @@ def unpackBlocks():
                             except KeyError:
                                 catdir = os.path.join(ns.drop, cat)
                             finally:
-                                if not os.path.isdir(catdir):
-                                    os.mkdir(catdir)
+                                if not os.path.isdir(os.path.join(ns.drop,catdir)):
+                                    os.mkdir(os.path.join(ns.drop,catdir))
                             pathend = recPaths[item]
                             ns.sumJobs += 1
                             tasker.put(recTask(file, item, catdir, pathend))
         global workers; workers = []
         for i in range(ns.numConsumers):
-            workers.append(recProc(tasker))
+            workers.append(tapProc(tasker))
         for w in workers:
             w.start()
         tasker.join()
@@ -828,7 +828,7 @@ if __name__ == "__main__":
             findblock()
             decryptBlock()
         unpackBlocks()
-        print("Any files with uncertain placement were moved to the output folder.")
+        print("\nAny files with uncertain placement were moved to the output folder.")
         print("All blocks have now been unpacked. Tapestery will clean up and exit.")
         cleardown()
         exit()
@@ -860,8 +860,8 @@ if __name__ == "__main__":
                         sendFile(instFTP, file)
             instFTP.quit()
             print("All files have been successfully uploaded to the FTP except as indicated.")
-        if ns.retainLocal:
-            print("Your files are also being retained locally, and are here:")
+        if ns.retainLocal and not ns.rcv:
+            print("\nYour files are also being retained locally, and are here:")
             print(str(ns.drop))
             cleardown()
             exit()
