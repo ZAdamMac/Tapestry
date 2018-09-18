@@ -353,7 +353,12 @@ def validateBlock(block): #Checks the validity of block's sig, and ret t/f accor
 
 def decryptBlock():
     global foundBlocks
+    validBlocks = []
     for block in foundBlocks:
+        validated = validateBlock(block)
+        if validated:
+            validBlocks.append(block)
+    for block in validBlocks:
         outputTGT = str(os.path.join(ns.workDir, block))
         with open(block, "rb") as kfile:
             baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
