@@ -78,7 +78,9 @@ v1.0.1 (release):
 v1.1.0 (dev):
     - Added a shebang to tapestry to make it immediately executable similar to a bash script.
     - Improved error handling to close issue #1 - missing keys are now correctly excepted.
-    - Improved log formatting in the functional-tests.py script.
+    - Closed the security issue which could result in recovery from unauthenticated blocks without warning the user.
+    - Improved log formatting in the test scripts.
     - Improved memory allocation during compression/decompression operations.
     - Removed the limitation on workers which was previously imposed by blocksize vs. available RAM.
-    - Rewrote the testing framework to close issue #5 - Hosts are now a suite, refer to the documenation.
+    - Rewrote the testing framework to close issue #5 - Test are now a suite, refer to the documenation.
+    - Added backup-to and recovery-via FTP with TLS support. Review the documentation.
