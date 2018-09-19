@@ -112,7 +112,7 @@ else:
     print("Beginning file transfer tests using inert transfer article.")
     dev.sendFile(instFTP, "testblock-2001-01-01.txt")
     countPlaced, listPlaced = dev.grepBlocks("testblock", "2001-01-01", instFTP)
-    dev.fetchBlock("testblock.txt", instFTP, out)
+    dev.fetchBlock("testblock-2001-01-01.txt", instFTP, out)
     hashControlFTP = hashlib.md5()
     hashControlFTP.update(open("testblock-2001-01-01.txt", "rb").readall())
     hashRelayFTP = hashlib.md5()
