@@ -72,6 +72,7 @@ hasher.update(open("dev.py", "rb").read())
 taphash = hasher.hexdigest()
 log.log("\n"+str(taphash)+"\n")
 
+cfg.read("tapestry-test.cfg")
 cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
 with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
@@ -85,6 +86,7 @@ print("--genKey completed in %s" % elapse)
 log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
 log.log(str(waiting))
 
+cfg.read("tapestry-test.cfg")
 cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
 with open("tapestry-test.cfg", "w") as warp:
     cfg.write(warp)
@@ -97,6 +99,7 @@ print("--inc completed in %s" % elapse)
 log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
 log.log(str(waiting))
 
+cfg.read("tapestry-test.cfg")
 cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
 cfg.set("Environment Variables", "recovery path", os.path.join(out, "Inc"))
 docs = cfg.get("Default Locations/Nix", "docs")
