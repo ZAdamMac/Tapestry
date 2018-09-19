@@ -746,7 +746,11 @@ def connectFTP(url, port, ssl_context, username, password):  # Establish and ret
     else:
         link = ftplib.FTP_TLS(context=ssl_context)
         link.connect(host=url, port=port)
-        link.auth()
+        try:
+            link.auth()
+        except ssl.SSLError:
+            print("Fuckin' SSL.")
+            raise ConnectionRefusedError
         link.prot_p()
     if username != '':
         link.login(user=username, passwd=password)
