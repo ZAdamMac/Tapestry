@@ -235,7 +235,7 @@ sizePoolExclusive = 0
 
 print("Beginning Inclusive/Exclusive Size Test")
 log.log("\n\n------------------------[INCLUSIVE/EXCLUSIVE COMPARISON]-----------------------")
-for foo, bar, file in os.walk(os.path.join(out,"Non-Inc")):
+for foo, bar, files in os.walk(os.path.join(out,"Non-Inc")):
     for file in files:
         sizePoolExclusive += os.path.getsize(os.path.join(foo, file))
 
