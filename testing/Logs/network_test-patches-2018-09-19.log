@@ -1,0 +1,39 @@
+===============================================================================
+This is a log of tests run against some version of Tapestry by the 
+network-tests.py testing utility. The date is indicated in the filename. 
+It should be made clear that these tests do not indicate any sort of warranty 
+or guarantee of merchantability.
+
+=======TEST MACHINE SPECS=======
+Cores Available: 4 
+RAM Available: 11392 MB 
+================================
+
+
+
+================================BEGIN TESTING==================================
+
+
+-------------------------[NETWORK CONNECTIVITY TESTS]--------------------------
+
+This log is for a test of a development version of Tapestry, with SHA256 hash:
+
+5e74a90edbaacd8049ff368800967f16b0766c648c28c595474c685e3c4940d5
+
+[PASSED] The 'malicious' server was correctly rejected by Tapestry's connection
+establishment function.
+[PASSED] The 'valid' server was accepted by the connection establishment
+function and a valid connection object is being passed to the next test.
+-------------------------------------------------------------------------------
+
+
+--------------------------[NETWORK PUSH/PULL TEST]-----------------------------
+[PASSED] A file was successfully uploaded to the test server, retrieved, and
+compared to the original file by its md5 hash.
+[PASSED] The function to search by label and date on the server is working.
+------------------------------------------------------------------------------
+
+
+===============================[END OF TESTING]===============================
+ Tester Comments: 
+ This test was run on 2018-09-19
