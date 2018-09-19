@@ -1,7 +1,8 @@
+#! /usr/bin/env python3.6
 # Tapestry Backup Automation Tool
 # Coded in python3 at Patch Savage Labs
 # git: ~/ZAdamMac/Patchs-Tapestry
-global version; version = 'DevBuild'  # Sets the version to display. "DevBuild" enables some extra debugging not normally accessable
+global version; version = '1.1.0'  # Sets the version to display. "DevBuild" enables some extra debugging not normally accessable
 
 # Importing Modules
 import argparse
@@ -9,6 +10,8 @@ import bz2
 import configparser
 import datetime
 from datetime import date
+import ftplib
+import getpass
 import gnupg
 import math
 import multiprocessing as mp
@@ -17,11 +20,22 @@ import os.path
 import pickle
 import platform
 import shutil
+import ssl
 import sys
 import tarfile
 import uuid
 
 # Defining Classes
+class MyFTP_TLS(ftplib.FTP_TLS): # With thanks to hynekcer
+    """Explicit FTPS, with shared TLS session"""
+    def ntransfercmd(self, cmd, rest=None):
+        conn, size = ftplib.FTP.ntransfercmd(self, cmd, rest)
+        if self._prot_p:
+            conn = self.context.wrap_socket(conn,
+                                            server_hostname=self.host,
+                                            session=self.sock.session)  # this is the fix
+        return conn, size
+
 class skipLogger:  # dedicated skip-logging handler for use in buildBlocks
     def __init__(self, landingdir,name):  # starts the skiplogger and tells it it will be writing to landingdir with name
         landingAbs = os.path.join(landingdir, name)
@@ -120,9 +134,7 @@ class comTasker(object):
         with open(self.tarf, "rb") as b:
             bz2d = self.tarf+".bz2"
             bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=ns.compressLevel)
-            data = b.read()
-            bz2f.write(data)
-            bz2f.close()
+            shutil.copyfileobj(b, bz2f)
             ns.jobsDone += 1
             statusPrint()
         pass
@@ -166,6 +178,8 @@ class sigTasker(object):
             tgtOutput = self.block + ".sig"
             debugPrint("Signing: " + tgtOutput)
             sis = gpg.sign_file(p, keyid=self.fp, output=tgtOutput, detach=True)
+            if sis.status != 'signature created':
+                print("[Error] Something went wrong in signing %s." % self.block)
             ns.jobsDone += 1
             statusPrint()
 
@@ -185,10 +199,11 @@ class recTask(object):
         placement, nameProper = os.path.split(absFile)  # split the pathend component into the subpath from the category dir, and the original filename.
         with tarfile.open(absTar, "r") as tf:
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
-        placed = os.path.join(placement, self.fid)
-        os.rename(placed, absFile)  # and now it's named correctly.
-        debugPrint("Placed " + str(pathEnd))
-        ns.jobsDone += 1
+            placed = os.path.join(placement, self.fid)
+            os.rename(placed, absFile)  # and now it's named correctly.
+            debugPrint("Placed " + str(pathEnd))
+            ns.jobsDone += 1
+            statusPrint()
 
 class recProc(mp.Process):
     def __init__(self, qTask):
@@ -279,6 +294,18 @@ def loadKey():
     if ns.genKey:
         genKey()
     ns.activeFP = config.get("Environment Variables", "Expected FP")
+    keys = gpg.list_keys(keys=ns.activeFP)
+    try:
+        location = keys.key_map[ns.activeFP] # If the key is in the dictionary, hooray!
+        found = True
+    except KeyError:
+        found = False
+    if found is False:
+        print('''"Unable to locate the key with fingerprint "%s"''' % ns.activeFP)
+        print("This could be due to either a configuration error, or the key needs to be re-imported.")
+        print("Please double-check your configuration and keyring and try again.")
+        cleardown()
+        exit()
     debugPrint("Fetching key %s from Keyring" % ns.activeFP)
     debugPrint(ns.activeFP)
 
@@ -299,31 +326,27 @@ def findblock():  # Time to go grepping for taps!
                 foundBlocks.append(file)
 
 
-def validateBlock():
+def validateBlock(block): #Checks the validity of block's sig, and ret t/f accordingly.
+    #  Block shall be the fully qualified path of a tapfile, as a string.
     print("Checking the validity of this tapfile's signature.")
-    global valid
-    global sig; sig = None
-    for dont, care, files in os.walk(ns.media):
-        for file in files:
-            debugPrint("Looking for a sig at file: " + file)
-            if file.endswith(".sig"):
-                sig = os.path.join(dont, file)
-            elif file.endswith(".tap"):
-                data = os.path.join(dont, file)
-            else:
-                continue
+    valid = False # Begin with the assumption someone's messing with us.
+    signame = (str(block)+".sig")
+    debugPrint("Looking for the signature: %s" % signame)
+    try:
+        sig = open(signame,"rb")
+    except FileNotFoundError:
+        sig = None
+
     if sig is None:
         print("No signature is available for this block. Continue?")
         go = input("y/n?")
         if go.lower() == "y":
             valid = True
         else:
-            print("Aborting backup.")
-            cleardown()
-            exit()
+            print("Okay, rejecting this block.")
+            return valid
     else:
-        with open(sig, "rb") as fsig:
-            verified = gpg.verify_file(fsig, data)
+        verified = gpg.verify_file(sig, block)
         if verified.trust_level is not None and verified.trust_level >= verified.TRUST_FULLY:
             valid = True
             print("This block has been verified by %s, which is sufficiently trusted." % verified.username)
@@ -334,14 +357,19 @@ def validateBlock():
             if go.lower() == "y":
                 valid = True
             else:
-                print("Aborting backup.")
-                cleardown()
-                exit()
+                print("Okay, rejecting this block.")
+                return valid
+    return valid
 
 
 def decryptBlock():
     global foundBlocks
+    validBlocks = []
     for block in foundBlocks:
+        validated = validateBlock(block)
+        if validated:
+            validBlocks.append(block)
+    for block in validBlocks:
         outputTGT = str(os.path.join(ns.workDir, block))
         with open(block, "rb") as kfile:
             baz = gpg.decrypt_file(kfile, output=outputTGT, always_trust=True)
@@ -354,7 +382,7 @@ def decryptBlock():
                     shutil.copy(outputTGT, (outputTGT+".temp"))
                     with bz2.BZ2File(outputTGT+".temp", "rb") as compressed:
                         with open(outputTGT, "wb") as uncompressed:
-                            uncompressed.write(compressed.read())
+                            shutil.copyfileobj(compressed, uncompressed)
                     pass
             if not baz.ok:
                 debugPrint("Decryption Error: " + str(baz.status))
@@ -422,13 +450,11 @@ def unpackBlocks():
                             pathend = recPaths[item]
                             ns.sumJobs += 1
                             tasker.put(recTask(file, item, catdir, pathend))
-
         global workers; workers = []
         for i in range(ns.numConsumers):
             workers.append(recProc(tasker))
         for w in workers:
             w.start()
-        tasker.join()
         for foo in range(ns.numConsumers):
             tasker.put(None)  # seed poison pills at the end of the queue to kill the damn consumers
         tasker.join()
@@ -437,6 +463,7 @@ def unpackBlocks():
 def cleardown():
     if os.path.exists(ns.workDir):
         shutil.rmtree(ns.workDir)
+        global gpg; gpg = None
 
 
 def getContents(category, tgt):
@@ -600,7 +627,7 @@ def buildMaster():  # summons the master process and builds its corresponding na
 
 def parseArgs():  # mounts argparser, crawls it and then assigns to the managed namespace
     if __name__ == "__main__":
-        parser = argparse.ArgumentParser(description="Automatically backup or restore personal files from the system.")
+        parser = argparse.ArgumentParser(description="Automatically backup or restore personal files from the system. \n Full documentation at https://github.com/ZAdamMac/Tapestry/blob/master/DOCUMENTATION.md")
         parser.add_argument('--rcv', help="Recover a previous archive from disk.", action="store_true")
         parser.add_argument('--inc', help="Tells the system to include non-default sections in the backup process.",
                             action="store_true")
@@ -628,30 +655,6 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
             config.read(cfg)
             global uninit
             uninit = False
-        else:  # the finished version should include a tapestry.cfg file by default for clarity, but in a pinch we can assign some defaults.
-            uninit = True
-            config.add_section("Environment Variables")
-            config.add_section("Default Locations/Nix")
-            config.add_section("Additional Locations/Nix")
-            config.add_section("Default Locations/Win")
-            config.add_section("Additional Locations/Win")
-            config.set("Environment Variables", "blockSize", "4000")
-            config.set("Environment Variables", "keysize", "2048")
-            config.set("Environment Variables", "expected fp", "0")
-            config.set("Environment Variables", "compid", "uninit")
-            config.set("Environment Variables", "sign by default", str(True))
-            config.set("Environment Variables", "signing fp", "0")
-            config.set("Envrionment Variables", "Drive Letter", "D:/")
-            config.set("Environment Variables", "uid",
-                       "uninit")  # as a portable function this should work in both Linux and Windows
-            if platform.system() == "Linux":  # Some defaults could be better
-                uname = os.uname()
-                config.set("Environment Variables", "compid",
-                           str(uname[1]))  # gets the nodeid and sets it as the computer's name.
-            configFile = os.open("tapestry.cfg", os.O_CREAT | os.O_RDWR)
-            os.close(configFile)
-            with open(cfg, "r+") as t:
-                config.write(t)
 
         ns.expectedFP = config.get("Environment Variables", "Expected FP")
         ns.fp = config.get("Environment Variables", "Expected FP")  # Can be changed during the finding process.
@@ -663,6 +666,12 @@ def parseConfig():  # mounts the configparser instance, grabs the config file, a
         ns.step = "none"
         ns.sumJobs = 0
         ns.jobsDone = 0
+        ns.modeNetwork = config.get("Network Configuration", "mode")
+        ns.addrNet = config.get("Network Configuration", "server")
+        ns.portNet = config.getint("Network Configuration", "port")
+        ns.nameNet = config.get("Network Configuration", "username")
+        ns.nameNet = config.get("Network Configuration", "remote drop location")
+        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
 
         # We also declare some globals here. They aren't used in the children so they aren't part of ns, but they still need to be declared and still come from config.
         global blockSizeActual
@@ -724,12 +733,58 @@ def buildOpsList():
 
 def calcConsumers(): #  Simple function, returns an appropriate number of consumers based on available RAM and available processor cores.
     cielCores = os.cpu_count()
-    global blockSizeActual
-    cielRAM = math.floor(int(os.popen("free -m").readlines()[1].split()[1])/blockSizeActual)
-    if cielCores < cielRAM:
-        if cielRAM > 1:
-            print("The selected RAM may be insufficient for the current blocksize and this may result in some delays.")
     return cielCores
+
+def getSSLContext(test=False):  # Construct and return an appropriately-configured SSL Context object.
+    tlsContext = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS)
+    tlsContext.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+    if ns.modeNetwork.lower() == "loom":
+        tlsContext.load_cert_chain(ns.clientCert)
+    if test:
+        tlsContext.load_verify_locations(cafile="testcert.pem")
+    return tlsContext
+
+def connectFTP(url, port, ssl_context, username, password):  # Establish and return a valid FTP connection object.
+    if username is not None:
+        if password is None:
+            password = ""
+    elif username is None:
+        username = ''
+    if port is None:
+        port = 21
+    if ssl_context is None:
+        link = ftplib.FTP()
+    else:
+        link = MyFTP_TLS(context=ssl_context)
+        link.connect(host=url, port=port)
+        try:
+            link.auth()
+        except ssl.SSLError:
+            raise ConnectionRefusedError
+        link.prot_p()
+    if username != '':
+        link.login(user=username, passwd=password)
+    return link
+
+def sendFile(ftp_link, upload): # locate file at string "target" and send over FTP_link
+    ftp_link.storbinary("STOR %s" % upload, open(upload, "rb"))
+
+def grepBlocks(label, date, ftp_connect):  # fetch the list of blocks from Label on Date.
+    index = ftp_connect.nlst()
+    lead = ( "%s-%s" % (label, date))
+    listFetch = []
+    for file in index:
+        if file.startswith(lead):
+            listFetch.append(file)
+    return len(listFetch), listFetch
+
+def fetchBlock(fname, ftp_connect, dirDestination): # fetch fname from the server
+    if dirDestination != "":
+        if not os.path.exists(dirDestination):
+            os.mkdir(dirDestination)
+    with open(os.path.join(dirDestination, fname), "wb") as fo:
+        ftp_connect.retrbinary(("RETR %s" %fname), fo.write)
+
 
 #We're gonna need some globals
 global counterFID; counterFID = 0
@@ -742,6 +797,7 @@ global listSection; listSection = {}
 
 # Runtime
 if __name__ == "__main__":
+    global compid
     announce()
     buildMaster()
     parseArgs()
@@ -752,27 +808,46 @@ if __name__ == "__main__":
         init()
         exit()
     elif ns.rcv:
-        print("Tapestry is ready to recover your files. If recovering from physical media, please insert the first disk.")
-        input("Press any key to continue")
+        if ns.modeNetwork.lower() == "ftp":
+            input("Tapestry is presently configured to an FTP drop. Please ensure you have a connection, and press any key to continue.")
+            useDefaultCompID = input("Would you like to recover files for %s? (y/n)>" % compid).lower()
+            if useDefaultCompID == "n":
+                print("Please enter the name of the computer you wish to recover files for:")
+                compid = input("Case Sensitive: ")
+            print("Please enter the date for which you wish to recover files:")
+            tgtDate = input("YYYY-MM-DD")
+            pw = getpass.getpass("Enter the FTP password now (if required)")
+            ftp_link = connectFTP(ns.addrNet, ns.portNet, getSSLContext(), ns.nameNet, pw)
+            countBlocks, listBlocks = grepBlocks(compid, tgtDate, ftp_link)
+            if countBlocks == 0:
+                print("No blocks for that date were found - check your records and try again.")
+                ftp_link.quit()
+                exit()
+            else:
+                ns.media = ns.workDir
+                for block in listBlocks:
+                    fetchBlock(block, ftp_link, ns.media)
+                ftp_link.quit()
         usedBlocks = []
         loadKey()
         buildOpsList()
         createDIRS()
         findblock()
-        validateBlock()
         decryptBlock()
         openPickle()
         print("This backup exists in %d blocks." % numBlocks)
         for foo, bar, found in os.walk(ns.workDir):
-            countBlocks = len(found)-1
+            countBlocks = 0
+            for i in found:
+                if i.endswith(".tap"):
+                    countBlocks+=1
         print("So far, you have supplied %d blocks." % countBlocks)
         while countBlocks < numBlocks:
             input("Please insert the next disk and press enter to continue.")
             findblock()
-            validateBlock()
             decryptBlock()
         unpackBlocks()
-        print("Any files with uncertain placement were moved to the output folder.")
+        print("\nAny files with uncertain placement were moved to the output folder.")
         print("All blocks have now been unpacked. Tapestery will clean up and exit.")
         cleardown()
         exit()
@@ -787,8 +862,35 @@ if __name__ == "__main__":
         makeIndex()
         buildBlocks()
         processBlocks()
-        print("\nThe processing has completed. Your .tap files are here:")
-        print(str(ns.drop))
-        print("Please archive these expediently.")
-        cleardown()
-        exit()
+        if ns.modeNetwork.lower() == "none":
+            print("\nThe processing has completed. Your .tap files are here:")
+            print(str(ns.drop))
+            print("Please archive these expediently.")
+            cleardown()
+            exit()
+        elif ns.modeNetwork.lower() == "ftp":
+            print("\nTapestry has been configured to use an FTP drop for file output.")
+            print("The program will now connect to %s as user %s and place the files in %s" % (ns.addrNet, ns.nameNet, ns.netDrop))
+            pw = getpass.getpass("Enter the FTP password now (if required): ")
+            instFTP = connectFTP(ns.addrNet, ns.portNet, getSSLContext(test=False), ns.nameNet, pw)
+            for foo, bar, files in os.walk(ns.drop):
+                for file in files:
+                    if file.endswith(".tap") or file.endswith(".sig"):
+                        sendFile(instFTP, file)
+            instFTP.quit()
+            print("All files have been successfully uploaded to the FTP except as indicated.")
+        if ns.retainLocal and not ns.rcv:
+            print("\nYour files are also being retained locally, and are here:")
+            print(str(ns.drop))
+            cleardown()
+            exit()
+        else:
+            print("Your network configuration is set such that files have not been retained locally.")
+            for foo, bar, files in os.walk(ns.drop):
+                for file in files:
+                    if file.lower() != "skipped files":
+                        os.chdir(ns.drop)
+                        os.remove(file)
+            print("The redundant files have been removed - Tapestry will now close.")
+            cleardown()
+            exit()

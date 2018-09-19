@@ -5,18 +5,18 @@
 Tapestry is a reasonably lightweight and flexible script in its essence, but it does involve some basic requirements.
 
 **Suggested Minimum Hardware Requirements**
-- 6GB RAM (or 1.5*Blocksize, if changing blocksize)
+- 4 GB RAM (Probably will run in less)
 - 3.0 GHz, 64-Bit Dual-Core Processor (or equivalent)
 - 10 GB or more unusued Hard Drive Space
 
 **Software Requirements**
 - 64-bit Linux/Unix-Based OS (Recommended)
-- Python v3.7
+- Python v3.6
 - Python-GnuPG, v.0.4.2 or later
 - GnuPG 2.1.11
 
 ### Other Considerations
-Tapestry runs are fairly long - on the order of twenty minutes per default-sized block, depending on your system resources and the amount of other processes running concurrently. Accordingly it's considered helpful to use cron jobs or other automation in order to run the backup overnight or during other periods of low-activity uptime.
+Tapestry runs are fairly long - on the order of 12 minutes per default-sized block, depending on your system resources and the amount of other processes running concurrently. Accordingly it's considered helpful to use cron jobs or other automation in order to run the backup overnight or during other periods of low-activity uptime.
 
 It is currently required due to software limitations that the recent version of GnuPG is installed as the primary instance. That is to say, a call to `gpg` should instantiate the latest version of it installed.
 
@@ -41,6 +41,17 @@ Tapestry stores its user-adjustable configuration files in `tapestry.cfg` which 
 |**use compression**|True|Toggles the use of Tapestry's built-in bz2 compression handler. If set to true, blocks are compressed before encrypting to keep them under the blocksize.|
 |**compression level**|2|A value from 1-9 indicating the number of bz2 compression passes to be used. Experimentation is required for different blocksizes to determine the minimum viable value. 9 passes is maximally efficient, but also takes considerable time, especially on larger blocksizes.|
 
+### Network Configuration
+|Option|Default|Use|
+|---|---|---|
+|mode|none|Determines whether or not the FTP mode will be used. "none" for no network mode, "ftp" for the FTP_TLS mode.|
+|server|localhost|Determines the address of the server for the FTP mode|
+|port|21|Determines the port at which the FTP server is listening.|
+|username|ftptest|Username to use when authenticating to server - user will be prompted for a password at runtime. Can be blank|
+|remote drop location|drop|The path appended to all file upload requests. Should be blank in the reference implementation.|
+|keep local copies| True| If false, Tapestry will delete the local copy of each block and signature upon upload.|
+
+
 ### Additional Categories
 Additionally, the user will find categories for windows and linux options, indicating they are either "default" or "additional" locations for backup. Any number of these definitions can be included at the user's discretion, so long as each option label is unique. When doing this it is desirable to set equivalent paths for both OS varieties, but as Windows support was broken in 0.3.0, the windows categories are not formally significant.
 
@@ -49,7 +60,6 @@ Tapestry supports the following arguments at runtime:
 
 |argument|function|
 |---|---|
-|--setup|Drops to the soon-to-be-deprecated setup menu system. The setup menu is badly out of date and crudely designed. It is better to modify config directly using a text editor.|
 |--genKey|Generate a new RSA public/private keypair designed to be used as the Disaster Recovery Key. In a pinch this could also be used to generate a signing key, but there are better ways to do that.|
 |--inc|Performs an "inclusive run", adding all of the "additional locations" categories to the work list at runtime. Provides non-granular differentation between "quick" and "complete" backups.|
 |--rcv|Places the script in recovery mode, checking its recovery path for .tap files and their associated .sigs and recovering them programatically.
@@ -97,7 +107,7 @@ Tapestry treats every location defined in its configuration file as the top of a
 The specific locations you select are entirely up to you. At time of writing I personally use the documents and photos default folders in my default locations list, with my additional locations list including videos, music, and a subset of the hidden configuration directories.
 
 ## Example Runsheet: First-Time Setup
-0. Download the latest version of tapestry from the github repo (at time of writing, 0.3.1), and verify it against its own signature. To do this you will need a copy of [this key](https://pgp.mit.edu/pks/lookup?op=vindex&search=0xF373FF4B43FC742F).
+0. Download the latest version of tapestry from the github repo (at time of writing, 1.1.0), and verify it against its own signature. To do this you will need a copy of [this key](https://pgp.mit.edu/pks/lookup?op=vindex&search=0xF373FF4B43FC742F).
 1. Unpack the verified tar of Tapestry. It should contain Tapestry.py, README.md, DOCUMENTATION.md (versions 1.0 and up), and an example tapestry.cfg file.
 2. Open up tapestry.cfg in your text editor of choice and adjust the configuration as follows:
  - Refer to the configuration table above for explanations of the environment variables, and;
@@ -109,3 +119,16 @@ python3 tapestry.py --genKey --inc
 4. Follow the onscreen directions to generate your first disaster-recovery key.
 5. (Optional) Take the time now to generate a signing key if you don't already have one, as well as the revocation certificates for both. Be sure to back these up and store them securely.
 6. Store your keyfiles and the generated inclusive backup safely and securely.
+
+## Network Storage Mode
+Tapestry is designed to use three different networking modes - Networked File Systems, FTP, and the purpose-designed Loom service.
+
+### Using Tapestry with NFS
+Using Tapestry with any variation of a network filesystem is as simple as ensuring the desired device or drive is mounted to the local filesystem and setting the desired output directory on that device as Tapestry's output directory. No other networking configuration is necessary and the mode value should be `none`
+
+### Using Tapestry with FTP
+Using Tapestry with FTP is a little more complex. Tapestry is designed primarily to work with TLS-secured FTP servers such as vsftpd. To configure this mode, make the following settings under Network Configuration:
+- Set `mode = ftp`
+- Set server and port per the configuration of your server.
+- If necessary, provide a username to authenticate as.
+- It is recommended you leave `keep local copies` set to True.
