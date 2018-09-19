@@ -48,7 +48,8 @@ Tapestry stores its user-adjustable configuration files in `tapestry.cfg` which 
 |server|localhost|Determines the address of the server for the FTP mode|
 |port|21|Determines the port at which the FTP server is listening.|
 |username|ftptest|Username to use when authenticating to server - user will be prompted for a password at runtime. Can be blank|
-|remote drop location|drop|The path appended to all file upload requests. Should be blank in the reference implementation.
+|remote drop location|drop|The path appended to all file upload requests. Should be blank in the reference implementation.|
+|keep local copies| True| If false, Tapestry will delete the local copy of each block and signature upon upload.|
 
 
 ### Additional Categories
@@ -59,7 +60,6 @@ Tapestry supports the following arguments at runtime:
 
 |argument|function|
 |---|---|
-|--setup|Drops to the soon-to-be-deprecated setup menu system. The setup menu is badly out of date and crudely designed. It is better to modify config directly using a text editor.|
 |--genKey|Generate a new RSA public/private keypair designed to be used as the Disaster Recovery Key. In a pinch this could also be used to generate a signing key, but there are better ways to do that.|
 |--inc|Performs an "inclusive run", adding all of the "additional locations" categories to the work list at runtime. Provides non-granular differentation between "quick" and "complete" backups.|
 |--rcv|Places the script in recovery mode, checking its recovery path for .tap files and their associated .sigs and recovering them programatically.
@@ -124,7 +124,11 @@ python3 tapestry.py --genKey --inc
 Tapestry is designed to use three different networking modes - Networked File Systems, FTP, and the purpose-designed Loom service.
 
 ### Using Tapestry with NFS
-Using Tapestry with any variation of a network filesystem is as simple as ensuring the desired device or drive is mounted to the local filesystem and setting the desired output directory on that device as Tapestry's output directory. No other networking configuration is necessary.
+Using Tapestry with any variation of a network filesystem is as simple as ensuring the desired device or drive is mounted to the local filesystem and setting the desired output directory on that device as Tapestry's output directory. No other networking configuration is necessary and the mode value should be `none`
 
 ### Using Tapestry with FTP
- # TODO Do This.
+Using Tapestry with FTP is a little more complex. Tapestry is designed primarily to work with TLS-secured FTP servers such as vsftpd. To configure this mode, make the following settings under Network Configuration:
+- Set `mode = ftp`
+- Set server and port per the configuration of your server.
+- If necessary, provide a username to authenticate as.
+- It is recommended you leave `keep local copies` set to True.
