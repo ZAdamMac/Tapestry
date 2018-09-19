@@ -194,7 +194,7 @@ for foo, bar, files in os.walk(out):
                     print("WARNING: Signature at %s insufficiently trusted." % file)
                     log.log("Signature mismatch in file: %s" % file)
                     failures =+ 1
-print("Signature verification completed with %s failures." % failures) # TODO fix for pass/fail
+print("Signature verification completed with %s failures." % failures)
 if failures < 1:
     log.log('''[PASSED] All of the signatures compared in the signature testing were trusted,  \n
 and matched the expected value for their source document.                       \n''')
