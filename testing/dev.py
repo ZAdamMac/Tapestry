@@ -782,7 +782,7 @@ def fetchBlock(fname, ftp_connect, dirDestination): # fetch fname from the serve
     if not os.path.exists(dirDestination):
         os.mkdir(dirDestination)
     with open(os.path.join(dirDestination, fname), "wb") as fo:
-        ftp_connect.retrbinary(("RETR %s" %fname), fo)
+        ftp_connect.retrbinary(("RETR %s" %fname), fo.write)
 
 
 #We're gonna need some globals
