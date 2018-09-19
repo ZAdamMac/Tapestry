@@ -112,10 +112,12 @@ else:
     print("Beginning file transfer tests using inert transfer article.")
     dev.sendFile(instFTP, "testblock-2001-01-01.txt")
     countPlaced, listPlaced = dev.grepBlocks("testblock", "2001-01-01", instFTP)
-    dev.fetchBlock("testblock.txt", instFTP, "/")
-    hashControlFTP = hashlib.md5().update(open("testblock.txt", "rb").readall())
-    hashRelayFTP = hashlib.md5().update(open(os.path.join(out, "testblock.txt")).readall())
-    if hashRelayFTP == hashControlFTP:
+    dev.fetchBlock("testblock.txt", instFTP, out)
+    hashControlFTP = hashlib.md5()
+    hashControlFTP.update(open("testblock-2001-01-01.txt", "rb").readall())
+    hashRelayFTP = hashlib.md5()
+    hashRelayFTP.update(open(os.path.join(out, "testblock-2001-01-01.txt", "rb")).readall())
+    if hashRelayFTP.hexdigest == hashControlFTP.hexdigest:
         print("File Transfer Success")
         log.log("[PASSED] A file was successfully uploaded to the test server, retrieved, and\ncompared to the original file by its md5 hash.")
     else:
