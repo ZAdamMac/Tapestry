@@ -767,7 +767,7 @@ def connectFTP(url, port, ssl_context, username, password):  # Establish and ret
     return link
 
 def sendFile(ftp_link, upload): # locate file at string "target" and send over FTP_link
-    ftp_link.storbinary("STOR %s" % upload, open(upload, "rb"))
+    ftp_link.storbinary("STOR %s" % upload, open(upload, "rb").readall())
 
 def grepBlocks(label, date, ftp_connect):  # fetch the list of blocks from Label on Date.
     index = ftp_connect.nlst()
