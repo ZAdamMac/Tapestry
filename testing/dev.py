@@ -759,7 +759,6 @@ def connectFTP(url, port, ssl_context, username, password):  # Establish and ret
         try:
             link.auth()
         except ssl.SSLError:
-            print("Fuckin' SSL.")
             raise ConnectionRefusedError
         link.prot_p()
     if username != '':
