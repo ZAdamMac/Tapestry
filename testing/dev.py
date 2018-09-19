@@ -25,6 +25,16 @@ import tarfile
 import uuid
 
 # Defining Classes
+class MyFTP_TLS(ftplib.FTP_TLS): # With thanks to hynekcer
+    """Explicit FTPS, with shared TLS session"""
+    def ntransfercmd(self, cmd, rest=None):
+        conn, size = ftplib.FTP.ntransfercmd(self, cmd, rest)
+        if self._prot_p:
+            conn = self.context.wrap_socket(conn,
+                                            server_hostname=self.host,
+                                            session=self.sock.session)  # this is the fix
+        return conn, size
+
 class skipLogger:  # dedicated skip-logging handler for use in buildBlocks
     def __init__(self, landingdir,name):  # starts the skiplogger and tells it it will be writing to landingdir with name
         landingAbs = os.path.join(landingdir, name)
@@ -744,7 +754,7 @@ def connectFTP(url, port, ssl_context, username, password):  # Establish and ret
     if ssl_context is None:
         link = ftplib.FTP()
     else:
-        link = ftplib.FTP_TLS(context=ssl_context)
+        link = MyFTP_TLS(context=ssl_context)
         link.connect(host=url, port=port)
         try:
             link.auth()
