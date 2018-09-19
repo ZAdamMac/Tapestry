@@ -11,6 +11,7 @@ import configparser
 import datetime
 from datetime import date
 import ftplib
+import getpass
 import gnupg
 import math
 import multiprocessing as mp
@@ -183,7 +184,7 @@ class sigTasker(object):
             statusPrint()
 
 
-class recTask(object): #todo exception handles
+class recTask(object):
     def __init__(self, tar, fid, catdir, pathend):
         self.tar = tar
         self.fid = fid
@@ -815,7 +816,7 @@ if __name__ == "__main__":
                 compid = input("Case Sensitive: ")
             print("Please enter the date for which you wish to recover files:")
             tgtDate = input("YYYY-MM-DD")
-            pw = input("Enter the FTP password now (if required)") # TODO add password masking to both these functions.
+            pw = getpass.getpass("Enter the FTP password now (if required)")
             ftp_link = connectFTP(ns.addrNet, ns.portNet, getSSLContext(), ns.nameNet, pw)
             countBlocks, listBlocks = grepBlocks(compid, tgtDate, ftp_link)
             if countBlocks == 0:
@@ -870,7 +871,7 @@ if __name__ == "__main__":
         elif ns.modeNetwork.lower() == "ftp":
             print("\nTapestry has been configured to use an FTP drop for file output.")
             print("The program will now connect to %s as user %s and place the files in %s" % (ns.addrNet, ns.nameNet, ns.netDrop))
-            pw = input("Enter the FTP password now (if required): ")
+            pw = getpass.getpass("Enter the FTP password now (if required): ")
             instFTP = connectFTP(ns.addrNet, ns.portNet, getSSLContext(test=False), ns.nameNet, pw)
             for foo, bar, files in os.walk(ns.drop):
                 for file in files:
