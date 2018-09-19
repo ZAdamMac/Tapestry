@@ -78,8 +78,6 @@ log.log("\n"+str(taphash)+"\n")
 os.chdir(permaHome)
 
 # We use popen not to block the test script while the servers are running, but we need to close them later, so we catch the processes in some vars.
-srvBad = subprocess.Popen(args="vsftpd vsftpd-bad.config", shell=True, stdout=subprocess.DEVNULL)
-srvGood = subprocess.Popen(args="vsftpd vsftpd-good.config.py", shell=True, stdout=subprocess.DEVNULL)
 instFTP = None
 
 #Test the Bad Link First
@@ -93,15 +91,13 @@ except ConnectionRefusedError:  # This should hopefully be the right exception b
     print("Malicious Connection Test - PASS - Connection Refused.")
     log.log("[PASSED] The 'malicious' server was correctly rejected by Tapestry's connection\nestablishment function.")
 
-srvBad.terminate()
-
 #Now the Good Link
 
 try:
     instFTP = dev.connectFTP("localhost", 211, testcontext, test_FTP_user, test_FTP_pw)
     print("Benign Connection Test - PASS - Connection Accepted.")
     log.log("[PASSED] The 'valid' server was accepted by the connection establishment\nfunction and a valid connection object is being passed to the next test.")
-except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
+except ConnectionRefusedError or ssl.SSLError:  # This should hopefully be the right exception but some offline tests are required
     print("Benign Connection Test - FAIL - Connection Refused.")
     log.log("[FAILED] The 'valid' server was rejected by the connection establishment\nfunction and the next test must be skipped.")
 log.log("-------------------------------------------------------------------------------")
@@ -141,6 +137,5 @@ carryOn = input("Press any key to continue. > ")
 shutil.rmtree(out)
 if instFTP is not None:
     instFTP.delete("testblock-2001-01-01.txt")
-srvGood.terminate()
 remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"), secret=True, expect_passphrase=False)
 remKey = gpg.delete_keys(cfg.get("Environment Variables", "Expected FP"))
