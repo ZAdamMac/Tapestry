@@ -114,9 +114,9 @@ else:
     countPlaced, listPlaced = dev.grepBlocks("testblock", "2001-01-01", instFTP)
     dev.fetchBlock("testblock-2001-01-01.txt", instFTP, out)
     hashControlFTP = hashlib.md5()
-    hashControlFTP.update(open("testblock-2001-01-01.txt", "rb").readall())
+    hashControlFTP.update(open("testblock-2001-01-01.txt", "rb").read())
     hashRelayFTP = hashlib.md5()
-    hashRelayFTP.update(open(os.path.join(out, "testblock-2001-01-01.txt", "rb")).readall())
+    hashRelayFTP.update(open(os.path.join(out, "testblock-2001-01-01.txt"), "rb").read())
     if hashRelayFTP.hexdigest == hashControlFTP.hexdigest:
         print("File Transfer Success")
         log.log("[PASSED] A file was successfully uploaded to the test server, retrieved, and\ncompared to the original file by its md5 hash.")
