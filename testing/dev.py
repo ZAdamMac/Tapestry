@@ -779,6 +779,8 @@ def grepBlocks(label, date, ftp_connect):  # fetch the list of blocks from Label
     return len(listFetch), listFetch
 
 def fetchBlock(fname, ftp_connect, dirDestination): # fetch fname from the server
+    if not os.path.exists(dirDestination):
+        os.mkdir(dirDestination)
     with open(os.path.join(dirDestination, fname), "wb") as fo:
         ftp_connect.retrbinary(fname, fo)
 
