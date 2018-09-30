@@ -1,5 +1,5 @@
 # Testing Documentation for Tapestry Project
-## Current as of release 1.1.0
+## Current as of release 2.0
 
 This document is intended to lay out a brief explanation of the correct use of the provided scripts in testing Tapestry, for use in development. **No fork may be pushed to Master until its version of dev.py passes all tests.** Functional Testing is the current best-fit method for testing Tapestry in a reproducible way during development and will likely remain such until the 2.0 rewrite. Going forward, new features should be added in such a way that they are unit-testable whenever possible.
 
