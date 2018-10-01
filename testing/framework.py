@@ -9,12 +9,12 @@ import time
 
 # Define the Classes We Use
 class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
-    def __init__(self, landingdir,name):  # starts the skiplogger and tells it it will be writing to landingdir with name
+    def __init__(self, landingdir,name, test):  # starts the skiplogger and tells it it will be writing to landingdir with name
         landingAbs = os.path.join(landingdir, name)
         if not os.path.exists(landingdir):
             os.makedirs(landingdir)
         self.loggerfile = open(landingAbs, "w")  # This will REPLACE the existing logfile with the new one so be careful
-        self.loggerfile.write("===============================================================================\nThis is a log of tests run against some version of Tapestry by the \nfunctional-tests.py testing utility. The date is indicated in the filename. \nIt should be made clear that these tests do not indicate any sort of warranty \nor guarantee of merchantability.\n\n=======TEST MACHINE SPECS=======\n")
+        self.loggerfile.write("===============================================================================\nThis is a log of tests run against some version of Tapestry by the \n%s.py testing utility. The date is indicated in the filename. \nIt should be made clear that these tests do not indicate any sort of warranty \nor guarantee of merchantability.\n\n=======TEST MACHINE SPECS=======\n" % str(test))
         cores = os.cpu_count()
         self.loggerfile.write("Cores Available: %s \n" % cores)
         RAM = os.popen("free -m").readlines()[1].split()[1]
