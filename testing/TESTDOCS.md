@@ -80,7 +80,6 @@ Back-and-forth tests, with hash comparison to make sure the files are unaltered 
 ### Extant Features
 Some extant features of Tapestry are not explicitly tested for. In most cases, their tests are implicit:
 - If Identity succeeds it didn't matter what the Blocksize value was set to.
-- Nothing from init() or setup() is tested as both scripts are to be deprecated in the near future.
 - "Bad Return" feature is implicitly tested for by the way in which the testing script runs the final recovery pass - if it is not working, Identity would fail.
 
 ### New Features
