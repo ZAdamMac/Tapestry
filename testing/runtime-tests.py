@@ -8,39 +8,11 @@ import hashlib
 import os
 import shutil
 import subprocess
+from testing import framework
 import time
 
 
 #  Define Classes
-class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
-    def __init__(self, landingdir,name):  # starts the skiplogger and tells it it will be writing to landingdir with name
-        landingAbs = os.path.join(landingdir, name)
-        if not os.path.exists(landingdir):
-            os.makedirs(landingdir)
-        self.loggerfile = open(landingAbs, "w")  # This will REPLACE the existing logfile with the new one so be careful
-        self.loggerfile.write("===============================================================================\nThis is a log of tests run against some version of Tapestry by the \nruntime-tests.py testing utility. The date is indicated in the filename. \nIt should be made clear that these tests do not indicate any sort of warranty \nor guarantee of merchantability.\n\n=======TEST MACHINE SPECS=======\n")
-        cores = os.cpu_count()
-        self.loggerfile.write("Cores Available: %s \n" % cores)
-        RAM = os.popen("free -m").readlines()[1].split()[1]
-        self.loggerfile.write("RAM Available: %s MB \n" % RAM)
-        self.loggerfile.write("================================\n\n\n\n================================BEGIN TESTING==================================\n")
-
-    def log(self, foo):  # Formats foo nicely and adds it to the log
-        self.loggerfile.write(foo + '\n')
-
-    def save(self):  # saves the file to disk. Once used you have to re-instance the logger
-        self.loggerfile.write("\n\n===============================[END OF TESTING]===============================")
-        self.loggerfile.write("\n Tester Comments: ")
-        self.loggerfile.write("\n This test was run on " + str(date.today()))
-        self.loggerfile.flush()
-        self.loggerfile.close()
-
-def elapsed(start):  #Quickly calculate the elapsed time between two points, to feed to the logger. Returns it formatted nicely.
-    current = time.monotonic()
-    secElapsed = current - start
-    strElapsed = time.strftime("%H:%M:%S", time.gmtime(secElapsed))
-    return strElapsed
-
 permaHome = os.getcwd()
 
 cfg = cp.ConfigParser()
@@ -61,7 +33,7 @@ if not os.path.isdir((logs)):
     os.mkdir(logs)
 
 logname = ("runtime_test-%s-%s.log" % (uid, str(date.today())))
-log = simpleLogger(logs, logname)
+log = framework.simpleLogger(logs, logname)
 
 
 #  Do the bulk runs and context switching to generate the test outputs (make sure to seperate outputs between runs!)
@@ -81,7 +53,7 @@ if not os.path.isdir(os.path.join(out, "Non-Inc")):
 print("Now Beginning the --genKey test")
 start = time.monotonic()
 waiting = subprocess.run(("python3.6", "dev.py", "--genKey"))
-elapse = elapsed(start)
+elapse = framework.elapsed(start)
 print("--genKey completed in %s" % elapse)
 log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
 log.log(str(waiting))
@@ -94,7 +66,7 @@ with open("tapestry-test.cfg", "w") as warp:
 print("Now beginning --inc test.")
 start = time.monotonic()
 waiting = subprocess.run(("python3.6", "dev.py", "--inc"))
-elapse = elapsed(start)
+elapse = framework.elapsed(start)
 print("--inc completed in %s" % elapse)
 log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
 log.log(str(waiting))
@@ -115,7 +87,7 @@ with open("tapestry-test.cfg", "w") as warp:
 print("Now beginning --rcv test.")
 start = time.monotonic()
 waiting = subprocess.run(("python3.6", "dev.py", "--rcv"))
-elapse = elapsed(start)
+elapse = framework.elapsed(start)
 print("--rcv completed in %s" % elapse)
 log.log("ecovery Mode Test Completed in %s - Returned:" % elapse)
 log.log("%s" % waiting)
