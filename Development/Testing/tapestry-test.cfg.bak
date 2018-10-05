@@ -1,0 +1,37 @@
+[Environment Variables]
+uid = patches
+compid = Testbed
+blocksize = 4096
+expected fp = 4961A99F45B8CDFBB0D25745C746293D20FCAC20
+sign by default = True
+signing fp = 388BB3657EAB090A9C01EC12288CBA1D80DCB8A5
+recovery path = /home/patches/Desktop/Tapestry FT Data/Test/Inc
+output path = /home/patches/Desktop/Tapestry FT Data/Test/
+keysize = 2048
+use compression = True
+compression level = 1
+
+[Network Configuration]
+mode = false
+server = localhost
+port = 21
+username = ftptest
+remote drop location = drop
+keep local copies = True
+
+[Default Locations/Nix]
+docs = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/documents
+photos = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/photos
+
+[Additional Locations/Nix]
+video = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/videos
+music = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/music
+
+[Default Locations/Win]
+docs = C:/Users/patches/Desktop/Tapestry FT Data/Documents
+photos = C:/Users/patches/Desktop/Tapestry FT Data/Pictures
+
+[Additional Locations/Win]
+video = C:/Users/patches/Desktop/Tapestry FT Data/Video
+music = C:/Users/patches/Desktop/Tapestry FT Data/Music
+
