@@ -1,7 +1,7 @@
 # Testing Documentation for Tapestry Project
-## Current as of release 1.1.0
+## Current as of release 2.0
 
-This document is intended to lay out a brief explanation of the correct use of the provided scripts in testing Tapestry, for use in development. **No fork may be pushed to Master until its version of dev.py passes all tests.** Functional Testing is the current best-fit method for testing Tapestry in a reproducible way during development and will likely remain such until the 2.0 rewrite. Going forward, new features should be added in such a way that they are unit-testable whenever possible.
+This document is intended to lay out a brief explanation of the correct use of the provided scripts in testing Tapestry, for use in development. **No fork or branch may be pushed to Master until its version of dev.py passes all tests.** Primary coverage is to be provided by unit testing of individual functions or rountine-functions, with Functional Testing to provide assurance the whole program functions as intended. Going forward, new features should be added in such a way that they are unit-testable whenever possible.
 
 ## Preparing the Test Environment and tapestry-test.cfg
 The test suite relies on a testing environment to run its target script against. That environment can be constructed relatively simply using the included `corpusmaker.py`. The method of preparing this environment is simple:
@@ -24,34 +24,48 @@ In order to test some variation of `dev.py`, simply copy it into the testing dir
 - From there on out, the user may allow the testing script to complete its run as normal. The system will run all of its tests and report their results to both STDOUT and a logfile stored under `~/Test`
 
 ## Technical Details of Integrity Tests
+While the bulk of testing before focused on integrity tests applied to the corpus produced by the functional test, a few remain which are done in this way after Tapestry 2.0. 
+
 ### Identity Tests
 The first test run in `integrity-tests` is an Identity Test, comparing the output version of the corpus to the known-good control corpus. Dictionaries are created listing every file in the control and test corpuses as key, with value being the md5 hash of the file. A simple comparison is then run and any deviations are logged.
 
 If there are no deviations, the test passes - the implication is that the backup was successfully restored. If any differences are observed, the test fails. Technically, it would be possible to use this test alone, but that is insufficiently granular.
 
-### Cryptographic Tests
-#### Decryption of .tap file
-The testing script attempts to decrypt a .tap file and reports success or failure. This is done in the event of a failure of the identity test to rule out an encryption error being the cause of the failure. As Identity cannot pass without decryption succeeding, this is all that is necessary.
-
-#### Signature Verification
-The script verifies the signature of a .tap file and reports success or failure. This is run regardless of the failure or success of other tests owing to the criticality of the signature function.
-
-### Version Specificity/Backward Compatibility
-If Identity fails, the testing script will fetch the recovery-pkl file from one of the test .tap blocks, and compare it to a known-good recovery-pkl sample. If the two files are different significantly (other than list orders), the test will fail, with the observed differences logged.
-
-Changes to expected recovery-pkl files are the largest cause of backward-forward compatibility breaking between versions.
-
-### Compression Tests
-The testing script makes a few tests involving file size, collectively referred to as compression tests.
-
-#### Inclusivity Test
-The testing script has generated both inclusive and exclusive sets of .tap files. This test simply compares the size of the two. It passes if the inclusive set is larger, and fails otherwise. If the test has been run against the control corpus output by corpusmaker.py, this is sufficient to demonstrate that the different sets of control lists are being handled correctly.
-
-#### Blocksize Compression Test
+### Blocksize Compression Test
 The testing script compares the size of all of its output blocks (the .tap files) to the blocksize defined in `tapestry-test.cfg`. If none exceed, the test passes.
 
 ### Export Test
 The testing script looks for, and attempts to import, DR.key and DRpub.key. If either fail, the corresponding test also fails.
+
+## Unit Tests
+In these tests, specific functions are imported from dev.py and their operation tested against known-good values.
+
+### Cryptographic Tests
+All cryptographic tests rely on a known key for stability reasons. This key is embedded in the relevant test package.
+
+#### Encryption Test
+A paintext value is passed to the encryption function (together with a test flag) to compare the expected output with a known-correctly-encrypted value.
+
+#### Decryption Test
+This test leverages the decrypt-block function to decrypt a "sample" tapfile. A flag is passed to bypass some of the heavier file operations and instead the plain and encrypted values of two strings are compared.
+
+#### Signature Verification
+The script verifies the signature of a .tap file and reports success or failure. This is run regardless of the failure or success of other tests owing to the criticality of the signature function.
+
+Additionally, this test is run again against a known-bad dataset to ensure it captures, after a flaw was discovered in Tapestry 1.0.1.
+
+### Version Specificity/Backward Compatibility
+There are two tests which provide for an assurance of backward-compatibility under Tapestry: the config-comparitor and the NewRIFF Strucutral Test.
+
+#### Config Comparison
+The configuration comparison test must be rewritten with each release. This test is simple - it looks to see that every value which should be found in the configuration actually is. This test is necessary because a standard practice is to update .dev without overwriting the config file. Future versions should include code to catch exceptions when an expected config value is absent (and define sane defaults.)
+
+#### NewRIFF Structural Test
+Updated each development cycle, the NewRIFF structural test compares the value of an extracted RIFF from the test packages generated by `functional-test.py`. It then uses a hard-coded list of expected key values and seeks to make sure that all values found in the RIFF in old versions are still found in new versions. It will also alert if a new RIFF value is detected with a `[WARNING]` message.
+
+
+### Inclusivity Test
+The script captures the return of the buildRunList() test twice, passing in different arguments each time to produce an inclusive and non-inclusive return. If the values match their expected values, the test will pass.
 
 ### Networking Tests
 #### Certificate Validity Tests
@@ -66,7 +80,6 @@ Back-and-forth tests, with hash comparison to make sure the files are unaltered 
 ### Extant Features
 Some extant features of Tapestry are not explicitly tested for. In most cases, their tests are implicit:
 - If Identity succeeds it didn't matter what the Blocksize value was set to.
-- Nothing from init() or setup() is tested as both scripts are to be deprecated in the near future.
 - "Bad Return" feature is implicitly tested for by the way in which the testing script runs the final recovery pass - if it is not working, Identity would fail.
 
 ### New Features
