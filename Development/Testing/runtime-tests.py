@@ -29,7 +29,7 @@ shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup o
 pathControl = out.replace("Test", "Control")
 
 #  Establish a Logger for Test Output
-if not os.path.isdir((logs)):
+if not os.path.isdir(logs):
     os.mkdir(logs)
 
 logname = ("runtime_test-%s-%s.log" % (uid, str(date.today())))
@@ -52,7 +52,7 @@ if not os.path.isdir(os.path.join(out, "Non-Inc")):
     os.mkdir(os.path.join(out, "Non-Inc"))
 print("Now Beginning the --genKey test")
 start = time.monotonic()
-waiting = subprocess.run(("python3.6", "dev.py", "--genKey"))
+waiting = subprocess.run(("python3.6", "dev.py", ("--genKey", "--devtest")))
 elapse = framework.elapsed(start)
 print("--genKey completed in %s" % elapse)
 log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
@@ -65,7 +65,7 @@ with open("tapestry-test.cfg", "w") as warp:
 
 print("Now beginning --inc test.")
 start = time.monotonic()
-waiting = subprocess.run(("python3.6", "dev.py", "--inc"))
+waiting = subprocess.run(("python3.6", "dev.py", ("--inc", "--devtest")))
 elapse = framework.elapsed(start)
 print("--inc completed in %s" % elapse)
 log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
@@ -86,7 +86,7 @@ with open("tapestry-test.cfg", "w") as warp:
 
 print("Now beginning --rcv test.")
 start = time.monotonic()
-waiting = subprocess.run(("python3.6", "dev.py", "--rcv"))
+waiting = subprocess.run(("python3.6", "dev.py", ("--rcv", "--devtest")))
 elapse = framework.elapsed(start)
 print("--rcv completed in %s" % elapse)
 log.log("ecovery Mode Test Completed in %s - Returned:" % elapse)
