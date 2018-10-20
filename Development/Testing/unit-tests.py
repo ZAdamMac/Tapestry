@@ -26,6 +26,13 @@ def establish_namespace():
 
     return ns
 
+def test_config_compliance(namespace):
+    """Imports /Development/Source/Tapestry.cfg and parses it, then ensures
+    that all the expected values are present. This test must be modified after
+    development of the release is believed "finished" to ensure all values are
+    present and correct.
+    """
+    pass
 
 def test_encryption_cyclic(namespace):
     """Test the encryption and decryption functions by providing a bytestream
