@@ -26,6 +26,7 @@ def establish_namespace():
 
     return ns
 
+
 def test_config_compliance(namespace):
     """Imports /Development/Source/Tapestry.cfg and parses it, then ensures
     that all the expected values are present. This test must be modified after
@@ -34,9 +35,17 @@ def test_config_compliance(namespace):
     """
     pass
 
+
 def test_encryption_cyclic(namespace):
     """Test the encryption and decryption functions by providing a bytestream
     which acts as a dummy file. The input and output are compared."""
+    pass
+
+
+def test_inclusivity_diff(namespace):
+    """Runs the runlist creation process twice against both the regular and
+    inclusive roots and makes sure the inclusive list is larger.
+    """
     pass
 
 
@@ -47,11 +56,13 @@ def test_riff_compliance(namespace):
     """
     pass
 
+
 def test_verification_good(namespace):
     """Tests signing/verification against a bytes object, expecting a valid
     result.
     """
     pass
+
 
 def test_verification_bad(namespace):
     """Passes a known-badly-signed bytes object into the verification function to
