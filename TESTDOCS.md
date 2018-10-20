@@ -43,11 +43,8 @@ In these tests, specific functions are imported from dev.py and their operation 
 ### Cryptographic Tests
 All cryptographic tests rely on known keys for stability reasons. These keys are included in the Testing package as "test_crypto.key" and "test_sign.key" respectively. If you choose to use different keys you will have to update the corresponding namespace variables in `establish_namespace()` of `unit-tests.py`.
 
-#### Encryption Test
-A paintext value is passed to the encryption function (together with a test flag) to compare the expected output with a known-correctly-encrypted value.
-
-#### Decryption Test
-This test leverages the decrypt-block function to decrypt a "sample" tapfile. A flag is passed to bypass some of the heavier file operations and instead the plain and encrypted values of two strings are compared.
+#### Cyclic Encryption Test
+The encryption and decryption functions from `dev.py` are called against a bytestream in order to ensure that the encryption process is fully reversible. This test is required as a diagnostic for possible failures of the integrity tests.
 
 #### Signature Verification
 The script verifies the signature of a .tap file and reports success or failure. This is run regardless of the failure or success of other tests owing to the criticality of the signature function.
