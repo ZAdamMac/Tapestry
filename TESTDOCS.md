@@ -41,7 +41,7 @@ The testing script looks for, and attempts to import, DR.key and DRpub.key. If e
 In these tests, specific functions are imported from dev.py and their operation tested against known-good values.
 
 ### Cryptographic Tests
-All cryptographic tests rely on a known key for stability reasons. This key is embedded in the relevant test package.
+All cryptographic tests rely on known keys for stability reasons. These keys are included in the Testing package as "test_crypto.key" and "test_sign.key" respectively. If you choose to use different keys you will have to update the corresponding namespace variables in `establish_namespace()` of `unit-tests.py`.
 
 #### Encryption Test
 A paintext value is passed to the encryption function (together with a test flag) to compare the expected output with a known-correctly-encrypted value.
