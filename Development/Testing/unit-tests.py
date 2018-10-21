@@ -3,9 +3,11 @@
 # See the documentation - there are dependencies
 
 # Import Block
+import configparser
 from datetime import date
 from Development.Source import dev
 from Development.Testing import framework as fw
+import gnupg
 
 # Extra Classes Go Here
 
@@ -17,14 +19,48 @@ def establish_namespace():
     returns an object best thought of as a namespace object, used for ferrying
     configuration values around the program.
     """
-    ns = type('', (), {})()  # We need a general-purpose namespace object
-    ns.key_sign_fp = 0  # TODO input
-    ns.key_crypt_fp = 0  # TODO input
-    ns.goodRIFF = 0  # TODO Generate and Encode
-    ns.filename = "unit_test-" + str(ns.uid) + "-" + str(date.today()) + ".log"
-    ns.logger = fw.simpleLogger("Logs", ns.filename, "unit-tests")
+    namespace = type('', (), {})()  # We need a general-purpose namespace object
+    namespace.key_sign_fp = "3B5ACC53FE33CB690AF28AA2B1116E0BE39BA873"
+    namespace.key_crypt_fp = "5EECD8B48E062B2520F518844C11667231468613"
+    namespace.goodRIFF = 0  # TODO Generate and Encode
+    namespace.gpg_instance = gnupg.GPG()
+    namespace.cfg = configparser.ConfigParser()
+    namespace.cfg.read_file("tapestry-test.cfg")
+    namespace.uid = namespace.cfg.get("Environment Variables", "uid")
+    namespace.filename = "unit_test-" + str(namespace.uid) + "-" + str(date.today()) + ".log"
+    namespace.logger = fw.simpleLogger("Logs", namespace.filename, "unit-tests")
 
-    return ns
+    return namespace
+
+
+def import_for_keys(ns):
+    """Check for the keys described in the namespace and adds them to the
+    keyring if not present. Warns the user they should add this key to a trust
+    level of minimal or higher for tests to work, and waits for them to do so.
+    """
+    found_enc_key = True
+    found_sig_key = True
+    list_present_keys = ns.gpg_instance.list_keys(True, keys=(ns.key_sign_fp, ns.key_crypt_fp))
+    if len(list_present_keys) < 2: # We need to know which are missing.
+        if ns.key_crypt_fp not in list_present_keys:
+            found_enc_key = False
+        if ns.key_sign_fp not in list_present_keys:
+            found_sig_key = False
+    if found_enc_key and found_sig_key:
+        print("Found both testing keys.")
+    else:
+        if not found_enc_key:
+            print("Importing the Test Encryption Key")
+            ns.gpg_instance.import_keys(open("test_enc_key", "r").read())
+            # No notification is required because this key does not need to be
+            # trusted
+            print("Done")
+        if not found_sig_key: # Without this sig tests fail.
+            print("Importing the Test Signing Key")
+            ns.gpg_instance.import_keys(open("test_sig_key", "r").read())
+            print("In order to continue you should first escalate the trust of:")
+            print("%s to at least Minimal" % ns.key_sign_fp)
+            input("Press enter to continue.")
 
 
 def test_config_compliance(namespace):
