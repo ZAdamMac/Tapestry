@@ -159,8 +159,7 @@ def test_config_compliance(ns):
     ns.config_test_pass = local_success
     ns.logger.log()  # TODO populate log statements
     print("End of Configuration Compliance Testing")
-
-
+    return ns
 
 
 def test_encryption_cyclic(ns):
