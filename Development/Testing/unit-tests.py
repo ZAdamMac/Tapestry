@@ -53,6 +53,7 @@ def establish_namespace():
     namespace.uid = namespace.cfg.get("Environment Variables", "uid")
     namespace.filename = "unit_test-" + str(namespace.uid) + "-" + str(date.today()) + ".log"
     namespace.logger = fw.simpleLogger("Logs", namespace.filename, "unit-tests")
+    namespace.failed_once = False  # Bool to show if any tests have failed.
 
     return namespace
 
@@ -85,6 +86,7 @@ def import_for_keys(ns):
             print("In order to continue you should first escalate the trust of:")
             print("%s to at least Minimal" % ns.key_sign_fp)
             input("Press enter to continue.")
+    return ns
 
 
 def test_config_compliance(ns):
@@ -93,7 +95,72 @@ def test_config_compliance(ns):
     development of the release is believed "finished" to ensure all values are
     present and correct.
     """
-    pass
+    print("Beginning the Configuration Compliance Test")
+    ns.logger.log()  # TODO populate log statements
+    # First we need to know what we expect!
+    expected_sections = ("Environment Variables", "Network Configuration",
+                         "Additional Locations/Nix", "Default Locations/Nix",
+                         "Additional Locations/Win", "Default Locations/Win")
+    expected_ev_opts = ("uid", "compid", "blocksize", "expected fp", "keysize",
+                        "sign by default", "signing fp", "recovery path",
+                        "output path", "use compression", "compression level")
+    expected_net_opts = ("mode", "server", "port", "username", "keep local copies" 
+                         "remote drop location")
+    found_ev = False
+    found_net = False
+    local_success = True  # For heuristics, we have to assume we succeeded.
+
+    testparser = dev.parse_config()
+    testparser.read("./Source/tapestry.cfg") # Moves up a level and fetches the raw config.
+    observed_sections = testparser.sections()
+
+    # We need some found_ lists to work from!
+    if "Environment Variables" in observed_sections:
+        observed_ev_opts = testparser.options("Environment Variables")
+        found_ev = True
+    else:
+        ns.logger.log()  # TODO populate log statements
+        print("[FAIL] Environment Variables section missing from sample config.")
+        ns.failed_once = True
+        local_success = False
+        observed_ev_opts = ()
+    if "Network Configuration" in observed_sections:
+        observed_net_opts = testparser.options("Network Configuration")
+        found_net = True
+    else:
+        observed_net_opts= ()
+        ns.logger.log()  # TODO Populate Log Statements.
+        print("[FAIL] Network Configuration section missing from sample config.")
+        ns.failed_once = True
+        local_success = False
+
+    # Now we know what we have and we can make sure it's what we want.
+    for section in expected_sections:
+        if section not in ("Environment Variables", "Network Configuration"):
+            # We already looked for those!
+            if section not in observed_sections:  # A Warning is Sufficient
+                print("[WARN] %s section missing from sample config" % section)
+                ns.logger.log() # TODO Populate Log Statements
+    if found_ev:
+        for option in expected_ev_opts:
+            if option not in observed_ev_opts:
+                print("[FAIL] %s option missing from Environment Variables." % option)
+                ns.logger.log()  # TODO populate log statements.
+                ns.failed_once = True
+                local_success = False
+    if found_net:
+        for option in expected_net_opts:
+            if option not in observed_net_opts:
+                print("[FAIL] %s option is missing from Network Configuration" % option)
+                ns.logger.log()  # TODO populate log statements
+                ns.failed_once = True
+                local_success = False
+
+    ns.config_test_pass = local_success
+    ns.logger.log()  # TODO populate log statements
+    print("End of Configuration Compliance Testing")
+
+
 
 
 def test_encryption_cyclic(ns):
