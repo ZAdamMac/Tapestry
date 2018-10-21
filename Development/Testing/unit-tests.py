@@ -161,12 +161,6 @@ def test_config_compliance(ns):
     return ns
 
 
-def test_encryption_cyclic(ns):
-    """Test the encryption and decryption functions by providing a bytestream
-    which acts as a dummy file. The input and output are compared."""
-    pass
-
-
 def test_inclusivity_diff(ns):
     """Runs the runlist creation process twice against both the regular and
     inclusive roots and makes sure the inclusive list is larger.
