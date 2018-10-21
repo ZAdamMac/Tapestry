@@ -110,8 +110,7 @@ def test_config_compliance(ns):
     found_net = False
     local_success = True  # For heuristics, we have to assume we succeeded.
 
-    testparser = dev.parse_config()
-    testparser.read("./Source/tapestry.cfg") # Moves up a level and fetches the raw config.
+    testparser = dev.parse_config(test=True)
     observed_sections = testparser.sections()
 
     # We need some found_ lists to work from!
