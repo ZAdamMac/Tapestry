@@ -165,7 +165,17 @@ def test_inclusivity_diff(ns):
     """Runs the runlist creation process twice against both the regular and
     inclusive roots and makes sure the inclusive list is larger.
     """
-    pass
+    short_list = dev.build_Ops_List("")
+    long_list = dev.build_Ops_List("inc")
+    if not (short_list < long_list):
+        ns.failed_once = True
+        ns.logger.log()  # TODO populate log statements
+        ns.inclusivity_test_pass = False
+        print("[FAIL] Inclusivity Test: Short List is Longer Than or Equal To Inclusive")
+    else:
+        ns.inclusivity_test_pass = True
+        print("[PASS] Inclusivity Test - Lists are Expected Values")
+    return ns
 
 
 def test_riff_compliance(ns):
