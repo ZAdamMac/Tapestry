@@ -22,7 +22,31 @@ def establish_namespace():
     namespace = type('', (), {})()  # We need a general-purpose namespace object
     namespace.key_sign_fp = "3B5ACC53FE33CB690AF28AA2B1116E0BE39BA873"
     namespace.key_crypt_fp = "5EECD8B48E062B2520F518844C11667231468613"
-    namespace.goodRIFF = 0  # TODO Generate and Encode
+    #goodRIFF is the string representation of a compliant RIFF structure.
+    namespace.goodRIFF = """{
+  metaBlock: {
+    numBlock: 1,
+    sizeLarge: 2000,
+    countFiles: 300
+  },
+  metaRun:{
+    sumBlock: 1,
+    sizeExtraLarge: 2000,
+    countFilesSum: 300,
+    dateRec: 1540139133,
+    comment: "This is just a test RIFF."
+  },
+  index:{
+    "fidentifier": {
+      fname: "somefilename.png",
+      md5: "aefaf7502d52994c3b01957636a3cdd2",
+      category: "files",
+      fpath: "/go/to/somefilename.png",
+      fsize: 200
+    }
+  }
+}
+"""
     namespace.gpg_instance = gnupg.GPG()
     namespace.cfg = configparser.ConfigParser()
     namespace.cfg.read_file("tapestry-test.cfg")
