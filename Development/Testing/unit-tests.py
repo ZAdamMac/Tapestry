@@ -279,3 +279,20 @@ def test_verification_bad(ns):
 
 
 # TODO add a strict verification check if using pinning (NOBLOCK)
+
+def runtime():
+    print("Now beginning the unit-tests for tapestry.")
+    data = establish_namespace()
+    data.logger.log()  # TODO populate log strings.
+    data = import_for_keys(data)
+    data = test_config_compliance(data)
+    data = test_inclusivity_diff(data)
+    data = test_riff_compliance(data)
+    data = test_verification_good(data)
+    data = test_verification_bad(data)
+    if data.failed_once:
+        print("Some tests were failed. Please try again.")
+        data.logger.log()  # TODO populate log strings
+    else:
+        print("All unit tests passed. Please try again.")
+        data.logger.log()  # TODO populate log strings
