@@ -242,14 +242,38 @@ def test_verification_good(ns):
     """Tests signing/verification against a bytes object, expecting a valid
     result.
     """
-    pass
+    bytes_control = b"0XDEADBEEF"
+    bytes_crypted = dev.sign_block(bytes_control, ns.key_sign_fp, test=True)
+    bytes_verified = dev.verify_block(bytes_crypted, test=True)
 
+    if bytes_verified.ok:
+        ns.test_verification_good_passed = True
+        print("Sig Verification Test (Good) Passed!")
+        ns.logger.log()  # TODO populate log statements
+    else:
+        ns.test_verification_good_passed = False
+        print("Sig Verification Test (Good) Failed!")
+        ns.logger.log()  # TODO populate log statements
+    return ns
 
 def test_verification_bad(ns):
     """Passes a known-badly-signed bytes object into the verification function to
     ensure that the function works as designed. This was necessary to prevent a
     recurrence of the verification bypass bug.
     """
-    pass
+    sig_bad_control = open("known_bad_sig.txt", "r").read()  # TODO generate and place.
+    bytes_verified = dev.verify_block(sig_bad_control, test=True)
+
+    if not bytes_verified.ok:
+        ns.test_verification_bad_passed = True
+        print("Sig Verification Test (Bad) Passed!")
+        ns.logger.log()  # TODO populate log statements
+    else:
+        ns.test_verification_bad_passed = False
+        print("Sig Verification Test (Bad) Failed!")
+        ns.logger.log()  # TODO populate log statements
+    return ns
+
+
 
 # TODO add a strict verification check if using pinning (NOBLOCK)
