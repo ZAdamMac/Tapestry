@@ -157,6 +157,7 @@ def runtime():
     tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
     os.chdir(out)
     foo = tfTest.extract("recovery-pkl")
+    bar = tfTest.extract("index.riff")
 
     pklControl = pickle.load(open(os.path.join(permaHome, "control-pkl"), "rb"))
     pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
