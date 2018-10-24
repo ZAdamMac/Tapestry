@@ -68,7 +68,7 @@ def import_for_keys(ns):
     found_enc_key = True
     found_sig_key = True
     list_present_keys = ns.gpg_instance.list_keys(True, keys=(ns.key_sign_fp, ns.key_crypt_fp))
-    if len(list_present_keys) < 2: # We need to know which are missing.
+    if len(list_present_keys) < 2:  # We need to know which are missing.
         if ns.key_crypt_fp not in list_present_keys:
             found_enc_key = False
         if ns.key_sign_fp not in list_present_keys:
@@ -82,7 +82,7 @@ def import_for_keys(ns):
             # No notification is required because this key does not need to be
             # trusted
             print("Done")
-        if not found_sig_key: # Without this sig tests fail.
+        if not found_sig_key:  # Without this sig tests fail.
             print("Importing the Test Signing Key")
             ns.gpg_instance.import_keys(open("test_sig_key", "r").read())
             print("In order to continue you should first escalate the trust of:")
@@ -129,7 +129,7 @@ def test_config_compliance(ns):
         observed_net_opts = testparser.options("Network Configuration")
         found_net = True
     else:
-        observed_net_opts= ()
+        observed_net_opts = ()
         ns.logger.log()  # TODO Populate Log Statements.
         print("[FAIL] Network Configuration section missing from sample config.")
         ns.failed_once = True
@@ -141,7 +141,7 @@ def test_config_compliance(ns):
             # We already looked for those!
             if section not in observed_sections:  # A Warning is Sufficient
                 print("[WARN] %s section missing from sample config" % section)
-                ns.logger.log() # TODO Populate Log Statements
+                ns.logger.log()  # TODO Populate Log Statements
     if found_ev:
         for option in expected_ev_opts:
             if option not in observed_ev_opts:
@@ -196,6 +196,7 @@ def test_riff_compliance(ns):
     for key in control_riff:
         try:
             foo = test_riff[key]
+            del foo
             found_top_keys.append(key)
         except KeyError:
             ns.failed_once = True
@@ -215,14 +216,14 @@ def test_riff_compliance(ns):
                         ns.logger.log()  # TODO populate log statements.
                 except KeyError:
                     print("[FAIL] %s was not found in the %s table." % (column, table))
-                    ns.logger.log()  #TODO populate log statements
+                    ns.logger.log()  # TODO populate log statements
                     ns.failed_once = True
                     ns.riff_complaince_pass = False
         else:  # The index table is a really special case.
             index_table_test = test_riff[table]
             for column in control_riff[table][0]:  # The UUID would never match
                 try:
-                    value = index_table_test[0][value]
+                    value = index_table_test[0][column]
                     control_type = type(control_riff[table][column])
                     test_type = type(value)
                     if control_type != test_type:
@@ -237,6 +238,7 @@ def test_riff_compliance(ns):
     print("RIFF Compliance Test Complete.")
     ns.logger.log()  # TODO populate log statements
     return ns
+
 
 def test_verification_good(ns):
     """Tests signing/verification against a bytes object, expecting a valid
@@ -256,6 +258,7 @@ def test_verification_good(ns):
         ns.logger.log()  # TODO populate log statements
     return ns
 
+
 def test_verification_bad(ns):
     """Passes a known-badly-signed bytes object into the verification function to
     ensure that the function works as designed. This was necessary to prevent a
@@ -273,7 +276,6 @@ def test_verification_bad(ns):
         print("Sig Verification Test (Bad) Failed!")
         ns.logger.log()  # TODO populate log statements
     return ns
-
 
 
 # TODO add a strict verification check if using pinning (NOBLOCK)
