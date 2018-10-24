@@ -251,3 +251,5 @@ def test_verification_bad(ns):
     recurrence of the verification bypass bug.
     """
     pass
+
+# TODO add a strict verification check if using pinning (NOBLOCK)
