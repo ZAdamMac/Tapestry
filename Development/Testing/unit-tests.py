@@ -226,8 +226,8 @@ def test_riff_compliance(ns):
                     control_type = type(control_riff[table][column])
                     test_type = type(value)
                     if control_type != test_type:
-                    print("[WARN] %s was found in the %s table, but is of an unexpected type" % (column, table))
-                    ns.logger.log()  # TODO populate log statements.
+                        print("[WARN] %s was found in the %s table, but is of an unexpected type" % (column, table))
+                        ns.logger.log()  # TODO populate log statements.
                 except KeyError:
                     print("[FAIL] %s was not found in the %s table." % (column, table))
                     ns.logger.log()  # TODO populate log statements
