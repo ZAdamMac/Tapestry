@@ -3,27 +3,36 @@
 
 #  Import Modules
 
+import os
+import configparser as cp
+from .framework import simpleLogger
+from datetime import date
+import hashlib
+import gnupg
+import tarfile
+import pickle
+
+
+# noinspection PyUnusedLocal
 def runtime():
     #  Parse test config
-    permaHome = os.getcwd()
+    perma_home = os.getcwd()
 
     cfg = cp.ConfigParser()
     cfg.read("tapestry-test.cfg")
     out = cfg.get("Environment Variables", "output path")
     uid = cfg.get("Environment Variables", "uid")
-    host = cfg.get("Environment Variables", "compID")
-    test_FTP_user = cfg.get("Network Configuration", "username")
-    logs = os.path.join(permaHome, "Logs")
-    blockSize = cfg.get("Environment Variables", "blocksize")
+    logs = os.path.join(perma_home, "Logs")
+    block_size = cfg.get("Environment Variables", "blocksize")
 
     #  Establish a Logger for Test Output
-    if not os.path.isdir((logs)):
+    if not os.path.isdir(logs):
         os.mkdir(logs)
 
-    logname = ("integrity_test-%s-%s.log" % (uid, str(date.today())))
-    log = fw.simpleLogger(logs, logname, "integrity-tests")
+    log_name = ("integrity_test-%s-%s.log" % (uid, str(date.today())))
+    log = simpleLogger(logs, log_name, "integrity-tests")
 
-    pathControl = out.replace("Test", "Control")
+    path_control = out.replace("Test", "Control")
 
     print("\n\nStarting Identity Test")
     log.log("\n\n-------------------------------[INTEGRITY TESTS]-------------------------------")
@@ -31,30 +40,31 @@ def runtime():
     hasher = hashlib.sha256()
     hasher.update(open("dev.py", "rb").read())
     taphash = hasher.hexdigest()
-    log.log("\n"+str(taphash)+"\n")
-    counterMismatch = 0
+    log.log("\n" + str(taphash) + "\n")
+    counter_mismatch = 0
     identical = False
 
-    for foo, bar, files in os.walk(os.path.join(pathControl,"Corpus")):
+    for foo, bar, files in os.walk(os.path.join(path_control, "Corpus")):
         for file in files:
-            hashControl = hashlib.md5()
-            hashTest = hashlib.md5()
+            hash_control = hashlib.md5()
+            hash_test = hashlib.md5()
             absfile = os.path.join(foo, file)
             testfile = absfile.replace("Control", "Test")
             with open(absfile, "rb") as f:
-                hashControl.update(f.read())
+                hash_control.update(f.read())
             with open(testfile, "rb") as f:
-                hashTest.update(f.read())
+                hash_test.update(f.read())
 
-            if hashControl.hexdigest() != hashTest.hexdigest():
+            if hash_control.hexdigest() != hash_test.hexdigest():
                 print("Mismatch detected!")
                 log.log("Mismatch detected in file: %s" % testfile)
-                counterMismatch += 1
+                counter_mismatch += 1
 
-    if counterMismatch == 0:
+    if counter_mismatch == 0:
         identical = True
         print("Identity test passed with no mismatching detected.")
-        log.log("[PASSED] All files from the results of the recovery mode run were determined to \nmatch the original test corpus by means of md5 hash comparison.")
+        log.log(
+            "[PASSED] All files from the results of the recovery mode run were determined to \nmatch the original test corpus by means of md5 hash comparison.")
     else:
         identical = False
         print("Multiple Mismatches Detected - See the log for details.")
@@ -63,7 +73,7 @@ def runtime():
     This sort of error is not acceptable in a file backup utility. See the testing  \n
     documentation for advice on possible causes of this failure.''')
 
-    #  Encryption and Signing Passing
+        #  Encryption and Signing Passing
         # Test if Signatures are Valid
     gpg = gnupg.GPG(gnupghome=str("/home/" + uid + "/.gnupg"))
     print("Beginning Signature Verification.")
@@ -83,7 +93,7 @@ def runtime():
                     else:
                         print("WARNING: Signature at %s insufficiently trusted." % file)
                         log.log("Signature mismatch in file: %s" % file)
-                        failures =+ 1
+                        failures = + 1
     print("Signature verification completed with %s failures." % failures)
     if failures < 1:
         log.log('''[PASSED] All of the signatures compared in the signature testing were trusted,  \n
@@ -95,8 +105,7 @@ def runtime():
 
     log.log("-------------------------------------------------------------------------------")
 
-        # If Identity failed, test encryption
-
+    # If Identity failed, test encryption
 
     if identical:
         print("Decryption Test Skipped - Identity Check Passed.")
@@ -114,7 +123,8 @@ def runtime():
                 if file.endswith(".tap"):
                     with open(file, "rb") as k:
                         if first:
-                            decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
+                            decrypted = gpg.decrypt_file(k, always_trust=True,
+                                                         output=(os.path.join(out, "unpacked sample")))
                             first = False
                         else:
                             decrypted = gpg.decrypt_file(k, always_trust=True)
@@ -126,15 +136,15 @@ def runtime():
                             failures = + 1
         print("Decryption Testing completed with %s failures." % failures)
         if failures < 1:
-            log.log("[PASSED] The decryption test was run - none of the test materials failed to\ndecrypt, which also validates that they were encrypted correctly.")
+            log.log(
+                "[PASSED] The decryption test was run - none of the test materials failed to\ndecrypt, which also validates that they were encrypted correctly.")
         else:
             log.log('''[FAILED] A total of %s files failed to decrypt as expected. This is most
     commonly caused by the loss of key material. Double-check this result manually
     using GPG to rule out an error in the cryptographic engine itself.''' % str(failures))
         log.log("-------------------------------------------------------------------------------")
 
-
-    #  Version Specificity
+    # Version Specificity
     print("Beginning Recovery File Completion Check")
     log.log("\n\n------------------------[RECOVERY FILE STRUCTURE TEST]-------------------------")
     if identical:
@@ -145,7 +155,8 @@ def runtime():
                 for file in files:
                     if file.endswith(".tap"):
                         with open(os.path.join(foo, file), "rb") as k:
-                            decrypted = gpg.decrypt_file(k, always_trust=True, output=(os.path.join(out, "unpacked sample")))
+                            decrypted = gpg.decrypt_file(k, always_trust=True,
+                                                         output=(os.path.join(out, "unpacked sample")))
                             waiting = True
                         while waiting:
                             if decrypted.ok:
@@ -154,16 +165,17 @@ def runtime():
                                 continue
 
     print("Extracting recovery pickle from the tapfile.")
-    tfTest = tarfile.open(os.path.join(out, "unpacked sample"))
+    tf_test = tarfile.open(os.path.join(out, "unpacked sample"))
     os.chdir(out)
-    foo = tfTest.extract("recovery-pkl")
-    bar = tfTest.extract("index.riff")
+    foo = tf_test.extract("recovery-pkl")
+    bar = tf_test.extract("index.riff")
 
-    pklControl = pickle.load(open(os.path.join(permaHome, "control-pkl"), "rb"))
-    pklTest = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
-    if len(pklControl) == len(pklTest):
+    pkl_control = pickle.load(open(os.path.join(perma_home, "control-pkl"), "rb"))
+    pkl_test = pickle.load(open(os.path.join(out, "recovery-pkl"), "rb"))
+    if len(pkl_control) == len(pkl_test):
         print("Recovery Files have Matching Structure!")
-        log.log("[PASSED] No structural changes detected in the recovery file generated by the\ncode under test. This indicates that the version under test is non-breaking.")
+        log.log(
+            "[PASSED] No structural changes detected in the recovery file generated by the\ncode under test. This indicates that the version under test is non-breaking.")
     else:
         print("WARNING: Recovery Files are mismatched!")
         print("This could indicate a break in version compatibility.")
@@ -182,7 +194,7 @@ def runtime():
         for file in files:
             if file.endswith(".tap"):
                 size = os.path.getsize(os.path.join(foo, file))
-                if int(size) > int(blockSize * ( 2 ** 20)):
+                if int(size) > int(block_size * (2 ** 20)):
                     print("Error: %s is larger than blocksize!" % file)
                     passing = False
 
@@ -191,24 +203,25 @@ def runtime():
         log.log("[PASSED] All files generated are smaller than their original blocksize.")
     else:
         print("Compression Efficacy Test failed. Check compression code or increase compression level.")
-        log.log("[FAILED] One or more output blockfiles were larger than expected. Revise the\ncompression level setting and run again.")
+        log.log("[FAILED] One or more output blockfiles were larger than"
+                " expected. Revise the\ncompression level setting and run again.")
     log.log("------------------------------------------------------------------------------")
 
-    #Inclusive/Exclusive Differentiation Test
-    sizePoolInclusive = 0
-    sizePoolExclusive = 0
+    # Inclusive/Exclusive Differentiation Test
+    size_pool_inclusive = 0
+    size_pool_exclusive = 0
 
     print("Beginning Inclusive/Exclusive Size Test")
     log.log("\n\n------------------------[INCLUSIVE/EXCLUSIVE COMPARISON]-----------------------")
-    for foo, bar, files in os.walk(os.path.join(out,"Non-Inc")):
+    for foo, bar, files in os.walk(os.path.join(out, "Non-Inc")):
         for file in files:
-            sizePoolExclusive += os.path.getsize(os.path.join(foo, file))
+            size_pool_exclusive += os.path.getsize(os.path.join(foo, file))
 
-    for foo, bar, files in os.walk(os.path.join(out,"Inc")):
+    for foo, bar, files in os.walk(os.path.join(out, "Inc")):
         for file in files:
-            sizePoolInclusive += os.path.getsize(os.path.join(foo, file))
+            size_pool_inclusive += os.path.getsize(os.path.join(foo, file))
 
-    if sizePoolExclusive < sizePoolInclusive:
+    if size_pool_exclusive < size_pool_inclusive:
         print("Inclusive/Exclusive Comparison Test Passed")
         log.log('''[PASSED] The output of the Inclusive Mode run was larger than the Key\n
     Generation Mode Run. This indicates that the inclusive mode is likely working\n
@@ -223,16 +236,16 @@ def runtime():
     #  Key Export Check
     print("Checking if keys were correctly exported!")
     log.log("\n\n---------------------------[KEY IMPORT/EXPORT TEST]----------------------------")
-    os.chdir(os.path.join(out,"Non-Inc"))
-    keysExpected = ["DR.key", "DRPub.key"]
+    os.chdir(os.path.join(out, "Non-Inc"))
+    keys_expected = ["DR.key", "DRPub.key"]
     passing = True
 
-    for key in keysExpected:
+    for key in keys_expected:
         if os.path.isfile(key):
             with open(key, "r") as k:
-                keyIn = gpg.import_keys(k.read())
-                if keyIn.count != 1:
-                    print("Keys imported: %s count, expected 1." % keyIn.count)
+                key_in = gpg.import_keys(k.read())
+                if key_in.count != 1:
+                    print("Keys imported: %s count, expected 1." % key_in.count)
                     log.log("[FAILED] One or Both of the expected keyfiles were not present, or failed to\nimport.")
                     passing = False
                 else:
@@ -244,6 +257,7 @@ def runtime():
         print("Some keys did not pass correctly.")
     log.log("-------------------------------------------------------------------------------")
     log.save()
+
 
 if __name__ == "__main__":
     runtime()
