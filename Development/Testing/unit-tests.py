@@ -99,7 +99,8 @@ def test_config_compliance(ns):
     present and correct.
     """
     print("Beginning the Configuration Compliance Test")
-    ns.logger.log()  # TODO populate log statements
+    ns.logger.log("""----------------------[Configuration 
+    Standards Compliance]---------------------""")
     # First we need to know what we expect!
     expected_sections = ("Environment Variables", "Network Configuration",
                          "Additional Locations/Nix", "Default Locations/Nix",
@@ -121,7 +122,8 @@ def test_config_compliance(ns):
         observed_ev_opts = testparser.options("Environment Variables")
         found_ev = True
     else:
-        ns.logger.log()  # TODO populate log statements
+        ns.logger.log("""[FAIL] Section "Environment Variables"
+         not found in the sample.""")
         print("[FAIL] Environment Variables section missing from sample config.")
         ns.failed_once = True
         local_success = False
@@ -131,7 +133,8 @@ def test_config_compliance(ns):
         found_net = True
     else:
         observed_net_opts = ()
-        ns.logger.log()  # TODO Populate Log Statements.
+        ns.logger.log("""[FAIL] Section "Network Configuration" not found in 
+        the sample.""")
         print("[FAIL] Network Configuration section missing from sample config.")
         ns.failed_once = True
         local_success = False
@@ -142,24 +145,27 @@ def test_config_compliance(ns):
             # We already looked for those!
             if section not in observed_sections:  # A Warning is Sufficient
                 print("[WARN] %s section missing from sample config" % section)
-                ns.logger.log()  # TODO Populate Log Statements
+                ns.logger.log("""[WARN] The following section was missing from 
+                the provided config sample:\n- %s""" % section)
     if found_ev:
         for option in expected_ev_opts:
             if option not in observed_ev_opts:
                 print("[FAIL] %s option missing from Environment Variables." % option)
-                ns.logger.log()  # TODO populate log statements.
+                ns.logger.log("[FAIL] %s not found in Environment Variables." % option)
                 ns.failed_once = True
                 local_success = False
     if found_net:
         for option in expected_net_opts:
             if option not in observed_net_opts:
                 print("[FAIL] %s option is missing from Network Configuration" % option)
-                ns.logger.log()  # TODO populate log statements
+                ns.logger.log("[FAIL] %s not found in Network Configuration." % option)
                 ns.failed_once = True
                 local_success = False
 
     ns.config_test_pass = local_success
-    ns.logger.log()  # TODO populate log statements
+    ns.logger.log("""[PASS] All mandatory options are present in the 
+    Environment Variables and\nNetwork Configuration sections of 
+    tapestry-tests.cfg. See above for warnings.""")
     print("End of Configuration Compliance Testing")
     return ns
 
@@ -168,18 +174,19 @@ def test_inclusivity_diff(ns):
     """Runs the runlist creation process twice against both the regular and
     inclusive roots and makes sure the inclusive list is larger.
     """
-    ns.logger.log()
-    short_list = dev.build_Ops_List("")
-    long_list = dev.build_Ops_List("inc")
+    ns.logger.log("""----------------------------[Inclusivity Mode Test]------
+    ----------------------""")
+    short_list = dev.build_ops_List("")
+    long_list = dev.build_ops_List("inc")
     if not (short_list < long_list):
         ns.failed_once = True
-        ns.logger.log()  # TODO populate log statements
+        ns.logger.log("[FAIL] The inclusive list is equal to or shorter than the default list.")
         ns.inclusivity_test_pass = False
         print("[FAIL] Inclusivity Test: Short List is Longer Than or Equal To Inclusive")
     else:
         ns.inclusivity_test_pass = True
         print("[PASS] Inclusivity Test - Lists are Expected Values")
-        ns.logger.log()
+        ns.logger.log("[PASS] The inclusive list is longer than the default list.")
     ns.logger.log()
     return ns
 
@@ -190,8 +197,9 @@ def test_riff_compliance(ns):
         script to a known-correct position.
     """
     print("Now beginning the RIFF Compliance Test")
-    ns.logger.log()  # TODO populate log statements
-    ns.riff_complaince_pass = True
+    ns.logger.log("""---------------------------[NewRIFF 
+    Compliance Test]---------------------------""")
+    ns.riff_compliance_pass = True
     control_riff = json.loads(ns.goodRIFF)
     lab_output = ns.cfg.get("Environment Variables", "output")
     test_riff = json.load(os.path.join(lab_output, "index.riff"))
@@ -204,9 +212,9 @@ def test_riff_compliance(ns):
             found_top_keys.append(key)
         except KeyError:
             ns.failed_once = True
-            ns.riff_complaince_pass = False
+            ns.riff_compliance_pass = False
             print("[FAIL] Could not locate %s in the RIFF Sample." % key)
-            ns.logger.log()  # TODO populate log statements
+            ns.logger.log("[FAIL] The following table was not found: %s" % key)
 
     for table in found_top_keys:
         if table is not "index":  # The index table is a special case.
@@ -217,12 +225,12 @@ def test_riff_compliance(ns):
                     test_type = type(value)
                     if control_type != test_type:
                         print("[WARN] %s was found in the %s table, but is of an unexpected type" % (column, table))
-                        ns.logger.log()  # TODO populate log statements.
+                        ns.logger.log("[WARN] %s was found in %s, but is of the wrong type." % (column, table))
                 except KeyError:
                     print("[FAIL] %s was not found in the %s table." % (column, table))
-                    ns.logger.log()  # TODO populate log statements
+                    ns.logger.log("[FAIL] %s was not found in %s." % (column, table))
                     ns.failed_once = True
-                    ns.riff_complaince_pass = False
+                    ns.riff_compliance_pass = False
         else:  # The index table is a really special case.
             index_table_test = test_riff[table]
             for column in control_riff[table][0]:  # The UUID would never match
@@ -232,15 +240,15 @@ def test_riff_compliance(ns):
                     test_type = type(value)
                     if control_type != test_type:
                         print("[WARN] %s was found in the %s table, but is of an unexpected type" % (column, table))
-                        ns.logger.log()  # TODO populate log statements.
+                        ns.logger.log("[WARN] %s was found in %s, but is of the wrong type." % (column, table))
                 except KeyError:
                     print("[FAIL] %s was not found in the %s table." % (column, table))
-                    ns.logger.log()  # TODO populate log statements
+                    ns.logger.log("[FAIL] %s was not found in %s." % (column, table))
                     ns.failed_once = True
-                    ns.riff_complaince_pass = False
+                    ns.riff_compliance_pass = False
 
     print("RIFF Compliance Test Complete.")
-    ns.logger.log()  # TODO populate log statements
+    ns.logger.log("[PASS] The sample recovery index generated is NewRIFF compliant.")
     return ns
 
 
@@ -248,6 +256,7 @@ def test_verification_good(ns):
     """Tests signing/verification against a bytes object, expecting a valid
     result.
     """
+    ns.logger.log("""----------------------[Valid Signature Verification Test]----------------------""")
     gpg = ns.gpg_instance
     bytes_control = b"0XDEADBEEF"
     bytes_crypted = gpg.sign(bytes_control, keyid=ns.key_sign_fp)
@@ -256,11 +265,11 @@ def test_verification_good(ns):
     if bytes_verified.ok:
         ns.test_verification_good_passed = True
         print("Sig Verification Test (Good) Passed!")
-        ns.logger.log()  # TODO populate log statements
+        ns.logger.log("[PASS] This signature was handled correctly by the verifier.")
     else:
         ns.test_verification_good_passed = False
         print("Sig Verification Test (Good) Failed!")
-        ns.logger.log()  # TODO populate log statements
+        ns.logger.log("[FAIL] This signature was handled incorrectly by the verifier.")
     return ns
 
 
@@ -275,11 +284,11 @@ def test_verification_bad(ns):
     if not bytes_verified.ok:
         ns.test_verification_bad_passed = True
         print("Sig Verification Test (Bad) Passed!")
-        ns.logger.log()  # TODO populate log statements
+        ns.logger.log("[PASS] This signature was handled correctly by the verifier.")
     else:
         ns.test_verification_bad_passed = False
         print("Sig Verification Test (Bad) Failed!")
-        ns.logger.log()  # TODO populate log statements
+        ns.logger.log("[FAIL] This signature was handled incorrectly by the verifier.")
     return ns
 
 
