@@ -10,6 +10,7 @@ from Development.Testing import framework as fw
 import gnupg
 import json
 import os
+import hashlib
 
 # Extra Classes Go Here
 
@@ -283,7 +284,12 @@ def test_verification_bad(ns):
 def runtime():
     print("Now beginning the unit-tests for tapestry.")
     data = establish_namespace()
-    data.logger.log()  # TODO populate log strings.
+    data.logger.log("------------------------------[SAMPLE GENERATION]------------------------------")
+    data.logger.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
+    hasher = hashlib.sha256()
+    hasher.update(open("../Source/dev.py", "rb").read())
+    taphash = hasher.hexdigest()
+    data.logger.log("\n"+str(taphash)+"\n")
     data = import_for_keys(data)
     data = test_config_compliance(data)
     data = test_inclusivity_diff(data)
