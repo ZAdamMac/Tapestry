@@ -7,7 +7,7 @@ Patch's Tapestry is a bespoke data backup tool designed for a particular, but ge
 Full documentation is available as part of DOCUMENTATION.md
 
 ## Requirements
-	-Python 3.7
+	-Python 3.6.7
 	-Python-gnupg 0.4.2
 	-GnuPG 2 or later, installed as default
 	
