@@ -54,7 +54,7 @@ def establish_namespace():
     namespace.cfg.read_file("tapestry-test.cfg")
     namespace.uid = namespace.cfg.get("Environment Variables", "uid")
     namespace.filename = "unit_test-" + str(namespace.uid) + "-" + str(date.today()) + ".log"
-    namespace.logger = fw.simpleLogger("Logs", namespace.filename, "unit-tests")
+    namespace.logger = fw.SimpleLogger("Logs", namespace.filename, "unit-tests")
     namespace.failed_once = False  # Bool to show if any tests have failed.
 
     return namespace

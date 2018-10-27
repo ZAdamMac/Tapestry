@@ -5,7 +5,7 @@
 
 import os
 import configparser as cp
-from .framework import simpleLogger
+from .framework import SimpleLogger
 from datetime import date
 import hashlib
 import gnupg
@@ -30,7 +30,7 @@ def runtime():
         os.mkdir(logs)
 
     log_name = ("integrity_test-%s-%s.log" % (uid, str(date.today())))
-    log = simpleLogger(logs, log_name, "integrity-tests")
+    log = SimpleLogger(logs, log_name, "integrity-tests")
 
     path_control = out.replace("Test", "Control")
 
