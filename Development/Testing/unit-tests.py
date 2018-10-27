@@ -168,6 +168,7 @@ def test_inclusivity_diff(ns):
     """Runs the runlist creation process twice against both the regular and
     inclusive roots and makes sure the inclusive list is larger.
     """
+    ns.logger.log()
     short_list = dev.build_Ops_List("")
     long_list = dev.build_Ops_List("inc")
     if not (short_list < long_list):
@@ -178,6 +179,8 @@ def test_inclusivity_diff(ns):
     else:
         ns.inclusivity_test_pass = True
         print("[PASS] Inclusivity Test - Lists are Expected Values")
+        ns.logger.log()
+    ns.logger.log()
     return ns
 
 
@@ -245,8 +248,9 @@ def test_verification_good(ns):
     """Tests signing/verification against a bytes object, expecting a valid
     result.
     """
+    gpg = ns.gpg_instance
     bytes_control = b"0XDEADBEEF"
-    bytes_crypted = dev.sign_block(bytes_control, ns.key_sign_fp, test=True)
+    bytes_crypted = gpg.sign(bytes_control, keyid=ns.key_sign_fp)
     bytes_verified = dev.verify_block(bytes_crypted, test=True)
 
     if bytes_verified.ok:
