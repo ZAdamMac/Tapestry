@@ -4,16 +4,16 @@
 #  Import Modules
 import configparser as cp
 from datetime import date
-from testing import dev, framework
+from ..Testing import framework
+from ..Source import dev
 import gnupg
 import hashlib
 import os
 import shutil
 import ssl
-import subprocess
-import time
 
 #  Stash classes and functions here if necessary.
+
 
 def runtime():
     #  Parse test config
@@ -29,7 +29,8 @@ def runtime():
     logs = os.path.join(permaHome, "Logs")
     blockSize = cfg.get("Environment Variables", "blocksize")
 
-    shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak") # We create a backup of the config to restore to after testing.
+    # We create a backup of the config to restore to after testing.
+    shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak")
 
     pathControl = out.replace("Test", "Control")
 
