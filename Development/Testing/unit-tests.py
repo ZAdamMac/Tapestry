@@ -311,7 +311,7 @@ def runtime():
     data = test_verification_bad(data)
     if data.failed_once:
         print("Some tests were failed. Please try again.")
-        data.logger.log()  # TODO populate log strings
+        data.logger.save()
     else:
         print("All unit tests passed. Please try again.")
-        data.logger.log()  # TODO populate log strings
+        data.logger.save()
