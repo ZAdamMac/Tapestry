@@ -10,12 +10,16 @@ The test suite relies on a testing environment to run its target script against.
 2. Under this functional root, create `/Control` and `/Test`.
 3. Edit `corpusmaker.py` such that its `dest` global variable points at some sub-directory Corpus, ie `~/Tapestry FT Data/Control/Corpus`.
 4. Run corpusmaker. Depending on your system specifications this operation may take up to an hour to complete - you are generating a considerable amount of data after all.
-5. After running corpusmaker, you must configure the `tapestry-test.cfg`. This is simply a version of an ordinary tapestry config file. If you downloaded the test.cfg file from the repo, simply edit its paths so that they point at your test environment instead of some guy named Patches.
-6. Create the following known-good samples: `Non-Inc Media` and `Inc-Media`, consisting of the output .tap and .tap.sig files of an inclusive and non-inclusive run respectively. These are used in some tests. You should also manually unpack the recovery-pkl file from one of these and leave it under the `~/Control` as some tests require it.
+5. After running corpusmaker, you must configure the `tapestry-test.cfg`. This is simply a version of an ordinary tapestry config file. If you cloned the repo, simply edit its paths so that they point at your test environment instead of some guy named Patches.
 7. If it is not already present, install vsftpd. vsftpd will be automatically invoked by the test framework itself; if desired, the developer may choose to disable vsftpd as a startup script. A dummy account should be created for ftp testing purposes so as not to interfere with the normal operation of users on the account (and allow account whitelisting for the security-conscious.)
 
 ## Testing a Development Build
-In order to test some variation of `dev.py`, simply copy it into the testing directory locally, start two copies of vsftpd (one for each config) and run `runtime-tests.py` followed by the remaining test scripts in any order. The vsftpd daemons must be run seperately in order as running as superuser is required. Testing can take a considerable amount of time, during the early stages of which the developer will need to be semi-present. A future version may obviate these requirements. In particular, the following sequences will require user intervention:
+In order to test some variation of `dev.py`, start two copies of vsftpd (one for each config) and run `run-tests.py`. The vsftpd daemons must be run separately as superuser is required. **Note to Windows Testers:** While vsftpd isn't required (and indeed isn't available on windows), you must be able to configure your daemon in a similar way to the vsftp config. Specifically:
+- There must be two instances, each using one of testcertbad.pem and testcertgood.pem,
+- the good server should listen on 201, and the bad on 211, and,
+- you must upload the config files (passwords scrubbed if present) along with your logs when submitting your pull request.
+
+Testing can take a considerable amount of time, during the early stages of which the developer will need to be semi-present. A future version may obviate these requirements. In particular, the following sequences will require user intervention:
 
 - Immediately upon running, when the script is testing `--genKey`, the developer will need to provide credentials for the key to be generated as though they were a user. Of particular note: the password will need to be provided twice, once during creation and once when the keys are exported. Blank passwords are allowed.
 - During the `--genKey` run, Tapestry will perform a non-inclusive run, as normal. Toward the end of this run the developer will have to supply the password a third time to execute a signing operation, if using a password-protected signing key for testing.
@@ -41,13 +45,7 @@ The testing script looks for, and attempts to import, DR.key and DRpub.key. If e
 In these tests, specific functions are imported from dev.py and their operation tested against known-good values.
 
 ### Cryptographic Tests
-All cryptographic tests rely on a known key for stability reasons. This key is embedded in the relevant test package.
-
-#### Encryption Test
-A paintext value is passed to the encryption function (together with a test flag) to compare the expected output with a known-correctly-encrypted value.
-
-#### Decryption Test
-This test leverages the decrypt-block function to decrypt a "sample" tapfile. A flag is passed to bypass some of the heavier file operations and instead the plain and encrypted values of two strings are compared.
+All cryptographic tests rely on known keys for stability reasons. These keys are included in the Testing package as "test_crypto.key" and "test_sign.key" respectively. If you choose to use different keys you will have to update the corresponding namespace variables in `establish_namespace()` of `unit-tests.py`.
 
 #### Signature Verification
 The script verifies the signature of a .tap file and reports success or failure. This is run regardless of the failure or success of other tests owing to the criticality of the signature function.
@@ -83,6 +81,8 @@ Some extant features of Tapestry are not explicitly tested for. In most cases, t
 - "Bad Return" feature is implicitly tested for by the way in which the testing script runs the final recovery pass - if it is not working, Identity would fail.
 
 ### New Features
+By the time development on a `release-dev` branch begins, any required tests *should* be merged to master. However, sometimes tests themselves need developing and tweaking - this should be done in a clear and well-explained manner with as much commenting and commit-message explanation provided as is practical.
+
 If your PR/development arc includes adding new functionality to the program that is not explicitly tested for, contact `tapestry@psavlabs.com` to discuss adding a test. It may be possible to construct your own under most circumstances.
 
 ## My Tests Passed!

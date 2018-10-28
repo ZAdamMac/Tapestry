@@ -8,7 +8,7 @@ import os
 import time
 
 # Define the Classes We Use
-class simpleLogger:  # dedicated skip-logging handler for use in buildBlocks
+class SimpleLogger:  # dedicated skip-logging handler for use in buildBlocks
     def __init__(self, landingdir,name, test):  # starts the skiplogger and tells it it will be writing to landingdir with name
         landingAbs = os.path.join(landingdir, name)
         if not os.path.exists(landingdir):

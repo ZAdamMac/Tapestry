@@ -16,8 +16,8 @@ def testRIFFCompliance(namespace):
 # Declare Some Constants
 
 ns = type('',(),{})()  # We need a general-purpose namespace object
-ns.keySig = 0 # TODO generate and encode
-ns.keyCrypt = 0 # TODO GENERATE AND ENCODE
-ns.goodRIFF = 0 # TODO Generate and Encode
+ns.keySig = 0
+ns.keyCrypt = 0
+ns.goodRIFF = 0
 ns.filename = "unit_test-"+str(ns.uid)+"-"+str(date.today())+".log"
 ns.logger = fw.simpleLogger("Logs",ns.filename,"unit-tests")
