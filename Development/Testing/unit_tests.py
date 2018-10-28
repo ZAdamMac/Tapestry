@@ -278,7 +278,7 @@ def test_verification_bad(ns):
     ensure that the function works as designed. This was necessary to prevent a
     recurrence of the verification bypass bug.
     """
-    sig_bad_control = open("known_bad_sig.txt", "r").read()  # TODO generate and place.
+    sig_bad_control = open("known_bad_sig.txt", "r").read()
     bytes_verified = dev.verify_block(sig_bad_control, test=True)
 
     if not bytes_verified.ok:
@@ -290,9 +290,6 @@ def test_verification_bad(ns):
         print("Sig Verification Test (Bad) Failed!")
         ns.logger.log("[FAIL] This signature was handled incorrectly by the verifier.")
     return ns
-
-
-# TODO add a strict verification check if using pinning (NOBLOCK)
 
 def runtime():
     print("Now beginning the unit-tests for tapestry.")
