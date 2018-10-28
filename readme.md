@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Patch's Tapestry is a bespoke data backup tool designed for a particular, but generally-acceptable, use case. Written in python, Tapestry uses Gnu Privacy Guard (GPG) to generate archive "blocks" from targeted directories on a given system and reproduce those blocks in a same-or-similar organizational format  upon restoration. The tool automatically subdivides the archive into blocks of a user-configurable size without breaking the content data (that is, the  structure of individual files is maintained). The blocks are then encrypted using the users Disaster Recovery PGP key and presented as ready-to-move. The intended use case is for backup to single-write physical media - though other use cases exist and are being actively developed for.
+Tapestry is a bespoke data backup tool designed to provide secure and reliable backups without the need to trust the storage media/device. Written in python, Tapestry uses Gnu Privacy Guard (GPG) to generate archive "blocks" from targeted directories on a given system and reproduce those blocks in a same-or-similar organizational format  upon restoration. The tool automatically subdivides the archive into blocks of a user-configurable size without breaking the content data (that is, the  structure of individual files is maintained). The blocks are then encrypted using the users Disaster Recovery PGP key and presented as ready-to-move.
 
 Full documentation is available as part of DOCUMENTATION.md
 
@@ -13,19 +13,19 @@ Full documentation is available as part of DOCUMENTATION.md
 	
 ## Contribution and Acknowledgement
 
-Building Tapestry has been a large and time-consuming project, but it would have been even more so without the work of the developers of our dependancies - GnuPG, the Python-GnuPG module, and obvious python itself.
+Building Tapestry has been a large and time-consuming project, but it would have been even more so without the work of the developers of our dependencies - GnuPG, the Python-GnuPG module, and obvious python itself.
 
 If you would like to contribute to the development of Tapestry, feel free to submit a pull request, or perhaps buy me a coffee at [ko-fi.com/PSavLabs](ko-fi.com/PSavLabs)
 	
 ## Security Considerations
-Tapestry relies on Gnu Privacy Guard - an implementation of the PGP protocol - in order to securely store the archives it generates, and also to provide a mechanism for verifying the individual who generated the backup. It does this using two seperate keys - the Encryption Key (sometimes called the "Disaster Recovery" key, after the comment included on keys Tapestry Generates) and an optional signing key specified by the user.
+Tapestry relies on a well-known FOSS implementation of the PGP protocol in order to securely store the archives it generates, and also to provide a mechanism for verifying the individual who generated the backup. It does this using two separate keys - the Encryption Key (sometimes called the "Disaster Recovery" key, after the comment included on keys Tapestry generates) and an optional signing key specified by the user.
 
 ### Care and Feeding of the Disaster Recovery Key
-When you run Tapestry for the first time, or otherwise cause it to generate a new key, the program will export the keys from GPG as two sperate files: `DR.key` and `DR-pub.key`. The former contains both the private and public keys of the RSA keypair - the latter contains only the public portion.
+When you run Tapestry for the first time, or otherwise cause it to generate a new key, the program will export the keys from GPG as two separate files: `DR.key` and `DR-pub.key`. The former contains both the private and public keys of the RSA keypair - the latter contains only the public portion.
 
-The private key and its associated file should be kept in a secure location - preferably either on removable media accessable only by trusted administrators or possibly on the keyring of a single-user/single-machine system, protected by a passphrase. **The use of passphraseless DR keys is considered harmful and should not be implemented.** It is even recommendable that you change the passphrase of the DR key regularly. If you are using the DR key across several systems, it is recommended that you also generate a revocation certificate (see GPG's docs) so that it can be revoked in the event of compromise.
+The private key and its associated file should be kept in a secure location - preferably either on removable media accessable only by trusted administrators or possibly on the keyring of a single-user/single-machine system, protected by a passphrase. **The use of passphraseless DR keys is considered harmful and should not be implemented.** It is even recommendable that you change the pass-phrase of the DR key regularly. If you are using the DR key across several systems, it is recommended that you also generate a revocation certificate (see GPG's docs) so that it can be revoked in the event of compromise.
 
-By design, the public key can be widely distributed if desired, as it cannot be used to decrypt files it was used to encrypt. This is the useful property of the PGP protocol. In Tapestry's case, this may be useful for a number of reasons. You may desire to leave the public key on your keyring to run the program in an automated mode, or you may be working in an office environment where it would be useful to have the key stored on many machines at once. Using an asymetric protocol like this allows you this flexibility. A public key cannot be said to be compromised, as it isn't even a secret.
+By design, the public key can be widely distributed if desired, as it cannot be used to decrypt files it was used to encrypt. This is the useful property of the PGP protocol. In Tapestry's case, this may be useful for a number of reasons. You may desire to leave the public key on your keyring to run the program in an automated mode, or you may be working in an office environment where it would be useful to have the key stored on many machines at once. Using an asymmetric protocol like this allows you this flexibility. A public key cannot be said to be compromised, as it isn't even a secret.
 
 ### In the Event of a Compromise, Do Not Break Glass
 It's possible that your `DR.key` file may be compromised through misuse, overuse, carelessness, or malicious action. Don't panic. If your archives are stored remotely and on removable media they will not be immediately accessible to an attacker, necessarily. The decision to destroy these archives or not is ultimately up to the user.
@@ -43,14 +43,14 @@ A cryptographic signature can be generated alongside the backup itself at relati
 
 **A signature is not an assurance that there is no malicious code in the signed file or message.** It is merely an assurance of the identify of the person who signed the code. Under tapestry's use case, it is an assurance that the person who ran tapestry was in the possession of both the private key they used and its passphrase. ***Never*** *use a key with no passphrase for signing*. This practice is such a bad idea that Tapestry will choke and die if you try.
 
-***in versions 0.3.0 and prior "loopback pinentry" was being used to pass pins from Tapestry to GPG!*** If you have more and less sensitive keys to use for signing use your least sensitive one until a proper pinentry hooking method is implemented. A malicious actor sniffing the traffic on your machine's loopback interface may be able to capture packets revealing your PIN or Passphrase. **This vulnerability is fixed as of v1.0, and in the current development build**
+***In versions 0.3.0 and prior "loopback pinentry" was being used to pass pins from Tapestry to GPG!*** If you have more and less sensitive keys to use for signing use your least sensitive one until a proper pinentry hooking method is implemented. A malicious actor sniffing the traffic on your machine's loopback interface may be able to capture packets revealing your PIN or Passphrase. **This vulnerability is fixed as of v1.0**
 
-It may be desirable for example, to have a "I did this Tapestry Backup" signing key, used for nothing else, that you signed with your main key. If compromised, someone could still sign backups as you, but if they tried to sign an email, for example, it would look odd to the recipient. This is obviously a half-assed solution at best. *For all versions 1.0 and up this is a non-issue*, as loopback pinentry was abandoned. Modern versions of Tapestry never even see your passphrase, even on key generation.
+Modern versions of Tapestry never even see your passphrase, even on key generation, and outsource the responsibility to GPG's pinentry binary.
 
 ### How to Store Keys
 I can't speak for everyone's use case and I'm also not an expert on the matter. I personally store the public key of the disaster recovery key on every device I intend to use it on. The private key lives on a USB drive along with a few tools I use for cleaning up computers, and can be imported if necessary. I also keep a paper copy of the private key.
 
-As for my signing key, I am currently (perhaps wrongly) using my main signing key, which lives on an OpenPGP smart key. In point of fact, Tapestry is perfectly oblivious to how you choose to store your keys - if it can't import them from removable media and can't find them in your keyring it assumes they don't exist.
+As for my signing key, I am currently using my main signing key, which lives on an OpenPGP smart key. In point of fact, Tapestry is perfectly oblivious to how you choose to store your keys - if it can't find them in your keyring it assumes they don't exist.
 	
 ## Installation and First Time Setup
 ### Dependencies
