@@ -2,7 +2,7 @@
 # Tapestry Backup Automation Tool
 # Coded in python3 at Patch Savage Labs
 # git: ~/ZAdamMac/Patchs-Tapestry
-global version; version = '1.1.0'  # Sets the version to display. "DevBuild" enables some extra debugging not normally accessable
+global version; version = '2.0'  # Sets the version to display.
 
 # Importing Modules
 import argparse
