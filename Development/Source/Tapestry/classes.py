@@ -33,7 +33,7 @@ class ChildProcess(mp.Process):
         self.debug = debug
         os.chdir(working_directory)
 
-    def run(self):
+    def run(self):  # TODO add statusprint functionality to this class.
         proc_name = self.name
         while True:
             next_task = self.queue.get()
