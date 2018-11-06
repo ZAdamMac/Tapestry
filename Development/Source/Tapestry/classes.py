@@ -8,8 +8,10 @@ Classes are to be organized by general purpose - see block comments for guidance
 
 import multiprocessing as mp
 import os
+import tarfile
 
 # Define Process Classes
+
 
 class ChildProcess(mp.Process):
     """A simple, logicless worker process which iterates against a queue. This
@@ -44,3 +46,32 @@ class ChildProcess(mp.Process):
             self.queue.task_done()
         return
 
+
+class TaskTarBuild(object):
+    """A simple task object which instructs the process to add a particular
+    file to a particular tarfile, all fully enumerated.
+    """
+
+    def __init__(self, tarf, FID, PATH, index, locks):
+        """
+        Create the tarfile or, otherwise, add a file to it.
+        :param tarf: which tarfile to use, relative to the working directory
+        :param FID: GUID FID as a string.
+        :param PATH: absolute path to the file in need of backup
+        :param index: appropriate index number for the lock to acquire.
+        :param locks: Locks dictionary which should be used.
+        """
+        self.tarf = tarf
+        self.a = FID
+        self.b = PATH
+        self.index = index #index number of the appropriate mutex
+        self.locks = locks
+
+    def __call__(self):
+        if os.path.exists(self.tarf): # we need to know if we're starting a new file or not.
+            fLock = self.locks[self.index] # Aquires the lock indicated in the index value from the master
+            fLock.acquire()
+            tar = tarfile.open(name=self.tarf, mode="a:")
+            tar.add(self.b, arcname=self.a, recursive=False)
+            tar.close()
+            fLock.release()
