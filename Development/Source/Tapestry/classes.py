@@ -66,7 +66,7 @@ class TaskTarBuild(object):
         self.tarf = tarf
         self.a = FID
         self.b = PATH
-        self.index = index #index number of the appropriate mutex
+        self.index = index  # index number of the appropriate mutex
         self.locks = locks
 
     def __call__(self):
