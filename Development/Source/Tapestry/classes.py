@@ -255,7 +255,7 @@ class TaskSign(object):
             path, tapped = os.path.split(self.file)
             absolute_output = os.path.join(self.out, tapped)
             absolute_output += ".sig"
-            k = gpg.sign_file(self.file, keyid=self.fp, output=absolute_output, detach=True)
+            k = self.gpg.sign_file(self.file, keyid=self.fp, output=absolute_output, detach=True)
             if k.status == "signature created":
                 return "Signing Success for %s." % tapped
             else:
