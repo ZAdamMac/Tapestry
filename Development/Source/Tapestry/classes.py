@@ -19,7 +19,7 @@ class ChildProcess(mp.Process):
     None, which indicates the process should exit.
     """
 
-    def __init__(self, queue_tasking, working_directory, debug=False):
+    def __init__(self, queue_tasking, queue_complete, working_directory, debug=False):
         """Initialize the class. Must provide the queue to attach to, the
         working directory to use, and a debug flag.
 
@@ -31,9 +31,10 @@ class ChildProcess(mp.Process):
         mp.Process.__init__(self)
         self.queue = queue_tasking
         self.debug = debug
+        self.ret = queue_complete
         os.chdir(working_directory)
 
-    def run(self):  # TODO add statusprint functionality to this class.
+    def run(self):
         proc_name = self.name
         while True:
             next_task = self.queue.get()
@@ -44,6 +45,7 @@ class ChildProcess(mp.Process):
                 break
             next_task()
             self.queue.task_done()
+            self.ret.put("0")  # Any value will suffice.
         return
 
 
