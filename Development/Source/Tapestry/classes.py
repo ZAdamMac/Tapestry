@@ -80,3 +80,34 @@ class TaskTarBuild(object):
             tar.add(self.b, arcname=self.a, recursive=False)
             tar.close()
             fLock.release()
+
+
+class TaskTarUnpack(object):
+    """A simple object that describes a file to pull from a particular tarfile
+    and puts it back where it belongs. Absolute paths required.
+    """
+    def __init__(self, tar, fid, category_dir, path_end):
+        """Initializing this object gives it all the information it needs to
+        unpack one particular file back to its original position in the
+        filesystem or to the fallback location.
+
+        :param tar: string describing the absolute path of the relevant tarball
+        :param fid: The GUID FID that the file has been packed into the tarball as.
+        :param category_dir: full path to the top of the category.
+        :param path_end: sub-path from the category including the filename
+        """
+        self.tar = tar
+        self.fid = fid
+        self.catdir = category_dir
+        self.pathend = path_end
+
+    def __call__(self):
+        path_end = self.pathend.strip('~/')
+        abs_path_out = os.path.join(self.catdir, path_end)
+        placement, name_proper = os.path.split(
+            abs_path_out)
+        # split the pathend component into the subpath from the category dir, and the original filename.
+        with tarfile.open(self.tar, "r") as tf:
+            tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
+            placed = os.path.join(placement, self.fid)
+            os.rename(placed, abs_path_out)  # and now it's named correctly.
