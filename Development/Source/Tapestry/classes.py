@@ -43,7 +43,10 @@ class ChildProcess(mp.Process):
                     print('%s: Exiting' % proc_name)
                 self.queue.task_done()
                 break
-            next_task()
+            try:
+                next_task()
+            except TypeError:
+                print("Something has gone wrong - unexpected item in queue.")
             self.queue.task_done()
             self.ret.put("0")  # Any value will suffice.
         return
