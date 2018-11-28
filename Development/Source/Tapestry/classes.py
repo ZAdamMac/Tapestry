@@ -166,7 +166,7 @@ class TaskDecompress(object):
                 return "File is already decompressed."
 
 
-class TaskEncryptTarfile(object):
+class TaskEncrypt(object):
     """This task takes an argument for the fingerprint to use, the file to be
     encrypted, and the directory currently used for output.
 
