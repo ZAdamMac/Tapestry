@@ -59,30 +59,30 @@ class TaskTarBuild(object):
     file to a particular tarfile, all fully enumerated.
     """
 
-    def __init__(self, tarf, FID, PATH, index, locks):
+    def __init__(self, tarf, fid, path, index, locks):
         """
         Create the tarfile or, otherwise, add a file to it.
         :param tarf: which tarfile to use, relative to the working directory
-        :param FID: GUID FID as a string.
-        :param PATH: absolute path to the file in need of backup
+        :param fid: GUID FID as a string.
+        :param path: absolute path to the file in need of backup
         :param index: appropriate index number for the lock to acquire.
         :param locks: Locks dictionary which should be used.
         """
         self.tarf = tarf
-        self.a = FID
-        self.b = PATH
+        self.a = fid
+        self.b = path
         self.index = index  # index number of the appropriate mutex
         self.locks = locks
 
     def __call__(self):
         if os.path.exists(self.tarf):  # we need to know if we're starting a new file or not.
-            fLock = self.locks[self.index]  # Aquires the lock indicated in the index value from the master
-            fLock.acquire()
+            f_lock = self.locks[self.index]  # Aquires the lock indicated in the index value from the master
+            f_lock.acquire()
             tar = tarfile.open(name=self.tarf, mode="a:")
             tar.add(self.b, arcname=self.a, recursive=False)
             tar.close()
-            fLock.release()
-        return ("Added %s to tarfile %s" % (self.tarf, self.b))
+            f_lock.release()
+        return "Added %s to tarfile %s" % (self.tarf, self.b)
 
 
 class TaskTarUnpack(object):
@@ -114,7 +114,7 @@ class TaskTarUnpack(object):
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
             placed = os.path.join(placement, self.fid)
             os.rename(placed, abs_path_out)  # and now it's named correctly.
-        return ("Restored %s to %s" % (self.fid, abs_path_out))
+        return "Restored %s to %s" % (self.fid, abs_path_out)
 
 
 class TaskCompress(object):
