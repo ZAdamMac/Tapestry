@@ -138,3 +138,29 @@ class TaskCompress(object):
             bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=self.level)
             shutil.copyfileobj(b, bz2f)
         return "Compressed %s to level %s" % (self.tarf, self.level)
+
+
+class TaskDecompress(object):
+    """A simple task that points exactly to a tarfile to decompress. The task
+    can determine for itself if the file actually needs decompressing at runtime.
+    """
+
+    def __init__(self, t):
+        """Defines the absolute path to a file to check for compression.
+
+        :param t: Absolute path to a tarfile
+        """
+        self.tarf = t
+
+    def __call__(self):
+        with open(self.tarf, "rb") as file:
+            signature = file.read()
+            if signature.startswith(b"BZh"):  # Microheader that indicates a BZ2 file.
+                shutil.copy(self.tarf, (self.tarf + ".temp"))
+                with bz2.BZ2File(self.tarf + ".temp", "rb") as compressed:
+                    with open(self.tarf, "wb") as uncompressed:
+                        shutil.copyfileobj(compressed, uncompressed)
+                os.remove(self.tarf+".temp")  # No sense in cluttering up the drive.
+                return "Decompressed %s" % self.tarf
+            else:
+                return "File is already decompressed."
