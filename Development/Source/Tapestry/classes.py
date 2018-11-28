@@ -164,3 +164,39 @@ class TaskDecompress(object):
                 return "Decompressed %s" % self.tarf
             else:
                 return "File is already decompressed."
+
+
+class TaskEncryptTarfile(object):
+    """This task takes an argument for the fingerprint to use, the file to be
+    encrypted, and the directory currently used for output.
+
+    """
+    def __init__(self, t, fp, out, gpg):
+        """This object expects the following arguments in order to signify a
+        tarfile which needs to be encrypted. Calling the task will cause the
+        tarfile to be encrypted using the gpg object passed to it at runtime.
+
+        :param t: an absolute path denoting the location of the tarfile.
+        :param fp: the fingerprint of the PGP key to use.
+        :param out: The absolute path to the output directory.
+        :param gpg: An gnupg.GPG object provided to allow an interface with
+        the local GPG runtime.
+        """
+        self.tarf = t
+        self.fp = fp
+        self.out = out
+        self.gpg = gpg
+
+    def __call__(self):
+        with open(self.tarf, "r") as p:
+            path, tapped = os.path.split(self.tarf)
+            tapped = tapped.strip(".bz2")
+            tapped = tapped.replace(".tar", ".tap")
+            tgtOutput = os.path.join(self.out, tapped)
+            with open(self.tarf, "rb") as tgt:
+                k = self.gpg.encrypt_file(tgt, self.fp, output=tgtOutput, armor=True, always_trust=True)
+            if k.ok:
+                return "Encryption Success for %s." % self.tarf
+            elif not k.ok:
+                return "Encryption Failed for %s, status: %s" % (self.tarf, k.status)
+
