@@ -70,8 +70,8 @@ class TaskTarBuild(object):
         self.locks = locks
 
     def __call__(self):
-        if os.path.exists(self.tarf): # we need to know if we're starting a new file or not.
-            fLock = self.locks[self.index] # Aquires the lock indicated in the index value from the master
+        if os.path.exists(self.tarf):  # we need to know if we're starting a new file or not.
+            fLock = self.locks[self.index]  # Aquires the lock indicated in the index value from the master
             fLock.acquire()
             tar = tarfile.open(name=self.tarf, mode="a:")
             tar.add(self.b, arcname=self.a, recursive=False)
