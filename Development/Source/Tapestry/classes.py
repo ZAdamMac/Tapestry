@@ -200,3 +200,31 @@ class TaskEncrypt(object):
             elif not k.ok:
                 return "Encryption Failed for %s, status: %s" % (self.tarf, k.status)
 
+
+class TaskDecrypt(object):
+    """This task contains both the information and method to take a Tapestry
+    blockfile and decrypt it. This task is naive in that it relies on another
+    task to do signature verification.
+
+    """
+    def __init__(self, block, working_directory, gpg):
+        """This object requires the following arguments in order to fetch,
+        open, and decrypt a single block, outputting the contents to a
+        working directory, based on the operation of a gnupg.GPG object.
+
+        :param block: Absolute path to the block to be decrypted.
+        :param working_directory: Absolute path to the output directory.
+        :param gpg:
+        """
+        self.tap_file = block
+        self.tap_name = os.path.split(block)[1]
+        self.absolute_output= os.path.join(working_directory, self.tap_name)
+        self.gpg = gpg
+
+    def __call__(self):
+            with open(self.tap_file, "rb") as tgt:
+                k = self.gpg.decrypt_file(tgt, output=self.absolute_output, always_trust=True)
+            if k.ok:
+                return "Decryption Success for %s." % self.tap_name
+            elif not k.ok:
+                return "Decryption Failed for %s, status: %s" % (self.tap_name, k.status)
