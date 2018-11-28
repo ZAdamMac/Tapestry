@@ -228,3 +228,35 @@ class TaskDecrypt(object):
                 return "Decryption Success for %s." % self.tap_name
             elif not k.ok:
                 return "Decryption Failed for %s, status: %s" % (self.tap_name, k.status)
+
+class TaskSign(object):
+    """This task takes an argument for the fingerprint to use, the file to be
+    signed, the output directory, and a GPG object.
+
+    """
+    def __init__(self, t, fp, out, gpg):
+        """This object expects the following arguments in order to sign a
+        tapfile which needs to be encrypted. Calling the task will cause the
+        tapfile to be signed using the gpg object passed to it at runtime.
+
+        :param t: an absolute path denoting the location of the tapfile.
+        :param fp: the fingerprint of the PGP key to use.
+        :param out: The absolute path to the output directory.
+        :param gpg: An gnupg.GPG object provided to allow an interface with
+        the local GPG runtime.
+        """
+        self.file = t
+        self.fp = fp
+        self.out = out
+        self.gpg = gpg
+
+    def __call__(self):
+        with open(self.file, "r") as p:
+            path, tapped = os.path.split(self.file)
+            absolute_output = os.path.join(self.out, tapped)
+            absolute_output += ".sig"
+            k = gpg.sign_file(self.file, keyid=self.fp, output=absolute_output, detach=True)
+            if k.status == "signature created":
+                return "Signing Success for %s." % tapped
+            else:
+                return "Signing Failed for %s, status: %s" % (tapped, k.status)
