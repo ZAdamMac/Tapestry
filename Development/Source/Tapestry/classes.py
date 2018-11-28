@@ -44,11 +44,11 @@ class ChildProcess(mp.Process):
                 self.queue.task_done()
                 break
             try:
-                next_task()
+                debug_message = next_task()
+                self.ret.put(debug_message)
             except TypeError:
-                print("Something has gone wrong - unexpected item in queue.")
+                self.ret.put("Something has gone wrong - unexpected item in queue.")
             self.queue.task_done()
-            self.ret.put("0")  # Any value will suffice.
         return
 
 
@@ -80,6 +80,7 @@ class TaskTarBuild(object):
             tar.add(self.b, arcname=self.a, recursive=False)
             tar.close()
             fLock.release()
+        return ("Added %s to tarfile %s" % (self.tarf, self.b))
 
 
 class TaskTarUnpack(object):
@@ -111,3 +112,4 @@ class TaskTarUnpack(object):
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
             placed = os.path.join(placement, self.fid)
             os.rename(placed, abs_path_out)  # and now it's named correctly.
+        return ("Restored %s to %s" % (self.fid, abs_path_out))
