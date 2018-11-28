@@ -6,8 +6,10 @@ Classes are to be organized by general purpose - see block comments for guidance
 
 """
 
+import bz2
 import multiprocessing as mp
 import os
+import shutil
 import tarfile
 
 # Define Process Classes
@@ -40,7 +42,7 @@ class ChildProcess(mp.Process):
             next_task = self.queue.get()
             if next_task is None:
                 if self.debug:
-                    print('%s: Exiting' % proc_name)
+                    self.ret.put('%s: Exiting' % proc_name)
                 self.queue.task_done()
                 break
             try:
@@ -113,3 +115,26 @@ class TaskTarUnpack(object):
             placed = os.path.join(placement, self.fid)
             os.rename(placed, abs_path_out)  # and now it's named correctly.
         return ("Restored %s to %s" % (self.fid, abs_path_out))
+
+
+class TaskCompress(object):
+    """A simple task that points exactly to a tarfile to compress, and then
+    compresses it to a specified level
+    """
+
+    def __init__(self, t, lvl):
+        """Defines the absolute path to a tarfile and the level (1-9) of
+        compression to apply.
+
+        :param t: Absolute path to a tarfile
+        :param lvl: Integer between 1 and 9 which determines the compression level
+        """
+        self.tarf = t
+        self.level = lvl
+
+    def __call__(self):
+        with open(self.tarf, "rb") as b:
+            bz2d = self.tarf+".bz2"
+            bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=self.level)
+            shutil.copyfileobj(b, bz2f)
+        return "Compressed %s to level %s" % (self.tarf, self.level)
