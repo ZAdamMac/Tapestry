@@ -7,6 +7,7 @@ Classes are to be organized by general purpose - see block comments for guidance
 """
 
 import bz2
+import hashlib
 import multiprocessing as mp
 import os
 import shutil
@@ -229,6 +230,7 @@ class TaskDecrypt(object):
             elif not k.ok:
                 return "Decryption Failed for %s, status: %s" % (self.tap_name, k.status)
 
+
 class TaskSign(object):
     """This task takes an argument for the fingerprint to use, the file to be
     signed, the output directory, and a GPG object.
@@ -260,3 +262,36 @@ class TaskSign(object):
                 return "Signing Success for %s." % tapped
             else:
                 return "Signing Failed for %s, status: %s" % (tapped, k.status)
+
+
+class TaskCheckIntegrity(object):
+    """A task, to be completed by ChildProcess, which contains the information
+    and operations needed to check the integrity of a file in the archive
+    against it's known-good composition, based on the MD5 hash.
+    """
+
+    def __init__(self, tarfile, fid, hash):
+        """Provided with a tarfile, an FID found within it, and a known good
+        hash, returns True or False if the file matches, as well as a string
+        used in debugging.
+
+        :param tarfile: string denoting absolute path to the tarball
+        :param fid: GUID file identifier of the file in question.
+        :param hash: the output of md5.hexdigest(), as found (e.g) in the RIFF
+        """
+        self.tarf = tarfile
+        self.fid = fid
+        self.hash_good = hash
+
+    def __call__(self):
+        hasher = hashlib.md5()
+        with tarfile.open(self.tarf, "rb") as tarball:
+            file_under_test = tarball.extractfile(self.fid)
+            if file_under_test is None:
+                return [False, "File %s not Found" % self.fid]
+            else:
+                hasher.update(file_under_test.read())
+        if hasher.hexdigest() == self.hash_good:
+            return [True, "File %s has a valid hash." % self.fid]
+        else:
+            return [False, "File %s has an invalid hash." % self.fid]
