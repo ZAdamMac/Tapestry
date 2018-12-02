@@ -16,6 +16,14 @@ import shutil
 
 __version__ = "2.0.0"
 
+# Class Definitions
+
+
+class Namespace(object):  # this just creates an object with arbitrary attributes.
+    pass
+
+
+
 # Function Definitions
 
 
@@ -125,3 +133,15 @@ def parse_config(namespace):
     debug_print("I am operating with %s consumers." % ns.numConsumers)
 
     return ns
+
+
+#  Runtime Follows
+if __name__ == "__main__":
+    announce()
+    state = Namespace()
+    state = parse_args(state)
+    state = parse_config(state)
+    if state.rcv:
+        do_recovery(state)
+    else:
+        do_main(state)
