@@ -143,6 +143,7 @@ def parse_config(namespace):
 
     return ns
 
+
 def start_gpg(state):
     """Starts the GPG handler based on the current state. If --devtest or
     --debug were passed at runtime, the gpg handler will be verbose.
