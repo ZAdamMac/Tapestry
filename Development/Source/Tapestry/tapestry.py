@@ -69,12 +69,12 @@ def generate_keys(namespace, gpg_agent):
     print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
     print(("This key will be a %s -bit RSA Key Pair with the credentials you specify." % namespace.keysize))
     print("This key will not expire by default. If you need this functionality, add it in GPG.")
-    nameKey = str(input("User/Organization Name: "))
-    contactKey = str(input("Recovery Contact Email: "))
+    name_key = str(input("User/Organization Name: "))
+    contact_key = str(input("Recovery Contact Email: "))
     print("You will be prompted externally to enter a passphrase for this key via your default pinentry program.")
     inp = gpg_agent.gen_key_input(key_type="RSA", key_length=namespace.keysize,
-                                  name_real=nameKey, name_comment="Tapestry Recovery",
-                                  name_email=contactKey)
+                                  name_real=name_key, name_comment="Tapestry Recovery",
+                                  name_email=contact_key)
     keypair = gpg_agent.gen_key(inp)
     fp = keypair.fingerprint  # Changes the value of FP to the new key
 
@@ -94,18 +94,18 @@ def generate_keys(namespace, gpg_agent):
     if not os.path.isdir(namespace.drop):
         os.mkdir(namespace.drop)
     os.chdir(namespace.drop)
-    pubOut = gpg_agent.export_keys(fp)
-    pubFile = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
-    pubHandle = os.fdopen(pubFile, "w")
-    pubHandle.write(str(pubOut))
-    pubHandle.close()
+    pub_out = gpg_agent.export_keys(fp)
+    pub_file = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
+    pub_handle = os.fdopen(pub_file, "w")
+    pub_handle.write(str(pub_out))
+    pub_handle.close()
     try:
-        keyOut = gpg_agent.export_keys(fp, True, expect_passphrase=False)
-        keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
-        keyHandle = os.fdopen(keyFile, "w")
-        keyHandle.write(str(keyOut))
-        keyHandle.close()
-    except ValueError: # Most Probable cause for this is that the version of the gnupg module is outdated
+        key_out = gpg_agent.export_keys(fp, True, expect_passphrase=False)
+        key_file = os.open("DR.key", os.O_CREAT | os.O_RDWR)
+        key_handle = os.fdopen(key_file, "w")
+        key_handle.write(str(key_out))
+        key_handle.close()
+    except ValueError:  # Most Probable cause for this is that the version of the gnupg module is outdated
         print("An error has occured which prevented the private side of the disaster recovery key from being exported.")
         print("This error is likely caused by this system's version of the python-gnupg module being outdated.")
         print("You can export the key manually using the method of your choice.")
@@ -113,6 +113,7 @@ def generate_keys(namespace, gpg_agent):
     print("The new keys have been saved in the output folder. Please move them to removable media or other backup.")
 
     return namespace
+
 
 def parse_args(namespace):
     """Parse arguments and return the modified namespace object"""
@@ -176,7 +177,7 @@ def parse_config(namespace):
         ns.nameNet = config.get("Network Configuration", "remote drop location")
         ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
         ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
-            2 ** 20)  # The math is ncessary to go from MB to Bytes)
+            2 ** 20)  # The math is necessary to go from MB to Bytes)
         ns.compid = config.get("Environment Variables", "compid")
         ns.recovery_path = config.get("Environment Variables", "recovery path")
         ns.uid = config.get("Environment Variables", "uid")
@@ -196,23 +197,25 @@ def parse_config(namespace):
     return ns
 
 
-def start_gpg(state):
+def start_gpg(ns):
     """Starts the GPG handler based on the current state. If --devtest or
     --debug were passed at runtime, the gpg handler will be verbose.
     """
     verbose = False
-    if state.debug or state.devtest:
+    if ns.debug or ns.devtest:
         verbose = True
-    gpg = gnupg.GPG(gnupghome=state.gpgDir, verbose=verbose)
+    gpg = gnupg.GPG(gnupghome=ns.gpgDir, verbose=verbose)
 
     return gpg
+
 
 def verify_keys(ns, gpg):
     """Verify that the keys intended for use are present."""
     keys = gpg.list_keys(keys=ns.fp)
     try:
         location = keys.key_map[ns.fp]  # If the key is in the dictionary, hooray!
-        found = True
+        if location is not None:
+            found = True
     except KeyError:
         found = False
     if found is False:
@@ -233,8 +236,8 @@ if __name__ == "__main__":
     state = parse_config(state)
     gpg_conn = start_gpg(state)
     if state.genKey:
-        state = generate_keys(state)
-    verify_keys(state)
+        state = generate_keys(state, gpg_conn)
+    verify_keys(state, gpg_conn)
     if state.rcv:
         do_recovery(state, gpg_conn)
     else:
