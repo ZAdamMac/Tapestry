@@ -112,6 +112,7 @@ def generate_keys(namespace, gpg_agent):
 
     print("The new keys have been saved in the output folder. Please move them to removable media or other backup.")
 
+    return namespace
 
 def parse_args(namespace):
     """Parse arguments and return the modified namespace object"""
@@ -215,7 +216,7 @@ if __name__ == "__main__":
     state = parse_config(state)
     gpg_conn = start_gpg(state)
     if state.genKey:
-        generate_keys(state)
+        state = generate_keys(state)
     verify_keys(state)
     if state.rcv:
         do_recovery(state, gpg_conn)
