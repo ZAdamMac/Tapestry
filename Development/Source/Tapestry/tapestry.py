@@ -81,8 +81,8 @@ def ftp_retrieve_files(ns):
         print("Please enter the date for which you wish to recover files:")
         tgtDate = input("YYYY-MM-DD")
         pw = getpass.getpass("Enter the FTP password now (if required):")
-        ftp_link = connect_ftp(ns.addrNet, ns.portNet, get_ssl_context(), ns.nameNet, pw)
-        countBlocks, listBlocks = grep_blocks(compid, tgtDate, ftp_link)
+        ftp_link = ftp_establish_connection(ns.addrNet, ns.portNet, get_ssl_context(), ns.nameNet, pw)
+        countBlocks, listBlocks = ftp_grep_blocks(compid, tgtDate, ftp_link)
         if countBlocks == 0:
             print("No blocks for that date were found - check your records and try again.")
             ftp_link.quit()
