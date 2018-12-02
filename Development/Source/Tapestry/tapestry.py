@@ -51,6 +51,16 @@ def debug_print(body):
         print(output_string)
 
 
+def do_main(state):
+    """Basic function that holds the runtime for the entire build process."""
+    pass
+
+
+def do_recovery(state):
+    """Basic function that holds the runtime for the entire recovery process."""
+    pass
+
+
 def parse_args(namespace):
     """Parse arguments and return the modified namespace object"""
     if __name__ == "__main__":
