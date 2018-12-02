@@ -22,8 +22,6 @@ __version__ = "2.0.0"
 class Namespace(object):  # this just creates an object with arbitrary attributes.
     pass
 
-
-
 # Function Definitions
 
 
