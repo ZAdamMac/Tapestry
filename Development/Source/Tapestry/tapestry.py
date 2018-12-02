@@ -10,6 +10,7 @@ github: https://www.github.com/ZAdamMac/Tapestry
 from ..Tapestry import classes
 import argparse
 import configparser
+import gnupg
 import os
 import platform
 import shutil
@@ -51,12 +52,12 @@ def debug_print(body):
         print(output_string)
 
 
-def do_main(state):
+def do_main(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire build process."""
     pass
 
 
-def do_recovery(state):
+def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
     pass
 
@@ -142,6 +143,17 @@ def parse_config(namespace):
 
     return ns
 
+def start_gpg(state):
+    """Starts the GPG handler based on the current state. If --devtest or
+    --debug were passed at runtime, the gpg handler will be verbose.
+    """
+    verbose = False
+    if state.debug or state.devtest:
+        verbose = True
+    gpg = gnupg.GPG(gnupghome=state.gpgDir, verbose=verbose)
+
+    return gpg
+
 
 #  Runtime Follows
 if __name__ == "__main__":
@@ -149,7 +161,10 @@ if __name__ == "__main__":
     state = Namespace()
     state = parse_args(state)
     state = parse_config(state)
+    gpg_conn = start_gpg(state)
     if state.rcv:
-        do_recovery(state)
+        do_recovery(state, gpg_conn)
     else:
-        do_main(state)
+        do_main(state, gpg_conn)
+    clean_up(state.workDir)
+    exit()
