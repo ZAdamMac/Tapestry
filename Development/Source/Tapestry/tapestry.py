@@ -59,8 +59,13 @@ def do_main(namespace, gpg_agent):
 
 def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
-    pass
-
+    if namespace.modeNetwork.lower() == "ftp":
+        ftp_retrieve_files(namespace)
+    verified_blocks = verify_blocks(namespace.workDir)
+    decrypt_blocks(verified_blocks)
+    unpack_blocks(namespace.workDir)
+    clean_up()
+    exit()
 
 def generate_keys(namespace, gpg_agent):
     """Provided with a namespace and a connection to the gpg agent, generates a
