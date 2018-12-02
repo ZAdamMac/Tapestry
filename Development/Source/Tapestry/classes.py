@@ -7,14 +7,14 @@ Classes are to be organized by general purpose - see block comments for guidance
 """
 
 import bz2
+import ftplib
 import hashlib
 import multiprocessing as mp
 import os
 import shutil
 import tarfile
 
-# Define Process Classes
-
+# Define Process and Task Classes
 
 class ChildProcess(mp.Process):
     """A simple, logicless worker process which iterates against a queue. This
@@ -295,3 +295,16 @@ class TaskCheckIntegrity(object):
             return [True, "File %s has a valid hash." % self.fid]
         else:
             return [False, "File %s has an invalid hash." % self.fid]
+
+# Define Package Overrides
+
+
+class FTP_TLS(ftplib.FTP_TLS):  # With thanks to hynekcer
+    """Explicit FTPS, with shared TLS session"""
+    def ntransfercmd(self, cmd, rest=None):
+        conn, size = ftplib.FTP.ntransfercmd(self, cmd, rest)
+        if self._prot_p:
+            conn = self.context.wrap_socket(conn,
+                                            server_hostname=self.host,
+                                            session=self.sock.session)  # this is the fix
+        return conn, size

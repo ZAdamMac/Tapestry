@@ -7,14 +7,16 @@ github: https://www.github.com/ZAdamMac/Tapestry
 
 """
 
-from ..Tapestry import classes
+from ..Tapestry import classes as tapestry
 import argparse
 import configparser
+import ftplib
 import getpass
 import gnupg
 import os
 import platform
 import shutil
+import ssl
 
 __version__ = "2.0.0"
 
@@ -67,6 +69,30 @@ def do_recovery(namespace, gpg_agent):
     unpack_blocks(namespace.workDir)
     clean_up()
     exit()
+
+
+def ftp_establish_connection(url, port, ssl_context, username, password):
+    """Establish and return a valid ftp(/tls) object."""
+    if username is not None:
+        if password is None:
+            password = ""
+    elif username is None:
+        username = ''
+    if port is None:
+        port = 21
+    if ssl_context is None:
+        link = ftplib.FTP()
+    else:
+        link = tapestry.FTP_TLS(context=ssl_context)
+        link.connect(host=url, port=port)
+        try:
+            link.auth()
+        except ssl.SSLError:
+            raise ConnectionRefusedError
+        link.prot_p()
+    if username != '':
+        link.login(user=username, passwd=password)
+    return link
 
 
 def ftp_retrieve_files(ns):
