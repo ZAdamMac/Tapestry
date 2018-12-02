@@ -212,12 +212,13 @@ def start_gpg(ns):
 def verify_keys(ns, gpg):
     """Verify that the keys intended for use are present."""
     keys = gpg.list_keys(keys=ns.fp)
+    found = False
     try:
         location = keys.key_map[ns.fp]  # If the key is in the dictionary, hooray!
         if location is not None:
             found = True
     except KeyError:
-        found = False
+        pass
     if found is False:
         print('''Unable to locate the key with fingerprint "%s"''' % ns.activeFP)
         print("This could be due to either a configuration error, or the key needs to be re-imported.")
