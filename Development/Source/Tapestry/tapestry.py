@@ -10,6 +10,7 @@ github: https://www.github.com/ZAdamMac/Tapestry
 from ..Tapestry import classes
 import argparse
 import configparser
+import getpass
 import gnupg
 import os
 import platform
@@ -66,6 +67,32 @@ def do_recovery(namespace, gpg_agent):
     unpack_blocks(namespace.workDir)
     clean_up()
     exit()
+
+
+def ftp_retrieve_files(ns):
+    """Based on the usual network config, retrieves the current blocks."""
+    if ns.modeNetwork.lower() == "ftp":
+        input(
+            "Tapestry is presently configured to an FTP drop. Please ensure you have a connection, and press any key to continue.")
+        useDefaultCompID = input("Would you like to recover files for %s? (y/n)>" % ns.compid).lower()
+        if useDefaultCompID == "n":
+            print("Please enter the name of the computer you wish to recover files for:")
+            compid = input("Case Sensitive: ")
+        print("Please enter the date for which you wish to recover files:")
+        tgtDate = input("YYYY-MM-DD")
+        pw = getpass.getpass("Enter the FTP password now (if required):")
+        ftp_link = connect_ftp(ns.addrNet, ns.portNet, get_ssl_context(), ns.nameNet, pw)
+        countBlocks, listBlocks = grep_blocks(compid, tgtDate, ftp_link)
+        if countBlocks == 0:
+            print("No blocks for that date were found - check your records and try again.")
+            ftp_link.quit()
+            exit()
+        else:
+            ns.media = ns.workDir
+            for block in listBlocks:
+                ftp_fetch_block(block, ftp_link, ns.media)
+            ftp_link.quit()
+
 
 def generate_keys(namespace, gpg_agent):
     """Provided with a namespace and a connection to the gpg agent, generates a
