@@ -160,7 +160,7 @@ def parse_config(namespace):
             exit()
 
         ns.expectedFP = config.get("Environment Variables", "Expected FP")
-        ns.fp = config.get("Environment Variables", "Expected FP")  # Can be changed during the finding process.
+        ns.fp = config.get("Environment Variables", "Expected FP")
         ns.signing = config.getboolean("Environment Variables", "Sign by Default")
         ns.sigFP = config.get("Environment Variables", "Signing FP")
         ns.keysize = config.getint("Environment Variables", "keysize")
@@ -206,6 +206,23 @@ def start_gpg(state):
     gpg = gnupg.GPG(gnupghome=state.gpgDir, verbose=verbose)
 
     return gpg
+
+def verify_keys(ns, gpg):
+    """Verify that the keys intended for use are present."""
+    keys = gpg.list_keys(keys=ns.fp)
+    try:
+        location = keys.key_map[ns.fp]  # If the key is in the dictionary, hooray!
+        found = True
+    except KeyError:
+        found = False
+    if found is False:
+        print('''Unable to locate the key with fingerprint "%s"''' % ns.activeFP)
+        print("This could be due to either a configuration error, or the key needs to be re-imported.")
+        print("Please double-check your configuration and keyring and try again.")
+        clean_up(ns.workDir)
+        exit()
+    debug_print("Fetching key %s from Keyring" % ns.activeFP)
+    debug_print(ns.activeFP)
 
 
 #  Runtime Follows
