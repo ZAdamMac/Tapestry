@@ -62,6 +62,57 @@ def do_recovery(namespace, gpg_agent):
     pass
 
 
+def generate_keys(namespace, gpg_agent):
+    """Provided with a namespace and a connection to the gpg agent, generates a
+    new key. Does not obviate the build runtime.
+    """
+    print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
+    print(("This key will be a %s -bit RSA Key Pair with the credentials you specify." % namespace.keysize))
+    print("This key will not expire by default. If you need this functionality, add it in GPG.")
+    nameKey = str(input("User/Organization Name: "))
+    contactKey = str(input("Recovery Contact Email: "))
+    print("You will be prompted externally to enter a passphrase for this key via your default pinentry program.")
+    inp = gpg_agent.gen_key_input(key_type="RSA", key_length=namespace.keysize,
+                                  name_real=nameKey, name_comment="Tapestry Recovery",
+                                  name_email=contactKey)
+    keypair = gpg_agent.gen_key(inp)
+    fp = keypair.fingerprint  # Changes the value of FP to the new key
+
+    config = configparser.ConfigParser()
+    if namespace.devtest:
+        cfg = "tapestry-test.cfg"
+    else:
+        cfg = "tapestry.cfg"
+
+    if os.path.exists(os.getcwd() + "/" + cfg):
+        config.read(cfg)
+    config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
+    namespace.activeFP = keypair.fingerprint
+    with open(cfg, "w") as cf:
+        config.write(cf)
+
+    if not os.path.isdir(namespace.drop):
+        os.mkdir(namespace.drop)
+    os.chdir(namespace.drop)
+    pubOut = gpg_agent.export_keys(fp)
+    pubFile = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
+    pubHandle = os.fdopen(pubFile, "w")
+    pubHandle.write(str(pubOut))
+    pubHandle.close()
+    try:
+        keyOut = gpg_agent.export_keys(fp, True, expect_passphrase=False)
+        keyFile = os.open("DR.key", os.O_CREAT | os.O_RDWR)
+        keyHandle = os.fdopen(keyFile, "w")
+        keyHandle.write(str(keyOut))
+        keyHandle.close()
+    except ValueError: # Most Probable cause for this is that the version of the gnupg module is outdated
+        print("An error has occured which prevented the private side of the disaster recovery key from being exported.")
+        print("This error is likely caused by this system's version of the python-gnupg module being outdated.")
+        print("You can export the key manually using the method of your choice.")
+
+    print("The new keys have been saved in the output folder. Please move them to removable media or other backup.")
+
+
 def parse_args(namespace):
     """Parse arguments and return the modified namespace object"""
     if __name__ == "__main__":
@@ -163,6 +214,9 @@ if __name__ == "__main__":
     state = parse_args(state)
     state = parse_config(state)
     gpg_conn = start_gpg(state)
+    if state.genKey:
+        generate_keys(state)
+    verify_keys(state)
     if state.rcv:
         do_recovery(state, gpg_conn)
     else:
