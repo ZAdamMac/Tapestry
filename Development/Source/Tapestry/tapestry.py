@@ -64,6 +64,8 @@ def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
     if namespace.modeNetwork.lower() == "ftp":
         ftp_retrieve_files(namespace)
+    else:
+        media_retreive_files(namespace)
     verified_blocks = verify_blocks(namespace.workDir, gpg_agent)
     decrypt_blocks(verified_blocks, gpg_agent)
     unpack_blocks(namespace.workDir)
@@ -296,6 +298,37 @@ def start_gpg(ns):
     gpg = gnupg.GPG(gnupghome=ns.gpgDir, verbose=verbose)
 
     return gpg
+
+
+def verify_blocks(namespace, gpg_conn):
+    """Verifies blocks and returns a list of verified blocks as a result"""
+    ns = namespace
+    gpg = gpg_conn
+    found_blocks = []
+    approved_fingerprints = []
+    valid_blocks = []
+    for root, bar, files in os.walk(ns.workDir):
+        for file in files:
+            if file.endswith(".tap"):
+                found_blocks.append(os.path.join(root, file))
+    for block in found_blocks:
+        with open(block+".sig", "rb") as k:
+            result = gpg.verify_file(k, block)
+        if not result.valid:
+            print("Rejecting %s; invalid signature." % (os.path.split(block)[1]))
+        else:
+            fingerprint = result.fingerprint
+            if fingerprint in approved_fingerprints:
+                valid_blocks.append(block)
+            else:
+                print("This fingerprint requires approval: %s" % fingerprint)
+                print("The fingerprint claims to be for: %s" % result.username)
+                print("Compare to a known-good fingerprint for this user.")
+                resume = input("Approve this fingerprint? (y/n)")
+                if "y" in resume.lower():
+                    valid_blocks.append(block)
+                    approved_fingerprints.append(fingerprint)
+    return valid_blocks
 
 
 def verify_keys(ns, gpg):
