@@ -64,8 +64,8 @@ def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
     if namespace.modeNetwork.lower() == "ftp":
         ftp_retrieve_files(namespace)
-    verified_blocks = verify_blocks(namespace.workDir)
-    decrypt_blocks(verified_blocks)
+    verified_blocks = verify_blocks(namespace.workDir, gpg_agent)
+    decrypt_blocks(verified_blocks, gpg_agent)
     unpack_blocks(namespace.workDir)
     clean_up()
     exit()
@@ -95,51 +95,53 @@ def ftp_establish_connection(url, port, ssl_context, username, password):
     return link
 
 
-def ftp_fetch_block(fname, ftp_connect, dirDestination): #
+def ftp_fetch_block(fname, ftp_connect, dir_destination):
     """fetch fname from the server"""
-    if dirDestination != "":
-        if not os.path.exists(dirDestination):
-            os.mkdir(dirDestination)
-    with open(os.path.join(dirDestination, fname), "wb") as fo:
-        ftp_connect.retrbinary(("RETR %s" %fname), fo.write)
+    if dir_destination != "":
+        if not os.path.exists(dir_destination):
+            os.mkdir(dir_destination)
+    with open(os.path.join(dir_destination, fname), "wb") as fo:
+        ftp_connect.retrbinary(("RETR %s" % fname), fo.write)
 
 
 def ftp_grep_blocks(label, date, ftp_connect):
     """fetch the list of blocks from Label on Date."""
     index = ftp_connect.nlst()
-    lead = ( "%s-%s" % (label, date))
-    listFetch = []
+    lead = ("%s-%s" % (label, date))
+    list_fetch = []
     for file in index:
         if file.startswith(lead):
-            listFetch.append(file)
-    return len(listFetch), listFetch
+            list_fetch.append(file)
+    return len(list_fetch), list_fetch
 
 
 def ftp_retrieve_files(ns):
     """Based on the usual network config, retrieves the current blocks."""
     if ns.modeNetwork.lower() == "ftp":
-        input(
-            "Tapestry is presently configured to an FTP drop. Please ensure you have a connection, and press any key to continue.")
-        useDefaultCompID = input("Would you like to recover files for %s? (y/n)>" % ns.compid).lower()
-        if useDefaultCompID == "n":
+        input("""Tapestry is presently configured to use an FTP drop. 
+        Please ensure you have a connection, and press any key to continue.""")
+        use_default_comp_id = input("Would you like to recover files for %s? (y/n)>" % ns.compid).lower()
+        if use_default_comp_id == "n":
             print("Please enter the name of the computer you wish to recover files for:")
             compid = input("Case Sensitive: ")
         print("Please enter the date for which you wish to recover files:")
-        tgtDate = input("YYYY-MM-DD")
+        tgt_date = input("YYYY-MM-DD")
         pw = getpass.getpass("Enter the FTP password now (if required):")
         ftp_link = ftp_establish_connection(ns.addrNet, ns.portNet, get_ssl_context(ns), ns.nameNet, pw)
-        countBlocks, listBlocks = ftp_grep_blocks(compid, tgtDate, ftp_link)
-        if countBlocks == 0:
+        count_blocks, list_blocks = ftp_grep_blocks(compid, tgt_date, ftp_link)
+        if count_blocks == 0:
             print("No blocks for that date were found - check your records and try again.")
             ftp_link.quit()
             exit()
         else:
             ns.media = ns.workDir
-            for block in listBlocks:
+            for block in list_blocks:
                 ftp_fetch_block(block, ftp_link, ns.media)
             ftp_link.quit()
 
-def get_ssl_context(ns, test=False):  # Construct and return an appropriately-configured SSL Context object.
+
+def get_ssl_context(ns, test=False):
+    """Construct and return an appropriately-configured SSL Context object."""
     tls_context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS)
     tls_context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
     if ns.modeNetwork.lower() == "loom":
