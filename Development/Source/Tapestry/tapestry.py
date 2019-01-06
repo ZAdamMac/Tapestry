@@ -17,6 +17,7 @@ import os
 import platform
 import shutil
 import ssl
+import tarfile
 
 __version__ = "2.0.0"
 
@@ -62,13 +63,16 @@ def do_main(namespace, gpg_agent):
 
 def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
+    ns = namespace
     if namespace.modeNetwork.lower() == "ftp":
-        ftp_retrieve_files(namespace)
+        namespace = ftp_retrieve_files(namespace, gpg_agent)
     else:
-        media_retreive_files(namespace)
-    verified_blocks = verify_blocks(namespace.workDir, gpg_agent)
+        rec_index = media_retrieve_files(namespace.workDir, namespace.workDir,
+                                         gpg_agent)
+        namespace.rec_index = rec_index
+    verified_blocks = verify_blocks(ns.workDir, gpg_agent)
     decrypt_blocks(verified_blocks, gpg_agent)
-    unpack_blocks(namespace.workDir)
+    unpack_blocks(namespace)
     clean_up()
     exit()
 
@@ -117,7 +121,7 @@ def ftp_grep_blocks(label, date, ftp_connect):
     return len(list_fetch), list_fetch
 
 
-def ftp_retrieve_files(ns):
+def ftp_retrieve_files(ns, gpg):
     """Based on the usual network config, retrieves the current blocks."""
     if ns.modeNetwork.lower() == "ftp":
         input("""Tapestry is presently configured to use an FTP drop. 
@@ -140,6 +144,28 @@ def ftp_retrieve_files(ns):
             for block in list_blocks:
                 ftp_fetch_block(block, ftp_link, ns.media)
             ftp_link.quit()
+
+        decrypted_first = tapestry.TaskDecrypt(list_blocks[0], ns.workDir, gpg)
+        decrypted_first = decrypted_first()
+        if decrypted_first.split()[1].lower == "success":
+            tar = tarfile.open(os.path.join(ns.workDir, list_blocks[0]), "r:*")
+            tapfile_contents = tar.getnames()
+
+            if "recovery-pkl" in tapfile_contents:
+                index_file = tar.extractfile("recovery-pkl")
+            elif "recovery-riff" in tapfile_contents:
+                index_file = tar.extractfile("recovery-pkl")
+            else:
+                print("Something has gone wrong!")
+                print("One or more blocks are corrupt and missing their recovery index.")
+                print("This is a fatal error.")
+                exit()
+        else:
+            print("Something has gone wrong in initial decryption.")
+            print("Verify you have the key for the blocks provided and try again.")
+            exit()
+        ns.rec_index = tapestry.RecoveryIndex(index_file)
+        return ns
 
 
 def get_ssl_context(ns, test=False):
@@ -204,6 +230,77 @@ def generate_keys(namespace, gpg_agent):
     print("The new keys have been saved in the output folder. Please move them to removable media or other backup.")
 
     return namespace
+
+
+def media_retrieve_files(mountpoint, temp_path, gpg_agent):
+    """Iterates over mountpoint, moving .tap files and their signatures to the
+    temporary working directory. Early in operation, will retrieve the recovery
+    pickle or NewRIFF index from the first block it finds.
+
+    :param mountpoint: absolute path to the media mountpoint.
+    :param temp_path: absolute path to the system's working directory.
+    :param gpg_agent: a python-gnupg gpg agent object
+    :return:
+    """
+
+    found_blocks = []
+    found_sigs = []
+    initial_block_hunt = True
+
+    while initial_block_hunt:
+        for location, sub_directories, files in os.walk(mountpoint):
+            for file in files:
+                if file.endswith(".tap"):
+                    found_blocks.append(file)
+                    shutil.copy(file, os.path.join(temp_path, file))
+                elif file.endswith(".tap.sig"):
+                    found_sigs.append(file)
+                    shutil.copy(file, os.path.join(temp_path, file))
+
+        if len(found_blocks) == 0:
+            print("The are no recovery files on the mountpoint at %s" % mountpoint)
+            print("Check the media is inserted correctly (or that that address is correct) and try again.")
+            input("Press enter to continue")
+        else:
+            initial_block_hunt = False
+
+    # Now we need to obtain a recovery file of some kind.
+    decrypted_first = tapestry.TaskDecrypt(found_blocks[0], temp_path, gpg_agent)
+    decrypted_first = decrypted_first()
+    if decrypted_first.split()[1].lower == "success":
+        tar = tarfile.open(os.path.join(temp_path, found_blocks[0]), "r:*")
+        tapfile_contents = tar.getnames()
+
+        if "recovery-pkl" in tapfile_contents:
+            index_file = tar.extractfile("recovery-pkl")
+        elif "recovery-riff" in tapfile_contents:
+            index_file = tar.extractfile("recovery-pkl")
+        else:
+            print("Something has gone wrong!")
+            print("One or more blocks are corrupt and missing their recovery index.")
+            print("This is a fatal error.")
+            exit()
+    else:
+        print("Something has gone wrong in initial decryption.")
+        print("Verify you have the key for the blocks provided and try again.")
+        exit()
+
+    # If we made it this far, we have a recovery file, so let's return a recovery index
+    rec_index = tapestry.RecoveryIndex(index_file)
+
+    while len(found_blocks) < rec_index.blocks:
+        print("One or more blocks are missing. Please insert the next disk")
+        input("Press enter to continue")
+        for location, sub_directories, files in os.walk(mountpoint):
+            for file in files:
+                if file.endswith(".tap"):
+                    found_blocks.append(file)
+                    shutil.copy(file, os.path.join(temp_path, file))
+                elif file.endswith(".tap.sig"):
+                    found_sigs.append(file)
+                    shutil.copy(file, os.path.join(temp_path, file))
+
+    return rec_index
 
 
 def parse_args(namespace):
@@ -300,10 +397,10 @@ def start_gpg(ns):
     return gpg
 
 
-def verify_blocks(namespace, gpg_conn):
+def verify_blocks(namespace, gpg_agent):
     """Verifies blocks and returns a list of verified blocks as a result"""
     ns = namespace
-    gpg = gpg_conn
+    gpg = gpg_agent
     found_blocks = []
     approved_fingerprints = []
     valid_blocks = []

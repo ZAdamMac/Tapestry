@@ -219,6 +219,7 @@ class TaskDecrypt(object):
         """
         self.tap_file = block
         self.tap_name = os.path.split(block)[1]
+        self.tap_name += self.tap_name+".decrypted"
         self.absolute_output= os.path.join(working_directory, self.tap_name)
         self.gpg = gpg
 
