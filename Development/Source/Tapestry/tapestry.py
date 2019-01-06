@@ -13,10 +13,12 @@ import configparser
 import ftplib
 import getpass
 import gnupg
+import multiprocessing as mp
 import os
 import platform
 import shutil
 import ssl
+import sys
 import tarfile
 
 __version__ = "2.0.0"
@@ -56,6 +58,53 @@ def debug_print(body):
         print(output_string)
 
 
+def decrypt_blocks(ns, verified_blocks, gpg_agent):
+    """Iterates over the provided list of verified blocks, producing decrypted
+    versions in the same directory, using the provided gpg agent. This is done
+    leveraging the multiprocess package via the provided classes.py.
+
+    :param ns: The process namespace object
+    :param verified_blocks: a list of absolute file paths, ideally provided by
+    tapestry.verify_blocks
+    :param gpg_agent: A python-gnupg GPG object.
+    :return:
+    """
+    if __name__ == "__main__":
+        worker_count = os.cpu_count()
+        """It should be noted this method of obtaining the maximum number of
+        processes to spawn is highly simplistic. Performance enhancements in
+        Tapestry's future will likely focus around finding a more elegant way
+        to do this.
+        """
+        tasks = mp.JoinableQueue()  # This queue provides jobs to be done.
+        done = mp.JoinableQueue()  # This queue provides jobs which ARE done.
+        workers = []
+        for i in range(worker_count):
+            workers.append(tapestry.ChildProcess(tasks, done, ns.workDir, ns.debug))
+        for block in verified_blocks:
+            if not os.path.exists(block+".decrypted"):  # No sense repeating
+                tasks.put(tapestry.TaskDecrypt(block, ns.workDir, gpg_agent))
+        sum_jobs = tasks.qsize()
+        rounds_complete = 0
+        for w in workers:
+            w.start()
+        working = True
+        while working:
+            message = done.get()
+            if message is None:
+                working = False
+            else:
+                rounds_complete += 1
+                status_print(rounds_complete, sum_jobs, "Decrypting")
+                debug_print(message)
+                if rounds_complete == sum_jobs:
+                    done.put(None)  # Use none as a poison pill to kill the queue.
+                done.task_done()
+        tasks.join()
+        for w in workers:
+            tasks.put(None)
+
+
 def do_main(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire build process."""
     pass
@@ -71,9 +120,9 @@ def do_recovery(namespace, gpg_agent):
                                          gpg_agent)
         namespace.rec_index = rec_index
     verified_blocks = verify_blocks(ns.workDir, gpg_agent)
-    decrypt_blocks(verified_blocks, gpg_agent)
-    unpack_blocks(namespace)
-    clean_up()
+    decrypt_blocks(ns, verified_blocks, gpg_agent)
+    unpack_blocks(ns)
+    clean_up(ns.workDir)
     exit()
 
 
@@ -395,6 +444,71 @@ def start_gpg(ns):
     gpg = gnupg.GPG(gnupghome=ns.gpgDir, verbose=verbose)
 
     return gpg
+
+
+def status_print(done, total, job):
+    """Prints a basic status message. If not interrupted, prints it on one line"""
+    lengthBar = 15.0
+    doneBar = int(round((done / total) * lengthBar))
+    doneBarPrint = str("#" * int(doneBar) + "-" * int(round((lengthBar - doneBar))))
+    percent = int(round((done / total) * 100))
+    text = ("\r{0}: [{1}] {2}%".format(job, doneBarPrint, percent))
+    sys.stdout.write(text)
+    sys.stdout.flush()
+
+
+def unpack_blocks(namespace):
+    """Provided a namespace object, this function will crawl the defined
+    working directory, looking for decrypted tap files to unpack into their
+    destinations according to the recovered index.
+
+    :param namespace: The system namespace object.
+    :return:
+    """
+    ns = namespace
+
+    found_decrypted = []  # Need to find all the decrypted blocks
+    for foo, bar, files in os.walk(ns.workDir):
+        for file in files:
+            if file.endswith(".decrypted"):
+                found_decrypted.append(file)
+
+    files_to_unpack = {}  # Now we need to iterate over each of those blocks for files
+    for block in found_decrypted:
+        with tarfile.open(block, "r:*") as tap:
+            members = tap.getnames()
+            for file in members:
+                files_to_unpack.update({file, block})
+
+    tasks = mp.JoinableQueue()  # Let's populate the queue
+    for file, block in files_to_unpack:
+        category_dir, sub_path = ns.rec_index.find(file)
+        tap_absolute = os.path.join(ns.workDir, block)
+        tasks.put(tapestry.TaskTarUnpack(tap_absolute, file, category_dir, sub_path))
+    sum_jobs = tasks.qsize()
+
+    workers = []
+    done = mp.JoinableQueue
+    for i in range(os.cpu_count()):
+        workers.append(tapestry.ChildProcess(tasks, done, ns.workDir, ns.debug))
+    rounds_complete = 0
+    for w in workers:
+        w.start()
+    working = True
+    while working:
+        message = done.get()
+        if message is None:
+            working = False
+        else:
+            rounds_complete += 1
+            status_print(rounds_complete, sum_jobs, "Unpacking")
+            debug_print(message)
+            if rounds_complete == sum_jobs:
+                done.put(None)  # Use none as a poison pill to kill the queue.
+            done.task_done()
+    tasks.join()
+    for w in workers:
+        tasks.put(None)
 
 
 def verify_blocks(namespace, gpg_agent):
