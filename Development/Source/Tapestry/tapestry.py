@@ -421,35 +421,35 @@ def parse_config(namespace):
         ns.uid = config.get("Environment Variables", "uid")
         ns.drop = config.get("Environment Variables", "Output Path")
 
-    if ns.currentOS == "Linux":
-        ns.workDir = "/tmp/Tapestry/"
-        ns.desktop = str("/home/" + ns.uid + "/Desktop")
-        ns.gpgDir = str("/home/" + ns.uid + "/.gnupg")
-    elif ns.currentOS == "Windows":
-        ns.workDir = "C:/Windows/Temp"
-        ns.desktop = str("C:/Users/" + ns.uid + "/Desktop")
-        ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
-    ns.numConsumers = os.cpu_count()
-    debug_print("I am operating with %s consumers." % ns.numConsumers)
+        if ns.currentOS == "Linux":
+            ns.workDir = "/tmp/Tapestry/"
+            ns.desktop = str("/home/" + ns.uid + "/Desktop")
+            ns.gpgDir = str("/home/" + ns.uid + "/.gnupg")
+        elif ns.currentOS == "Windows":
+            ns.workDir = "C:/Windows/Temp"
+            ns.desktop = str("C:/Users/" + ns.uid + "/Desktop")
+            ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
+        ns.numConsumers = os.cpu_count()
+        debug_print("I am operating with %s consumers." % ns.numConsumers)
 
-    # lastly, now that we know current OS, let's build the dictionary of categories
-    ns.category_paths = {}
-    if ns.currentOS == "Linux":
-        relevant = "Default Locations/Nix"
-    else:
-        relevant = "Default Locations/Windows"
-    for categories in config.options(relevant):
-        for category in categories:
-            category_path = config.get(relevant, category)
-            ns.category_paths.update({category: category_path})
-    if ns.currentOS == "Linux":
-        relevant = "Additional Locations/Nix"
-    else:
-        relevant = "Additional Locations/Windows"
-    for categories in config.options(relevant):
-        for category in categories:
-            category_path = config.get(relevant, category)
-            ns.category_paths.update({category: category_path})
+        # lastly, now that we know current OS, let's build the dictionary of categories
+        ns.category_paths = {}
+        if ns.currentOS == "Linux":
+            relevant = "Default Locations/Nix"
+        else:
+            relevant = "Default Locations/Windows"
+        for categories in config.options(relevant):
+            for category in categories:
+                category_path = config.get(relevant, category)
+                ns.category_paths.update({category: category_path})
+        if ns.currentOS == "Linux":
+            relevant = "Additional Locations/Nix"
+        else:
+            relevant = "Additional Locations/Windows"
+        for categories in config.options(relevant):
+            for category in categories:
+                category_path = config.get(relevant, category)
+                ns.category_paths.update({category: category_path})
 
 
     return ns
