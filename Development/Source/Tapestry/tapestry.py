@@ -482,11 +482,15 @@ def unpack_blocks(namespace):
 
     tasks = mp.JoinableQueue()  # Let's populate the queue
     for file, block in files_to_unpack:
+        skip = False
         category_dir, sub_path = ns.rec_index.find(file)
         if category_dir = "404";
             category_dir = ns.drop
-        tap_absolute = os.path.join(ns.workDir, block)
-        tasks.put(tapestry.TaskTarUnpack(tap_absolute, file, category_dir, sub_path))
+        elif category_dir = "skip":
+            skip = True
+        if not skip:
+            tap_absolute = os.path.join(ns.workDir, block)
+            tasks.put(tapestry.TaskTarUnpack(tap_absolute, file, category_dir, sub_path))
     sum_jobs = tasks.qsize()
 
     workers = []
