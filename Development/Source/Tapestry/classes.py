@@ -9,12 +9,29 @@ Classes are to be organized by general purpose - see block comments for guidance
 import bz2
 import ftplib
 import hashlib
+import json
 import multiprocessing as mp
 import os
+import pickle
 import shutil
 import tarfile
 
+# Define Exceptions
+
+
+class RecoveryIndexError(Exception):
+    """Standard exception to be raised when the recovery index has an issue
+    with the file it is provided."""
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
 # Define Process and Task Classes
+
 
 class ChildProcess(mp.Process):
     """A simple, logicless worker process which iterates against a queue. This
@@ -297,6 +314,7 @@ class TaskCheckIntegrity(object):
         else:
             return [False, "File %s has an invalid hash." % self.fid]
 
+
 # Define Package Overrides
 
 
@@ -309,3 +327,79 @@ class FTP_TLS(ftplib.FTP_TLS):  # With thanks to hynekcer
                                             server_hostname=self.host,
                                             session=self.sock.session)  # this is the fix
         return conn, size
+
+
+# Define Utility Objects
+
+class RecoveryIndex(object):
+    """Special utility class for loading and translating Tapestry recovery
+    index files and presenting them back to the script in a universal way. Made
+    for both the old Recovery Pickle design as well as the NewRIFF format.
+    """
+
+    def __init__(self, index_file):
+        """Initialize the Recovery Index by handing it a working file.
+
+        :param file: a reader object containing the file in question.
+        """
+        self.pickle_failed = False
+        self.json_failed = False
+
+        try:
+            self.pickled_data = pickle.load(index_file)
+        except pickle.UnpicklingError:  # In this case we must have a newRiff:
+            self.pickle_failed = True
+
+        try:
+            self.unpacked_json = json.load(index_file)
+        except JSONDecodeError:
+            self.json_failed = True
+
+        if self.pickle_failed and self.json_failed:
+            raise RecoveryIndexError("The recovery index is not a valid file type, or corrupt.")
+        elif self.pickle_failed:
+            self.mode = "json"
+        else:
+            self.mode = "pkl"
+
+        if self.mode == "json":
+            self.run_metadata = self.unpacked_json["metaRun"]
+            self.file_index = self.unpacked_json["index"]
+            self.blocks = self.unpacked_json["metaRun"]["sumBlock"]
+        elif self.mode == "pkl":
+            self.blocks, self.rec_paths, self.rec_sections = self.pickled_data
+        else:  # We have entered a cursed state...
+            raise RecoveryIndexError("The self.mode variable is an unexpected value. Are you hacking?")
+
+        def find(file_key):
+            """Expectes a FID value as the argument and will return the
+            category and sub-path accordingly.
+
+            :param file_key: A string representing a valid file ID.
+            """
+            if file_key.lower() in ["recovery-pkl", "recovery-riff"]:
+                category = "skip"
+                sub_path = "skip"
+                return category, sub_path
+            elif self.mode == "json":
+                try:
+                    category = self.file_index[file_key]["category"]
+                    sub_path = self.file_index[file_key]["fpath"]
+                except KeyError:
+                    category = b"404"
+                    sub_path = b"404"
+            elif self.mode == "pkl":
+                try:
+                    category = self.rec_sections[file_key]
+                    sub_path = self.rec_paths[file_key]
+                except KeyError:
+                    category = b"404"
+                    sub_path = b"404"
+            else:
+                raise RecoveryIndexError("The self.mode variable is an unexpected value. Are you hacking?")
+
+            return category, sub_path
+
+
+
+
