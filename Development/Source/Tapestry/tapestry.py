@@ -323,7 +323,7 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
         if "recovery-pkl" in tapfile_contents:
             index_file = tar.extractfile("recovery-pkl")
         elif "recovery-riff" in tapfile_contents:
-            index_file = tar.extractfile("recovery-pkl")
+            index_file = tar.extractfile("recovery-riff")
         else:
             print("Something has gone wrong!")
             print("One or more blocks are corrupt and missing their recovery index.")
@@ -483,6 +483,8 @@ def unpack_blocks(namespace):
     tasks = mp.JoinableQueue()  # Let's populate the queue
     for file, block in files_to_unpack:
         category_dir, sub_path = ns.rec_index.find(file)
+        if category_dir = "404";
+            category_dir = ns.drop
         tap_absolute = os.path.join(ns.workDir, block)
         tasks.put(tapestry.TaskTarUnpack(tap_absolute, file, category_dir, sub_path))
     sum_jobs = tasks.qsize()
