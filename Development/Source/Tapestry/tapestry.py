@@ -13,6 +13,8 @@ import configparser
 import ftplib
 import getpass
 import gnupg
+import hashlib
+import io
 import multiprocessing as mp
 import os
 import platform
@@ -20,6 +22,7 @@ import shutil
 import ssl
 import sys
 import tarfile
+import uuid
 
 __version__ = "2.0.0"
 
@@ -46,6 +49,51 @@ def clean_up(working_directory):
     if __name__ == "__main__":
         if os.path.exists(working_directory):
             shutil.rmtree(working_directory)
+
+
+def build_ops_list(namespace):
+    """A simple function which performs the crawling we need to do, and returns
+    the findex of a RIFF). The returned index is not sorted by size and has to
+    be sorted to do the blocksort.
+
+    :param namespace: The namespace object, which by this point should be fully
+    populated after passing through parse_config and parse_args
+    :return:
+    """
+    ns = namespace
+    # Step 1: Index Everything for the Blocksort
+    files_index = {} # This comes out the same as the 'findex' key in a NewRIFF JSON
+    node = uuid.getnode()
+    run_list = ns.categories_default
+    if ns.inc:
+        for category in ns.categories_inclusive:
+            run_list.append(category)
+    for category in run_list:
+        for dir_path, sub_dirs, files in os.walk(ns.category_paths[category]):
+            for file in files:
+                absolute_path = os.path.join(dir_path, file)
+                sub_path = os.path.relpath(absolute_path, ns.category_paths[category])
+                size = os.path.getsize(absolute_path)
+                if size <= ns.block_size_raw: # We'll be handling this file.
+                    hasher = hashlib.new('sha256')
+                    with open(absolute_path, "rb") as contents:
+                        chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
+                        while chunk != b"":
+                            hasher.update(chunk)
+                            chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
+                    hash_digest = hasher.hexdigest()
+                    file_descriptor = {
+                        'fname': file, 'sha256': hash_digest, 'category': category,
+                        'fpath': sub_path, 'fsize': size
+                        }
+                    files_index.update({uuid.uuid1(node): file_descriptor})
+                else:
+                    size_pretty = size / 1048576
+                    block_size_pretty = ns.block_size_raw / 1048576
+                    print("{%s} %s is larger than %s (%s) and is being excluded" % (category, file, size_pretty, block_size_pretty))
+                    #Todo Add the Logger Here Too, I guess
+
+    return files_index
 
 
 def debug_print(body):
@@ -107,7 +155,13 @@ def decrypt_blocks(ns, verified_blocks, gpg_agent):
 
 def do_main(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire build process."""
-    pass
+    ops_list = build_ops_list(namespace)
+    raw_recovery_index = build_recovery_index(namespace)
+    list_blocks = pack_blocks(namespace)
+    list_locked_blocks = encrypt_blocks(namespace, gpg_agent)
+    sign_blocks(list_locked_blocks, namespace, gpg_agent)
+    clean_up(namespace.workDir)
+    exit()
 
 
 def do_recovery(namespace, gpg_agent):
@@ -434,6 +488,8 @@ def parse_config(namespace):
 
         # lastly, now that we know current OS, let's build the dictionary of categories
         ns.category_paths = {}
+        ns.categories_default = []
+        ns.categories_inclusive = []# May be Inc or Default
         if ns.currentOS == "Linux":
             relevant = "Default Locations/Nix"
         else:
@@ -442,6 +498,7 @@ def parse_config(namespace):
             for category in categories:
                 category_path = config.get(relevant, category)
                 ns.category_paths.update({category: category_path})
+                ns.categories_default.append(category)
         if ns.currentOS == "Linux":
             relevant = "Additional Locations/Nix"
         else:
@@ -450,7 +507,7 @@ def parse_config(namespace):
             for category in categories:
                 category_path = config.get(relevant, category)
                 ns.category_paths.update({category: category_path})
-
+                ns.categories_inclusive.append(category)
 
     return ns
 
