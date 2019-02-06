@@ -331,6 +331,69 @@ class FTP_TLS(ftplib.FTP_TLS):  # With thanks to hynekcer
 
 # Define Utility Objects
 
+class Block(object):
+    """Class representation of a tapestry block object. Exposes a method "put"
+    to add a file to the block, and another, "meta" method, for adding the
+    full-run metadata file to a batch before proceeding with packing.
+
+    """
+
+    def __init__(self, name, max_size, count):
+        """Initialize the block with its preset values.
+
+        :param name: string, output filename
+        :param max_size: int in bytes
+        """
+        self.name = name # This string will be used as the final output filename
+        self.max_size = max_size
+        self.size = 0
+        self.file_index = {}
+        self.remaining = max_size
+        self.files = 0 # A simple integer counter
+        self.run_metadata = {}
+        self.num_block = count
+        self.block_metadata = {}
+        self.global_index = {}
+
+    def put(self, file_identifier, file_index_object):
+        """Accepts an arbitrary file index identifier and the corresponding
+        dictionary of metadata, as from a recovery index object"""
+        if file_index_object['fsize'] <= self.remaining: # the new file will fit
+            self.file_index.update({file_identifier: file_index_object})
+            self.size += file_index_object['fsize']
+            self.files += 1
+            self.remaining = self.max_size - self.size
+            return True
+        else: # This file won't fit and has to be placed somewhere else.
+            return False
+
+    def meta(self, sum_blocks, sum_size, sum_files, datestamp, comment_string, full_index, drop_dir):
+        """Provided these arguments, populate the runMetadata portion of a RIFF,
+        then create the corresponding RIFF file.
+        """
+        meta_value = {}
+        meta_value.update({"sumBlock": sum_blocks})
+        meta_value.update({"sizeExtraLarge": sum_size})
+        meta_value.update({"countFilesSum": sum_files})
+        meta_value.update({"dateRec": datestamp})
+        if comment_string is None:
+            comment_string = "No Comment"
+        meta_value.update({"comment": comment_string})
+        self.run_metadata = meta_value
+
+        self.block_metadata = {
+            "numBlock": self.num_block, "sizeLarge": self.size, "countFiles": self.files
+        }
+
+        self.global_index = full_index
+
+        dict_riff = {"metaBlock": self.block_metadata, "metaRun": self.run_metadata,
+                     "index": self.global_index}
+
+        with open(os.path.join(drop_dir, self.name+".riff", "r") as riff:
+            json.dump(dict_riff, riff)
+
+
 class RecoveryIndex(object):
     """Special utility class for loading and translating Tapestry recovery
     index files and presenting them back to the script in a universal way. Made
