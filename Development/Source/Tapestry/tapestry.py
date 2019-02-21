@@ -10,6 +10,7 @@ github: https://www.github.com/ZAdamMac/Tapestry
 from ..Tapestry import classes as tapestry
 import argparse
 import configparser
+import datetime
 import ftplib
 import getpass
 import gnupg
@@ -90,11 +91,29 @@ def build_ops_list(namespace):
                 else:
                     size_pretty = size / 1048576
                     block_size_pretty = ns.block_size_raw / 1048576
-                    print("{%s} %s is larger than %s (%s) and is being excluded" % (category, file, size_pretty, block_size_pretty))
-                    #Todo Add the Logger Here Too, I guess
-
+                    print("{%s} %s is larger than %s (%s) and is being excluded" %
+                          (category, file, size_pretty, block_size_pretty))
+                    # Todo Add the Logger Here Too, I guess
     return files_index
 
+
+def build_recovery_index(ops_list):
+    """Provided with the output of a build_ops_list function, this function
+    will return a sorted recovery index (fit for blocksort, which is contained
+    in the pack_blocks function)
+
+    :param ops_list: the "files_index" object returned by build_ops_list
+    """
+    dict_sizes = {}
+    sum_size = 0
+    for key, value in ops_list:
+        size_entry = {key: value['fsize']}
+        sum_size += value['fsize']
+
+    working_index = sorted(dict_sizes, key=dict_sizes.__getitem__)
+    working_index.reverse()
+
+    return working_index, sum_size
 
 def debug_print(body):
     """Checks for the value of a global variable, debug, and determines whether
@@ -156,9 +175,10 @@ def decrypt_blocks(ns, verified_blocks, gpg_agent):
 def do_main(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire build process."""
     ops_list = build_ops_list(namespace)
-    raw_recovery_index = build_recovery_index(namespace)
-    list_blocks = pack_blocks(namespace)
-    list_locked_blocks = encrypt_blocks(namespace, gpg_agent)
+    raw_recovery_index, namespace.sum_size = build_recovery_index(ops_list)
+    list_blocks = pack_blocks(raw_recovery_index, ops_list, namespace)
+    list_blocks = compress_blocks(list_blocks, ns.compress, ns.compressLevel)
+    list_locked_blocks = encrypt_blocks(list_blocks, namespace, gpg_agent)
     sign_blocks(list_locked_blocks, namespace, gpg_agent)
     clean_up(namespace.workDir)
     exit()
@@ -407,6 +427,91 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
     return rec_index
 
 
+def pack_blocks(sizes, ops_list, namespace):
+    """Processes files by creating the individual tarred tapblock files, and
+    returns a list of those files and their absolute paths to be processed by
+    the next stage of events.
+
+    :param sizes: a list object returned by build_recovery_index, made up of
+    strings indicating file identifier values sorted by the size of the file.
+    :param ops_list: The full ops list prepared by build_ops_list, which is
+    equivalent to the third portion of a recovery index file.
+    :param namespace: the entire namespace object.
+    :return:
+    """
+    if __name__ == "__main__":
+        ns = namespace
+        collection_blocks = []
+        block_final_paths = []
+        block_name_base = ns.compid+"-"+str(datetime.date.today())
+        counter = 1  # Remember to increment this later
+        working_block = tapestry.Block(
+            (block_name_base+"-"+str(counter)), ns.block_size_raw, counter
+        )
+        packing = True
+        while packing:
+            for item in sizes:
+                placed = working_block.put(item, ops_list[item])
+                if placed:
+                    sizes.remove(item)
+            if len(sizes) > 0:  # We need a new block, unpacked items.
+                collection_blocks.append(working_block)
+                working_block = tapestry.Block(
+                    (block_name_base+"-"+str(counter)), ns.block_size_raw, counter
+                )
+            else:
+                collection_blocks.append(working_block)
+                packing = False  # The list is empty and we're therefore done.
+        tarf_queue = mp.JoinableQueue()
+        locks = []
+        sum_files = 0
+        for block in collection_blocks:
+            sum_files += block.files
+        sum_sizes = 0
+        for item, value in ops_list:
+            sum_sizes += int(value["fsize"])
+        for block in collection_blocks:
+            this_block_lock = mp.Lock()
+            locks.append(this_block_lock)
+            tarf = os.path.join(ns.workDir, (block.name+".tar"))
+            block_final_paths.append(tarf)
+            for fid, file_metadata in block.file_index:
+                path = os.path.join(ns.category_paths[file_metadata["category"]],
+                                    file_metadata['fpath'])
+                this_task = tapestry.TaskTarBuild(tarf, fid, path, this_block_lock, locks)
+                tarf_queue.put(this_task)
+            this_riff = block.meta(len(collection_blocks), sum_sizes, sum_files,
+                                   datetime.date.today(), None, ops_list, ns.drop)
+            this_task = tapestry.TaskTarBuild(tarf, "recovery-riff",
+                                              this_riff, this_block_lock, locks)
+            tarf_queue.append(this_task)
+
+        sum_jobs = len(tarf_queue)
+        done = mp.JoinableQueue()
+        workers = []
+        for i in range(os.cpu_count()):
+            workers.append(tapestry.ChildProcess(tarf_queue, done, ns.workDir, ns.debug))
+        rounds_complete = 0
+        for w in workers:
+            w.start()
+        working = True
+        while working:
+            message = done.get()
+            if message is None:
+                working = False
+            else:
+                rounds_complete += 1
+                status_print(rounds_complete, sum_jobs, "Unpacking")
+                debug_print(message)
+                if rounds_complete == sum_jobs:
+                    done.put(None)  # Use none as a poison pill to kill the queue.
+                done.task_done()
+        tarf_queue.join()
+        for w in workers:
+            tarf_queue.put(None)
+
+        return block_final_paths
+
 def parse_args(namespace):
     """Parse arguments and return the modified namespace object"""
     if __name__ == "__main__":
@@ -576,7 +681,7 @@ def unpack_blocks(namespace):
     sum_jobs = tasks.qsize()
 
     workers = []
-    done = mp.JoinableQueue
+    done = mp.JoinableQueue()
     for i in range(os.cpu_count()):
         workers.append(tapestry.ChildProcess(tasks, done, ns.workDir, ns.debug))
     rounds_complete = 0

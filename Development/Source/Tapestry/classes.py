@@ -77,24 +77,24 @@ class TaskTarBuild(object):
     file to a particular tarfile, all fully enumerated.
     """
 
-    def __init__(self, tarf, fid, path, index, locks):
+    def __init__(self, tarf, fid, path, lock, locks):
         """
         Create the tarfile or, otherwise, add a file to it.
         :param tarf: which tarfile to use, relative to the working directory
         :param fid: GUID FID as a string.
         :param path: absolute path to the file in need of backup
-        :param index: appropriate index number for the lock to acquire.
+        :param lock: actual lock object needed to aquire
         :param locks: Locks dictionary which should be used.
         """
         self.tarf = tarf
         self.a = fid
         self.b = path
-        self.index = index  # index number of the appropriate mutex
+        self.lock = lock  # index number of the appropriate mutex
         self.locks = locks
 
     def __call__(self):
         if os.path.exists(self.tarf):  # we need to know if we're starting a new file or not.
-            f_lock = self.locks[self.index]  # Aquires the lock indicated in the index value from the master
+            f_lock = self.lock  # Aquires the lock indicated in the index value from the master
             f_lock.acquire()
             tar = tarfile.open(name=self.tarf, mode="a:")
             tar.add(self.b, arcname=self.a, recursive=False)
@@ -390,8 +390,11 @@ class Block(object):
         dict_riff = {"metaBlock": self.block_metadata, "metaRun": self.run_metadata,
                      "index": self.global_index}
 
-        with open(os.path.join(drop_dir, self.name+".riff", "r") as riff:
+        with open(os.path.join(drop_dir, self.name+".riff", "w")) as riff:
             json.dump(dict_riff, riff)
+
+        return os.path.join(drop_dir, (self.name+".riff"))
+
 
 
 class RecoveryIndex(object):
