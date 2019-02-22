@@ -68,7 +68,7 @@ def build_ops_list(namespace):
                 absolute_path = os.path.join(dir_path, file)
                 sub_path = os.path.relpath(absolute_path, ns.category_paths[category])
                 size = os.path.getsize(absolute_path)
-                if size <= ns.block_size_raw: # We'll be handling this file.
+                if size <= ns.block_size_raw:  # We'll be handling this file.
                     hasher = hashlib.new('sha256')
                     with open(absolute_path, "rb") as contents:
                         chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
@@ -114,6 +114,55 @@ def clean_up(working_directory):
     if __name__ == "__main__":
         if os.path.exists(working_directory):
             shutil.rmtree(working_directory)
+
+
+def compress_blocks(ns, targets, do_compression=True, compression_level=1):
+    """Iterates over a list of files, and then compresses them, using the
+    multiprocessing framework.
+
+    :param targets: list of absolute paths to the files to be compressed.
+    :param do_compression: boolean value indicting if we should use compression
+    :param compression_level: integer value from 1-9 denoting the number of passes
+    :return: list of absolute paths of the resulting files.
+    """
+    if __name__ == "__main__":
+        if do_compression:
+            worker_count = os.cpu_count()
+            compress_queue = mp.JoinableQueue()
+            for target in targets:
+                task = tapestry.TaskCompress(target, compression_level)
+                compress_queue.put(task)
+            workers = []
+            sum_jobs = len(compress_queue)
+            done = mp.JoinableQueue()
+            for i in range(worker_count):
+                workers.append(tapestry.ChildProcess(compress_queue, done, ns.work, ns.debug))
+            rounds_complete = 0
+            for w in workers:
+                w.start()
+            working = True
+            while working:
+                message = done.get()
+                if message is None:
+                    working = False
+                else:
+                    rounds_complete += 1
+                    status_print(rounds_complete, sum_jobs, "Compressing")
+                    debug_print(message)
+                    if rounds_complete == sum_jobs:
+                        done.put(None)  # Use none as a poison pill to kill the queue.
+                    done.task_done()
+            compress_queue.join()
+            for w in workers:
+                compress_queue.put(None)
+            replacement_list = []
+            for target in targets:
+                out = target+".bz2"
+                replacement_list.append(out)
+        else:
+            replacement_list = targets
+
+        return replacement_list
 
 
 def debug_print(body):
@@ -175,10 +224,11 @@ def decrypt_blocks(ns, verified_blocks, gpg_agent):
 
 def do_main(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire build process."""
+    ns = namespace
     ops_list = build_ops_list(namespace)
     raw_recovery_index, namespace.sum_size = build_recovery_index(ops_list)
     list_blocks = pack_blocks(raw_recovery_index, ops_list, namespace)
-    list_blocks = compress_blocks(list_blocks, ns.compress, ns.compressLevel)
+    list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
     list_locked_blocks = encrypt_blocks(list_blocks, namespace, gpg_agent)
     sign_blocks(list_locked_blocks, namespace, gpg_agent)
     clean_up(namespace.workDir)
@@ -502,7 +552,7 @@ def pack_blocks(sizes, ops_list, namespace):
                 working = False
             else:
                 rounds_complete += 1
-                status_print(rounds_complete, sum_jobs, "Unpacking")
+                status_print(rounds_complete, sum_jobs, "Packing")
                 debug_print(message)
                 if rounds_complete == sum_jobs:
                     done.put(None)  # Use none as a poison pill to kill the queue.
