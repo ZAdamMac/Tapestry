@@ -45,13 +45,6 @@ def announce():
         debug_print("The current OS is: " + platform.system())
 
 
-def clean_up(working_directory):
-    """Releases the memory space used up by temp, because we're polite."""
-    if __name__ == "__main__":
-        if os.path.exists(working_directory):
-            shutil.rmtree(working_directory)
-
-
 def build_ops_list(namespace):
     """A simple function which performs the crawling we need to do, and returns
     the findex of a RIFF). The returned index is not sorted by size and has to
@@ -114,6 +107,14 @@ def build_recovery_index(ops_list):
     working_index.reverse()
 
     return working_index, sum_size
+
+
+def clean_up(working_directory):
+    """Releases the memory space used up by temp, because we're polite."""
+    if __name__ == "__main__":
+        if os.path.exists(working_directory):
+            shutil.rmtree(working_directory)
+
 
 def debug_print(body):
     """Checks for the value of a global variable, debug, and determines whether
@@ -511,6 +512,7 @@ def pack_blocks(sizes, ops_list, namespace):
             tarf_queue.put(None)
 
         return block_final_paths
+
 
 def parse_args(namespace):
     """Parse arguments and return the modified namespace object"""
