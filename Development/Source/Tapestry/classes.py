@@ -465,7 +465,3 @@ class RecoveryIndex(object):
                 raise RecoveryIndexError("The self.mode variable is an unexpected value. Are you hacking?")
 
             return category, sub_path
-
-
-
-
