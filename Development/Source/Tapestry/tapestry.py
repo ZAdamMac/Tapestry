@@ -712,6 +712,49 @@ def parse_config(namespace):
     return ns
 
 
+def sign_blocks(namespace, gpg_agent):
+    """Locates and signs tapestry blocks.
+
+    :param namespace: A namespace object
+    :param gpg_agent: the python-gnupg GPG agent
+    :return:
+    """
+    if __name__ == "__main__":
+        ns = namespace
+        out = ns.drop
+        jobs = mp.JoinableQueue()
+        for root, bar, files in os.walk(namespace.drop):
+            for file in files:
+                if file.endswith(".tap"):
+                    target = os.path.join(root, file)
+                    job = tapestry.TaskEncrypt(target, ns.sigFP, out, gpg_agent)
+                    jobs.put(job)
+        workers = []
+        sum_jobs = len(jobs)
+        done = mp.JoinableQueue()
+        for i in range(os.cpu_count()):
+            workers.append(tapestry.ChildProcess(jobs, done, ns.work, ns.debug))
+        rounds_complete = 0
+        for w in workers:
+            w.start()
+        working = True
+        while working:
+            message = done.get()
+            if message is None:
+                working = False
+            else:
+                rounds_complete += 1
+                status_print(rounds_complete, sum_jobs, "Signing")
+                debug_print(message)
+                if rounds_complete == sum_jobs:
+                    done.put(None)  # Use none as a poison pill to kill the queue.
+                done.task_done()
+        jobs.join()
+        for w in workers:
+            jobs.put(None)
+        jobs.join()
+
+
 def start_gpg(ns):
     """Starts the GPG handler based on the current state. If --devtest or
     --debug were passed at runtime, the gpg handler will be verbose.
