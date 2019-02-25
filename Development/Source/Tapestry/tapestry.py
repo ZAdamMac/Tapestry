@@ -86,7 +86,7 @@ def build_ops_list(namespace):
                     block_size_pretty = ns.block_size_raw / 1048576
                     print("{%s} %s is larger than %s (%s) and is being excluded" %
                           (category, file, size_pretty, block_size_pretty))
-                    # Todo Add the Logger Here Too, I guess
+
     return files_index
 
 
