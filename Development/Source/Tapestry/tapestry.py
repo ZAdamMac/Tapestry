@@ -229,8 +229,8 @@ def do_main(namespace, gpg_agent):
     raw_recovery_index, namespace.sum_size = build_recovery_index(ops_list)
     list_blocks = pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
-    list_locked_blocks = encrypt_blocks(list_blocks, namespace, gpg_agent)
-    sign_blocks(list_locked_blocks, namespace, gpg_agent)
+    encrypt_blocks(list_blocks, gpg_agent, ns.fp, ns)
+    sign_blocks(namespace, gpg_agent)
     clean_up(namespace.workDir)
     exit()
 
@@ -249,6 +249,49 @@ def do_recovery(namespace, gpg_agent):
     unpack_blocks(ns)
     clean_up(ns.workDir)
     exit()
+
+
+def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
+    """Does the needful to take an argued list of packaged blocks and encrypt.
+    Returns a list of the output files.
+
+    :param targets: list of target files to process
+    :param gpg_agent: a python-gnupg gpg_agent object to do the encryption
+    :param fingerprint: the fingerprint to encrypt the files to.
+    :param namespace: the working namespace process
+    :return:
+    """
+    if __name__ == "__main__":
+        ns = namespace
+        out = ns.drop
+        jobs = mp.JoinableQueue()
+        for target in targets:
+            job = tapestry.TaskEncrypt(target, fingerprint, out, gpg_agent)
+            jobs.put(job)
+        workers = []
+        sum_jobs = len(jobs)
+        done = mp.JoinableQueue()
+        for i in range(os.cpu_count()):
+            workers.append(tapestry.ChildProcess(jobs, done, ns.work, ns.debug))
+        rounds_complete = 0
+        for w in workers:
+            w.start()
+        working = True
+        while working:
+            message = done.get()
+            if message is None:
+                working = False
+            else:
+                rounds_complete += 1
+                status_print(rounds_complete, sum_jobs, "Encrypting")
+                debug_print(message)
+                if rounds_complete == sum_jobs:
+                    done.put(None)  # Use none as a poison pill to kill the queue.
+                done.task_done()
+        jobs.join()
+        for w in workers:
+            jobs.put(None)
+        jobs.join()
 
 
 def ftp_establish_connection(url, port, ssl_context, username, password):
