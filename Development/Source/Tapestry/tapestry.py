@@ -56,7 +56,7 @@ def build_ops_list(namespace):
     """
     ns = namespace
     # Step 1: Index Everything for the Blocksort
-    files_index = {} # This comes out the same as the 'findex' key in a NewRIFF JSON
+    files_index = {}  # This comes out the same as the 'findex' key in a NewRIFF JSON
     node = uuid.getnode()
     run_list = ns.categories_default
     if ns.inc:
@@ -100,7 +100,6 @@ def build_recovery_index(ops_list):
     dict_sizes = {}
     sum_size = 0
     for key, value in ops_list:
-        size_entry = {key: value['fsize']}
         sum_size += value['fsize']
 
     working_index = sorted(dict_sizes, key=dict_sizes.__getitem__)
@@ -249,6 +248,7 @@ def do_recovery(namespace, gpg_agent):
     unpack_blocks(ns)
     clean_up(ns.workDir)
     exit()
+    return namespace
 
 
 def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
