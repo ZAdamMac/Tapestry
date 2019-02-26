@@ -895,11 +895,11 @@ def verify_keys(ns, gpg):
 
 #  Runtime Follows
 if __name__ == "__main__":
-    announce()
     state = Namespace()
     state = parse_args(state)
     state = parse_config(state)
     gpg_conn = start_gpg(state)
+    announce()
     if state.genKey:
         state = generate_keys(state, gpg_conn)
     verify_keys(state, gpg_conn)
