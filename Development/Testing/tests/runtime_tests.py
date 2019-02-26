@@ -52,7 +52,7 @@ def runtime():
         os.mkdir(os.path.join(out, "Non-Inc"))
     print("Now Beginning the --genKey test")
     start = time.monotonic()
-    waiting = subprocess.run(("python3.6", "dev.py", ("--genKey", "--devtest")))
+    waiting = subprocess.run("python3.6", "dev.py", ("--genKey", "--devtest"))
     elapse = framework.elapsed(start)
     print("--genKey completed in %s" % elapse)
     log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
@@ -65,7 +65,7 @@ def runtime():
 
     print("Now beginning --inc test.")
     start = time.monotonic()
-    waiting = subprocess.run(("python3.6", "dev.py", ("--inc", "--devtest")))
+    waiting = subprocess.run("python3.6", "dev.py", ("--inc", "--devtest"))
     elapse = framework.elapsed(start)
     print("--inc completed in %s" % elapse)
     log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
@@ -87,7 +87,7 @@ def runtime():
 
     print("Now beginning --rcv test.")
     start = time.monotonic()
-    waiting = subprocess.run(("python3.6", "dev.py", ("--rcv", "--devtest")))
+    waiting = subprocess.run("python3.6", "dev.py", ("--rcv", "--devtest"))
     elapse = framework.elapsed(start)
     print("--rcv completed in %s" % elapse)
     log.log("Recovery Mode Test Completed in %s - Returned:" % elapse)

@@ -12,11 +12,11 @@ use compression = True
 compression level = 1
 
 [Network Configuration]
-mode = false
+mode = none
 server = localhost
 port = 21
 username = ftptest
-remote drop location = drop
+remote drop location = ""
 keep local copies = True
 
 [Default Locations/Nix]
