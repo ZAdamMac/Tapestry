@@ -4,8 +4,8 @@
 #  Import Modules
 import configparser as cp
 from datetime import date
-from ..Testing import framework
-from ..Source import dev
+from Development.Testing.tests import framework
+from Development.Source.Tapestry import tapestry as dev
 import gnupg
 import hashlib
 import os

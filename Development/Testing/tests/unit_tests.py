@@ -6,7 +6,7 @@
 import configparser
 from datetime import date
 from Development.Source import dev
-from Development.Testing import framework as fw
+from Development.Testing.tests import framework as fw
 import gnupg
 import json
 import os
