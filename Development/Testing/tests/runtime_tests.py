@@ -24,9 +24,7 @@ def runtime():
     logs = os.path.join(perma_home, "Logs")
     block_size = cfg.get("Environment Variables", "blocksize")
     dev_level, bar = os.path.split(perma_home)
-    path_to_tapestry = os.path.join("Source", "Tapestry")
-    path_to_tapestry = os.path.join(path_to_tapestry, "__main__.py")
-    full_path_tapestry = os.path.join(dev_level, path_to_tapestry)
+    full_path_tapestry = os.path.join(dev_level, "Source")
 
     shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak")
 
@@ -60,10 +58,13 @@ def runtime():
     if not os.path.isdir(os.path.join(out, "Non-Inc")):
         os.mkdir(os.path.join(out, "Non-Inc"))
     print("Now Beginning the --genKey test")
+    here = os.getcwd()
+    os.chdir(full_path_tapestry)
     start = time.monotonic()
-    waiting = subprocess.run("python3.6", "dev.py", ("--genKey", "--devtest"))
+    waiting = subprocess.run("python3.6 -m Tapestry --genKey --devTest")
     elapse = framework.elapsed(start)
     print("--genKey completed in %s" % elapse)
+    os.chdir(here)
     log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
     log.log(str(waiting))
 
@@ -73,10 +74,12 @@ def runtime():
         cfg.write(warp)
 
     print("Now beginning --inc test.")
+    os.chdir(full_path_tapestry)
     start = time.monotonic()
-    waiting = subprocess.run("python3.6", "dev.py", ("--inc", "--devtest"))
+    waiting = subprocess.run("python3.6 -m Tapestry --inc --devTest")
     elapse = framework.elapsed(start)
     print("--inc completed in %s" % elapse)
+    os.chdir(here)
     log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
     log.log(str(waiting))
 
@@ -96,9 +99,11 @@ def runtime():
 
     print("Now beginning --rcv test.")
     start = time.monotonic()
-    waiting = subprocess.run("python3.6", "dev.py", ("--rcv", "--devtest"))
+    os.chdir(full_path_tapestry)
+    waiting = subprocess.run("python3.6 -m Tapestry --rcv --devTest")
     elapse = framework.elapsed(start)
     print("--rcv completed in %s" % elapse)
+    os.chdir(here)
     log.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
     log.log("%s" % waiting)
 
