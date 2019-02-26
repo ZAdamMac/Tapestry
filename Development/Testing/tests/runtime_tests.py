@@ -23,6 +23,10 @@ def runtime():
     test_ftp_user = cfg.get("Network Configuration", "username")
     logs = os.path.join(perma_home, "Logs")
     block_size = cfg.get("Environment Variables", "blocksize")
+    dev_level, bar = os.path.split(perma_home)
+    path_to_tapestry = os.path.join("Source", "Tapestry")
+    path_to_tapestry = os.path.join(path_to_tapestry, "tapestry.py")
+    full_path_tapestry = os.path.join(dev_level, path_to_tapestry)
 
     shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak")
 
@@ -40,7 +44,12 @@ def runtime():
     log.log("------------------------------[SAMPLE GENERATION]------------------------------")
     log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
     hasher = hashlib.sha256()
-    hasher.update(open("../Source/dev.py", "rb").read())
+    hasher.update(open("../Source/Tapestry/tapestry.py", "rb").read())
+    taphash = hasher.hexdigest()
+    log.log("\n"+str(taphash)+"\n")
+    log.log("\nWhich relies on the classes library with hash:")
+    hasher = hashlib.sha256()
+    hasher.update(open("../Source/Tapestry/classes.py", "rb").read())
     taphash = hasher.hexdigest()
     log.log("\n"+str(taphash)+"\n")
 

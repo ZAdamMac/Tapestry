@@ -7,7 +7,7 @@ github: https://www.github.com/ZAdamMac/Tapestry
 
 """
 
-from ..Tapestry import classes as tapestry
+from . import classes as tapestry
 import argparse
 import configparser
 import datetime
