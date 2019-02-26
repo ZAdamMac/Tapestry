@@ -5,7 +5,7 @@
 import configparser as cp
 from datetime import date
 from Development.Testing.tests import framework
-from Development.Source.Tapestry import tapestry as dev
+from Development.Source.Tapestry import __main__ as dev
 import gnupg
 import hashlib
 import os
