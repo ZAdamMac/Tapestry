@@ -6,7 +6,7 @@ aren't buggy and Tapestry isn't raising any unhandled exceptions, the testing
 results will appear in the logs.
 """
 
-from tests import integrity_tests, network_tests, runtime_tests, unit_tests
+from .tests import integrity_tests, network_tests, runtime_tests, unit_tests
 
 
 print("Okay, starting the tests.")
