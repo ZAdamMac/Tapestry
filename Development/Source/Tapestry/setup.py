@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="tapestry-dev",
+    name="tapestrydev",
     version="2.0.0dev",
     author="Zac Adam-MacEwen",
     author_email="ZAdamMac@kenshosec.com",

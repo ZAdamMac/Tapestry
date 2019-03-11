@@ -5,7 +5,7 @@
 # Import Block
 import configparser
 from datetime import date
-from . import dev
+import tapestry-dev as dev
 from . import framework as fw
 import gnupg
 import json
