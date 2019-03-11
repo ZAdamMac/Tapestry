@@ -166,6 +166,7 @@ class TaskCompress(object):
             bz2d = self.tarf+".bz2"
             bz2f = bz2.BZ2File(bz2d, "wb", compresslevel=self.level)
             shutil.copyfileobj(b, bz2f)
+
         return "Compressed %s to level %s" % (self.tarf, self.level)
 
 
@@ -349,7 +350,7 @@ class Block(object):
 
     """
 
-    def __init__(self, name, max_size, count):
+    def __init__(self, name, max_size, count, smallest):
         """Initialize the block with its preset values.
 
         :param name: string, output filename
@@ -360,20 +361,24 @@ class Block(object):
         self.size = 0
         self.file_index = {}
         self.remaining = max_size
-        self.files = 0 # A simple integer counter
+        self.files = 0  # A simple integer counter
         self.run_metadata = {}
         self.num_block = count
         self.block_metadata = {}
         self.global_index = {}
+        self.smallest = smallest
+        self.full = False
 
     def put(self, file_identifier, file_index_object):
         """Accepts an arbitrary file index identifier and the corresponding
         dictionary of metadata, as from a recovery index object"""
-        if file_index_object['fsize'] <= self.remaining: # the new file will fit
+        if file_index_object['fsize'] <= self.remaining:  # the new file will fit
             self.file_index.update({file_identifier: file_index_object})
             self.size += file_index_object['fsize']
             self.files += 1
             self.remaining = self.max_size - self.size
+            if self.remaining <= self.smallest:
+                self.full = True
             return True
         else: # This file won't fit and has to be placed somewhere else.
             return False

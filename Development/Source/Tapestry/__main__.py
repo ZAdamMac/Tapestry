@@ -139,18 +139,20 @@ def compress_blocks(ns, targets, do_compression=True, compression_level=1):
             for i in range(worker_count):
                 workers.append(tapestry.ChildProcess(compress_queue, done, ns.workDir, ns.debug))
             rounds_complete = 0
+            debug_print(str(targets)+"\n")
             for w in workers:
                 w.start()
             working = True
+            status_print(0, sum_jobs, "Compressing", "Working...")  # We need an initial status print
             while working:
                 message = done.get()
                 if message is None:
                     working = False
                 else:
-                    if not namespace.debug:
+                    if not ns.debug:
                         message = "Working..."
                     rounds_complete += 1
-                    status_print(rounds_complete, sum_jobs, "Packing", message)
+                    status_print(rounds_complete, sum_jobs, "Compressing", message)
                     if rounds_complete == sum_jobs:
                         done.put(None)  # Use none as a poison pill to kill the queue.
                     done.task_done()
@@ -542,8 +544,9 @@ def pack_blocks(sizes, ops_list, namespace):
         block_final_paths = []
         block_name_base = ns.compid+"-"+str(datetime.date.today())
         counter = 1  # Remember to increment this later
+        smallest = ops_list[sizes[-1]]['fsize']
         working_block = tapestry.Block(
-            (block_name_base+"-"+str(counter)), ns.block_size_raw, counter
+            (block_name_base+"-"+str(counter)), ns.block_size_raw, counter, smallest
         )
         packing = True
         while packing:
@@ -551,12 +554,13 @@ def pack_blocks(sizes, ops_list, namespace):
                 placed = working_block.put(item, ops_list[item])
                 if placed:
                     sizes.remove(item)
-            if len(sizes) > 0:  # We need a new block, unpacked items.
+            if working_block.full:  # We need a new block, unpacked items.
                 collection_blocks.append(working_block)
+                counter += 1
                 working_block = tapestry.Block(
-                    (block_name_base+"-"+str(counter)), ns.block_size_raw, counter
+                    (block_name_base+"-"+str(counter)), ns.block_size_raw, counter, smallest
                 )
-            else:
+            elif len(sizes) == 0:
                 collection_blocks.append(working_block)
                 packing = False  # The list is empty and we're therefore done.
         tarf_queue = mp.JoinableQueue()
@@ -777,7 +781,7 @@ def status_print(done, total, job, message):
     percent = int(round((done / total) * 100))
     if percent == 100:  # More Pretty Printing!
         if message == "Working...":
-            message = "Done!\n"
+            message = "Done!    \n"
     text = ("\r {0}: [{1}] {2}% - {3}".format(job, doneBarPrint, percent, message))
     sys.stdout.write(text)
     sys.stdout.flush()
