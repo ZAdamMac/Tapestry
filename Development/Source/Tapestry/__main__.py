@@ -137,7 +137,7 @@ def compress_blocks(ns, targets, do_compression=True, compression_level=1):
             sum_jobs = int(compress_queue.qsize())
             done = mp.JoinableQueue()
             for i in range(worker_count):
-                workers.append(tapestry.ChildProcess(compress_queue, done, ns.work, ns.debug))
+                workers.append(tapestry.ChildProcess(compress_queue, done, ns.workDir, ns.debug))
             rounds_complete = 0
             for w in workers:
                 w.start()
@@ -777,7 +777,7 @@ def status_print(done, total, job, message):
     percent = int(round((done / total) * 100))
     if percent == 100:  # More Pretty Printing!
         if message == "Working...":
-            message = "Done!"
+            message = "Done!\n"
     text = ("\r {0}: [{1}] {2}% - {3}".format(job, doneBarPrint, percent, message))
     sys.stdout.write(text)
     sys.stdout.flush()
