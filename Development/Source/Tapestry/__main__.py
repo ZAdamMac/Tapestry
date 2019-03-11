@@ -134,7 +134,7 @@ def compress_blocks(ns, targets, do_compression=True, compression_level=1):
                 task = tapestry.TaskCompress(target, compression_level)
                 compress_queue.put(task)
             workers = []
-            sum_jobs = len(compress_queue)
+            sum_jobs = int(compress_queue.qsize())
             done = mp.JoinableQueue()
             for i in range(worker_count):
                 workers.append(tapestry.ChildProcess(compress_queue, done, ns.work, ns.debug))
@@ -147,9 +147,10 @@ def compress_blocks(ns, targets, do_compression=True, compression_level=1):
                 if message is None:
                     working = False
                 else:
+                    if not namespace.debug:
+                        message = "Working..."
                     rounds_complete += 1
-                    status_print(rounds_complete, sum_jobs, "Compressing")
-                    debug_print(message)
+                    status_print(rounds_complete, sum_jobs, "Packing", message)
                     if rounds_complete == sum_jobs:
                         done.put(None)  # Use none as a poison pill to kill the queue.
                     done.task_done()
@@ -212,9 +213,10 @@ def decrypt_blocks(ns, verified_blocks, gpg_agent):
             if message is None:
                 working = False
             else:
+                if not ns.debug:
+                    message = "Working..."
                 rounds_complete += 1
-                status_print(rounds_complete, sum_jobs, "Decrypting")
-                debug_print(message)
+                status_print(rounds_complete, sum_jobs, "Packing", message)
                 if rounds_complete == sum_jobs:
                     done.put(None)  # Use none as a poison pill to kill the queue.
                 done.task_done()
@@ -274,7 +276,7 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
             job = tapestry.TaskEncrypt(target, fingerprint, out, gpg_agent)
             jobs.put(job)
         workers = []
-        sum_jobs = len(jobs)
+        sum_jobs = int(jobs.qsize())
         done = mp.JoinableQueue()
         for i in range(os.cpu_count()):
             workers.append(tapestry.ChildProcess(jobs, done, ns.work, ns.debug))
@@ -286,13 +288,13 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
             message = done.get()
             if message is None:
                 working = False
-            else:
-                rounds_complete += 1
-                status_print(rounds_complete, sum_jobs, "Encrypting")
-                debug_print(message)
-                if rounds_complete == sum_jobs:
-                    done.put(None)  # Use none as a poison pill to kill the queue.
-                done.task_done()
+            if not ns.debug:
+                message = "Working..."
+            rounds_complete += 1
+            status_print(rounds_complete, sum_jobs, "Decrypting", message)
+            if rounds_complete == sum_jobs:
+                done.put(None)  # Use none as a poison pill to kill the queue.
+            done.task_done()
         jobs.join()
         for w in workers:
             jobs.put(None)
