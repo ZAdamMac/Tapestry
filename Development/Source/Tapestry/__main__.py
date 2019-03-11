@@ -414,11 +414,11 @@ def generate_keys(namespace, gpg_agent):
 
     config = configparser.ConfigParser()
 
-    if os.path.exists(ns.config_path):
-        config.read(ns.config_path)
+    if os.path.exists(namespace.config_path):
+        config.read(namespace.config_path)
     config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
     namespace.activeFP = keypair.fingerprint
-    with open(ns.config_path, "w") as cf:
+    with open(namespace.config_path, "w") as cf:
         config.write(cf)
 
     if not os.path.isdir(namespace.drop):
