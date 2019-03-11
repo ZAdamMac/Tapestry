@@ -80,7 +80,7 @@ def build_ops_list(namespace):
                         'fname': file, 'sha256': hash_digest, 'category': category,
                         'fpath': sub_path, 'fsize': size
                         }
-                    files_index.update({uuid.uuid1(node): file_descriptor})
+                    files_index.update({str(uuid.uuid1(node)): file_descriptor})
                 else:
                     size_pretty = size / 1048576
                     block_size_pretty = ns.block_size_raw / 1048576
@@ -99,8 +99,9 @@ def build_recovery_index(ops_list):
     """
     dict_sizes = {}
     sum_size = 0
-    for key, value in ops_list:
-        sum_size += value['fsize']
+    for findex in ops_list.keys():
+        sum_size += ops_list[findex]['fsize']
+        dict_sizes.update({findex: ops_list[findex]['fsize']})
 
     working_index = sorted(dict_sizes, key=dict_sizes.__getitem__)
     working_index.reverse()
@@ -223,8 +224,10 @@ def decrypt_blocks(ns, verified_blocks, gpg_agent):
 
 def do_main(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire build process."""
+    debug_print("Entering do_main")
     ns = namespace
     ops_list = build_ops_list(namespace)
+    debug_print(ops_list)
     raw_recovery_index, namespace.sum_size = build_recovery_index(ops_list)
     list_blocks = pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
