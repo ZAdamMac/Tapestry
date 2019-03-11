@@ -413,16 +413,12 @@ def generate_keys(namespace, gpg_agent):
     fp = keypair.fingerprint  # Changes the value of FP to the new key
 
     config = configparser.ConfigParser()
-    if namespace.devtest:
-        cfg = "tapestry-test.cfg"
-    else:
-        cfg = "tapestry.cfg"
 
-    if os.path.exists(os.getcwd() + "/" + cfg):
-        config.read(cfg)
+    if os.path.exists(ns.config_path):
+        config.read(ns.config_path)
     config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
     namespace.activeFP = keypair.fingerprint
-    with open(cfg, "w") as cf:
+    with open(ns.config_path, "w") as cf:
         config.write(cf)
 
     if not os.path.isdir(namespace.drop):
@@ -651,7 +647,7 @@ def parse_config(namespace):
             print("The Appropriate config file: %s cannot be found." % ns.config_path)
             exit()
 
-        ns.expectedFP = config.get("Environment Variables", "Expected FP")
+        ns.activeFP = config.get("Environment Variables", "Expected FP")
         ns.fp = config.get("Environment Variables", "Expected FP")
         ns.signing = config.getboolean("Environment Variables", "Sign by Default")
         ns.sigFP = config.get("Environment Variables", "Signing FP")
