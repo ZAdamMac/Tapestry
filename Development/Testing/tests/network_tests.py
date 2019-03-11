@@ -5,7 +5,7 @@
 import configparser as cp
 from datetime import date
 from .framework import SimpleLogger
-from Development.Source.Tapestry import __main__ as dev
+from . import dev
 import gnupg
 import hashlib
 import os

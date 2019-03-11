@@ -270,6 +270,7 @@ def test_verification_bad(ns):
         ns.logger.log("[FAIL] This signature was handled incorrectly by the verifier.")
     return ns
 
+
 def runtime():
     print("Now beginning the unit-tests for tapestry.")
     data = establish_namespace()
