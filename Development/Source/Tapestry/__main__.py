@@ -19,6 +19,7 @@ import io
 import multiprocessing as mp
 import os
 import platform
+from random import shuffle
 import shutil
 import ssl
 import sys
@@ -558,6 +559,7 @@ def pack_blocks(sizes, ops_list, namespace):
                 packing = False  # The list is empty and we're therefore done.
         tarf_queue = mp.JoinableQueue()
         locks = {}
+        temp_queue = []  # We need a temporary queue to avoid having the blocks all lined up.
         sum_files = 0
         for block in collection_blocks:
             sum_files += block.files
@@ -571,13 +573,15 @@ def pack_blocks(sizes, ops_list, namespace):
                 path = os.path.join(ns.category_paths[file_metadata["category"]],
                                     file_metadata['fpath'])
                 this_task = tapestry.TaskTarBuild(tarf, fid, path, block.name)
-                tarf_queue.put(this_task)
+                temp_queue.append(this_task)
             this_riff = block.meta(len(collection_blocks), sum_sizes, sum_files,
                                    str(datetime.date.today()), None, ops_list, ns.drop)
             this_task = tapestry.TaskTarBuild(tarf, "recovery-riff",
                                               this_riff, block.name)
             tarf_queue.put(this_task)
-
+        shuffle(temp_queue)  # Shuffling these tasks before feeding them into the queue is actually a speed boost.
+        for task in temp_queue:
+            tarf_queue.put(task)
         sum_jobs = tarf_queue.qsize
         done = mp.JoinableQueue()
         workers = []
