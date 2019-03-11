@@ -165,6 +165,7 @@ def compress_blocks(ns, targets, do_compression=True, compression_level=1):
                 replacement_list.append(out)
         else:
             replacement_list = targets
+        print("\n")
 
         return replacement_list
 
@@ -281,7 +282,7 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
         sum_jobs = int(jobs.qsize())
         done = mp.JoinableQueue()
         for i in range(os.cpu_count()):
-            workers.append(tapestry.ChildProcess(jobs, done, ns.work, ns.debug))
+            workers.append(tapestry.ChildProcess(jobs, done, ns.workDir, ns.debug))
         rounds_complete = 0
         for w in workers:
             w.start()
@@ -737,10 +738,10 @@ def sign_blocks(namespace, gpg_agent):
                     job = tapestry.TaskEncrypt(target, ns.sigFP, out, gpg_agent)
                     jobs.put(job)
         workers = []
-        sum_jobs = len(jobs)
+        sum_jobs = int(jobs.qsize())
         done = mp.JoinableQueue()
         for i in range(os.cpu_count()):
-            workers.append(tapestry.ChildProcess(jobs, done, ns.work, ns.debug))
+            workers.append(tapestry.ChildProcess(jobs, done, ns.workDir, ns.debug))
         rounds_complete = 0
         for w in workers:
             w.start()
