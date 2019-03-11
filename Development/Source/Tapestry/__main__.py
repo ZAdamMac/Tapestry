@@ -286,6 +286,7 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
         for w in workers:
             w.start()
         working = True
+        status_print(rounds_complete, sum_jobs, "Encrypting", "Working...")
         while working:
             message = done.get()
             if message is None:
@@ -293,7 +294,7 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
             if not ns.debug:
                 message = "Working..."
             rounds_complete += 1
-            status_print(rounds_complete, sum_jobs, "Decrypting", message)
+            status_print(rounds_complete, sum_jobs, "Encrypting", message)
             if rounds_complete == sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.
             done.task_done()
@@ -744,17 +745,18 @@ def sign_blocks(namespace, gpg_agent):
         for w in workers:
             w.start()
         working = True
+        status_print(rounds_complete, sum_jobs, "Signing", "Working...")
         while working:
             message = done.get()
             if message is None:
                 working = False
-            else:
-                rounds_complete += 1
-                status_print(rounds_complete, sum_jobs, "Signing")
-                debug_print(message)
-                if rounds_complete == sum_jobs:
-                    done.put(None)  # Use none as a poison pill to kill the queue.
-                done.task_done()
+            if not ns.debug:
+                message = "Working..."
+            rounds_complete += 1
+            status_print(rounds_complete, sum_jobs, "Signing", message)
+            if rounds_complete == sum_jobs:
+                done.put(None)  # Use none as a poison pill to kill the queue.
+            done.task_done()
         jobs.join()
         for w in workers:
             jobs.put(None)
