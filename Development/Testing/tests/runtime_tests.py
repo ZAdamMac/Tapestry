@@ -8,7 +8,7 @@ import hashlib
 import os
 import shutil
 import subprocess
-from Development.Testing.tests import framework
+from . import framework
 import time
 
 

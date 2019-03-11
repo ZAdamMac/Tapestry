@@ -5,7 +5,7 @@
 
 import os
 import configparser as cp
-from Development.Testing.tests.framework import SimpleLogger
+from .framework import SimpleLogger
 from datetime import date
 import hashlib
 import gnupg

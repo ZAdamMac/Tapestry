@@ -5,8 +5,8 @@
 # Import Block
 import configparser
 from datetime import date
-from Development.Source import dev
-from Development.Testing.tests import framework as fw
+from . import dev
+from . import framework as fw
 import gnupg
 import json
 import os
@@ -281,7 +281,6 @@ def runtime():
     data.logger.log("\n"+str(taphash)+"\n")
     data = import_for_keys(data)
     data = test_config_compliance(data)
-    data = test_inclusivity_diff(data)
     data = test_riff_compliance(data)
     data = test_verification_good(data)
     data = test_verification_bad(data)

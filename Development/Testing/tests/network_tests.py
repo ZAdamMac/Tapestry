@@ -4,7 +4,7 @@
 #  Import Modules
 import configparser as cp
 from datetime import date
-from Development.Testing.tests import framework
+from .framework import SimpleLogger
 from Development.Source.Tapestry import __main__ as dev
 import gnupg
 import hashlib
@@ -38,7 +38,7 @@ def runtime():
         os.mkdir(logs)
 
     log_name = ("network_test-%s-%s.log" % (uid, str(date.today())))
-    log = framework.SimpleLogger(logs, log_name, "network-tests")
+    log = SimpleLogger(logs, log_name, "network-tests")
 
     gpg = gnupg.GPG(gnupghome="/home/"+uid+"/.gnupg")
 
