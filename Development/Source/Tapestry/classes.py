@@ -111,7 +111,7 @@ class TaskTarBuild(object):
         tar.close()
         f_lock.release()
 
-        return "Added %s to tarfile %s" % (self.tarf, self.b)
+        return "Added %s to tarfile %s" % (self.b, self.tarf)
 
 
 class TaskTarUnpack(object):

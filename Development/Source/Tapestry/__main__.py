@@ -582,7 +582,7 @@ def pack_blocks(sizes, ops_list, namespace):
         shuffle(temp_queue)  # Shuffling these tasks before feeding them into the queue is actually a speed boost.
         for task in temp_queue:
             tarf_queue.put(task)
-        sum_jobs = tarf_queue.qsize
+        sum_jobs = int(tarf_queue.qsize())
         done = mp.JoinableQueue()
         workers = []
         for i in range(os.cpu_count()):
@@ -596,9 +596,10 @@ def pack_blocks(sizes, ops_list, namespace):
             if message is None:
                 working = False
             else:
+                if not namespace.debug:
+                    message = "Working..."
                 rounds_complete += 1
-                status_print(rounds_complete, sum_jobs, "Packing")
-                debug_print(message)
+                status_print(rounds_complete, sum_jobs, "Packing", message)
                 if rounds_complete == sum_jobs:
                     done.put(None)  # Use none as a poison pill to kill the queue.
                 done.task_done()
@@ -766,13 +767,16 @@ def start_gpg(ns):
     return gpg
 
 
-def status_print(done, total, job):
+def status_print(done, total, job, message):
     """Prints a basic status message. If not interrupted, prints it on one line"""
     lengthBar = 15.0
     doneBar = int(round((done / total) * lengthBar))
     doneBarPrint = str("#" * int(doneBar) + "-" * int(round((lengthBar - doneBar))))
     percent = int(round((done / total) * 100))
-    text = ("\r{0}: [{1}] {2}%".format(job, doneBarPrint, percent))
+    if percent == 100:  # More Pretty Printing!
+        if message == "Working...":
+            message = "Done!"
+    text = ("\r {0}: [{1}] {2}% - {3}".format(job, doneBarPrint, percent, message))
     sys.stdout.write(text)
     sys.stdout.flush()
 
