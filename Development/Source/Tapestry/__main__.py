@@ -641,6 +641,7 @@ def parse_config(namespace):
     values into the namespace.
     """
     ns = namespace
+    ns.currentOS = platform.system()
     if __name__ == "__main__":
         config = configparser.ConfigParser()
 
@@ -687,25 +688,23 @@ def parse_config(namespace):
         # lastly, now that we know current OS, let's build the dictionary of categories
         ns.category_paths = {}
         ns.categories_default = []
-        ns.categories_inclusive = []# May be Inc or Default
+        ns.categories_inclusive = []  # May be Inc or Default
         if ns.currentOS == "Linux":
             relevant = "Default Locations/Nix"
         else:
             relevant = "Default Locations/Windows"
-        for categories in config.options(relevant):
-            for category in categories:
-                category_path = config.get(relevant, category)
-                ns.category_paths.update({category: category_path})
-                ns.categories_default.append(category)
+        for category in config.options(relevant):
+            category_path = config.get(relevant, category)
+            ns.category_paths.update({category: category_path})
+            ns.categories_default.append(category)
         if ns.currentOS == "Linux":
             relevant = "Additional Locations/Nix"
         else:
             relevant = "Additional Locations/Windows"
-        for categories in config.options(relevant):
-            for category in categories:
-                category_path = config.get(relevant, category)
-                ns.category_paths.update({category: category_path})
-                ns.categories_inclusive.append(category)
+        for category in config.options(relevant):
+            category_path = config.get(relevant, category)
+            ns.category_paths.update({category: category_path})
+            ns.categories_inclusive.append(category)
 
     return ns
 
