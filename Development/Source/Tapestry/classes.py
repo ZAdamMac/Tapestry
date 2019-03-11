@@ -39,20 +39,27 @@ class ChildProcess(mp.Process):
     None, which indicates the process should exit.
     """
 
-    def __init__(self, queue_tasking, queue_complete, working_directory, debug=False):
+    def __init__(self, queue_tasking, queue_complete, working_directory, locks, debug=False):
         """Initialize the class. Must provide the queue to attach to, the
         working directory to use, and a debug flag.
 
         :param queue_tasking: mp.Queue object used for multiprocess communication.
+        :param queue_complete: mp.Queue object used for communicating completions
         :param working_directory: String to the absolute path of the desired
         working directory.
+        :param locks: a dictionary of blockname:lock pairs (optional).
         :param debug: Boolean, activates the debugging statement.
         """
         mp.Process.__init__(self)
         self.queue = queue_tasking
         self.debug = debug
         self.ret = queue_complete
+        if not os.path.isdir(working_directory):
+            os.mkdir(working_directory)
         os.chdir(working_directory)
+
+        global dict_locks
+        dict_locks = locks
 
     def run(self):
         proc_name = self.name
@@ -77,29 +84,33 @@ class TaskTarBuild(object):
     file to a particular tarfile, all fully enumerated.
     """
 
-    def __init__(self, tarf, fid, path, lock, locks):
+    def __init__(self, tarf, fid, path, bname):
         """
         Create the tarfile or, otherwise, add a file to it.
         :param tarf: which tarfile to use, relative to the working directory
         :param fid: GUID FID as a string.
         :param path: absolute path to the file in need of backup
-        :param lock: actual lock object needed to aquire
-        :param locks: Locks dictionary which should be used.
+        :param bname: block name, used as a key to the locks dictionary.
         """
         self.tarf = tarf
         self.a = fid
         self.b = path
-        self.lock = lock  # index number of the appropriate mutex
-        self.locks = locks
+        self.block = bname
 
     def __call__(self):
+        global dict_locks
         if os.path.exists(self.tarf):  # we need to know if we're starting a new file or not.
-            f_lock = self.lock  # Aquires the lock indicated in the index value from the master
-            f_lock.acquire()
-            tar = tarfile.open(name=self.tarf, mode="a:")
-            tar.add(self.b, arcname=self.a, recursive=False)
-            tar.close()
-            f_lock.release()
+            tarf_mode = "a:"
+        else:
+            tarf_mode = "r:"
+
+        f_lock = dict_locks[self.block]  # Aquires the lock indicated in the index value from the master
+        f_lock.acquire()
+        tar = tarfile.open(name=self.tarf, mode="a:")
+        tar.add(self.b, arcname=self.a, recursive=False)
+        tar.close()
+        f_lock.release()
+        else:
         return "Added %s to tarfile %s" % (self.tarf, self.b)
 
 
