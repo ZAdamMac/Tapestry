@@ -390,7 +390,7 @@ class Block(object):
         dict_riff = {"metaBlock": self.block_metadata, "metaRun": self.run_metadata,
                      "index": self.global_index}
 
-        with open(os.path.join(drop_dir, self.name+".riff", "w")) as riff:
+        with open(os.path.join(drop_dir, self.name+".riff"), "w") as riff:
             json.dump(dict_riff, riff)
 
         return os.path.join(drop_dir, (self.name+".riff"))
