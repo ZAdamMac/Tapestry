@@ -227,8 +227,9 @@ def do_main(namespace, gpg_agent):
     debug_print("Entering do_main")
     ns = namespace
     ops_list = build_ops_list(namespace)
-    debug_print(ops_list)
+    debug_print("Have ops list")
     raw_recovery_index, namespace.sum_size = build_recovery_index(ops_list)
+    debug_print("Have RI, Proceeding to Pack")
     list_blocks = pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
     encrypt_blocks(list_blocks, gpg_agent, ns.fp, ns)
@@ -560,15 +561,13 @@ def pack_blocks(sizes, ops_list, namespace):
         sum_files = 0
         for block in collection_blocks:
             sum_files += block.files
-        sum_sizes = 0
-        for item, value in ops_list:
-            sum_sizes += int(value["fsize"])
+        sum_sizes = ns.sum_size
         for block in collection_blocks:
             this_block_lock = mp.Lock()
             locks.append(this_block_lock)
             tarf = os.path.join(ns.workDir, (block.name+".tar"))
             block_final_paths.append(tarf)
-            for fid, file_metadata in block.file_index:
+            for fid, file_metadata in block.file_index.items():
                 path = os.path.join(ns.category_paths[file_metadata["category"]],
                                     file_metadata['fpath'])
                 this_task = tapestry.TaskTarBuild(tarf, fid, path, this_block_lock, locks)
