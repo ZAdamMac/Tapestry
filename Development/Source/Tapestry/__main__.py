@@ -576,7 +576,7 @@ def pack_blocks(sizes, ops_list, namespace):
                                    str(datetime.date.today()), None, ops_list, ns.drop)
             this_task = tapestry.TaskTarBuild(tarf, "recovery-riff",
                                               this_riff, this_block_lock, locks)
-            tarf_queue.append(this_task)
+            tarf_queue.put(this_task)
 
         sum_jobs = len(tarf_queue)
         done = mp.JoinableQueue()
