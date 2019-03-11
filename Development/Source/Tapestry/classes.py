@@ -110,7 +110,7 @@ class TaskTarBuild(object):
         tar.add(self.b, arcname=self.a, recursive=False)
         tar.close()
         f_lock.release()
-        else:
+
         return "Added %s to tarfile %s" % (self.tarf, self.b)
 
 
