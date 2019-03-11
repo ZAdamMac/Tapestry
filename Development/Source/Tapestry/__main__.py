@@ -623,6 +623,7 @@ def parse_args(namespace):
         parser.add_argument('--genKey', help="Generates a new key before proceeding with any other functions called.",
                             action="store_true")
         parser.add_argument('--devtest', help="Starts testing mode, see documentation", action="store_true")
+        parser.add_argument('-c', help="absolute or relative path to the config file", action="store")
         args = parser.parse_args()
 
         ns.rcv = args.rcv
@@ -630,6 +631,7 @@ def parse_args(namespace):
         ns.debug = args.debug
         ns.devtest = args.devtest
         ns.genKey = args.genKey
+        ns.config_path = args.c
 
         return ns
 
@@ -641,15 +643,11 @@ def parse_config(namespace):
     ns = namespace
     if __name__ == "__main__":
         config = configparser.ConfigParser()
-        if ns.devtest:
-            cfg = "tapestry-test.cfg"
-        else:
-            cfg = "tapestry.cfg"
 
-        if os.path.exists(os.getcwd() + "/" + cfg):
-            config.read(cfg)
+        if os.path.exists(ns.config_path):
+            config.read(ns.config_path)
         else:
-            print("The Appropriate config file: %s cannot be found." % cfg)
+            print("The Appropriate config file: %s cannot be found." % ns.config_path)
             exit()
 
         ns.expectedFP = config.get("Environment Variables", "Expected FP")
