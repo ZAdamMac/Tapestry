@@ -60,7 +60,7 @@ def runtime():
     print("Now Beginning the --genKey test")
     here = os.getcwd()
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--genKey", "--devTest", "-c", "tapestry-test.cfg"])
+    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--genKey", "--devtest", "-c", "tapestry-test.cfg"])
     elapse = framework.elapsed(start)
     print("--genKey completed in %s" % elapse)
     log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
@@ -73,7 +73,7 @@ def runtime():
 
     print("Now beginning --inc test.")
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devTest", "-c", "tapestry-test.cfg"])
+    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devtest", "-c", "tapestry-test.cfg"])
     elapse = framework.elapsed(start)
     print("--inc completed in %s" % elapse)
     log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
@@ -94,7 +94,7 @@ def runtime():
         cfg.write(warp)
 
     print("Now beginning --rcv test.")
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--rcv", "--devTest", "-c", "tapestry-test.cfg"])
+    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--rcv", "--devtest", "-c", "tapestry-test.cfg"])
     elapse = framework.elapsed(start)
     print("--rcv completed in %s" % elapse)
     log.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
