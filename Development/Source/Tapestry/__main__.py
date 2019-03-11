@@ -557,32 +557,32 @@ def pack_blocks(sizes, ops_list, namespace):
                 collection_blocks.append(working_block)
                 packing = False  # The list is empty and we're therefore done.
         tarf_queue = mp.JoinableQueue()
-        locks = []
+        locks = {}
         sum_files = 0
         for block in collection_blocks:
             sum_files += block.files
         sum_sizes = ns.sum_size
         for block in collection_blocks:
             this_block_lock = mp.Lock()
-            locks.append(this_block_lock)
+            locks.update({block.name: this_block_lock})
             tarf = os.path.join(ns.workDir, (block.name+".tar"))
             block_final_paths.append(tarf)
             for fid, file_metadata in block.file_index.items():
                 path = os.path.join(ns.category_paths[file_metadata["category"]],
                                     file_metadata['fpath'])
-                this_task = tapestry.TaskTarBuild(tarf, fid, path, this_block_lock, locks)
+                this_task = tapestry.TaskTarBuild(tarf, fid, path, block.name)
                 tarf_queue.put(this_task)
             this_riff = block.meta(len(collection_blocks), sum_sizes, sum_files,
                                    str(datetime.date.today()), None, ops_list, ns.drop)
             this_task = tapestry.TaskTarBuild(tarf, "recovery-riff",
-                                              this_riff, this_block_lock, locks)
+                                              this_riff, block.name)
             tarf_queue.put(this_task)
 
-        sum_jobs = len(tarf_queue)
+        sum_jobs = tarf_queue.qsize
         done = mp.JoinableQueue()
         workers = []
         for i in range(os.cpu_count()):
-            workers.append(tapestry.ChildProcess(tarf_queue, done, ns.workDir, ns.debug))
+            workers.append(tapestry.ChildProcess(tarf_queue, done, ns.workDir, locks, ns.debug))
         rounds_complete = 0
         for w in workers:
             w.start()
