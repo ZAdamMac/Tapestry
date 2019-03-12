@@ -250,7 +250,7 @@ def do_recovery(namespace, gpg_agent):
     if namespace.modeNetwork.lower() == "ftp":
         namespace = ftp_retrieve_files(namespace, gpg_agent)
     else:
-        rec_index = media_retrieve_files(namespace.workDir, namespace.workDir,
+        rec_index = media_retrieve_files(namespace.recovery_path, namespace.workDir,
                                          gpg_agent)
         namespace.rec_index = rec_index
     verified_blocks = verify_blocks(ns.workDir, gpg_agent)
@@ -474,13 +474,16 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
 
     while initial_block_hunt:
         for location, sub_directories, files in os.walk(mountpoint):
+            debug_print("media_retrieve_files' mountpoint is: %s" % mountpoint)
+            if not os.path.exists(temp_path):  # We must create this explicitly for shutil
+                os.mkdir(temp_path)
             for file in files:
                 if file.endswith(".tap"):
                     found_blocks.append(file)
-                    shutil.copy(file, os.path.join(temp_path, file))
+                    shutil.copy(os.path.join(location, file), os.path.join(temp_path, file))
                 elif file.endswith(".tap.sig"):
                     found_sigs.append(file)
-                    shutil.copy(file, os.path.join(temp_path, file))
+                    shutil.copy(os.path.join(location, file), os.path.join(temp_path, file))
 
         if len(found_blocks) == 0:
             print("The are no recovery files on the mountpoint at %s" % mountpoint)
@@ -490,18 +493,21 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
             initial_block_hunt = False
 
     # Now we need to obtain a recovery file of some kind.
-    decrypted_first = tapestry.TaskDecrypt(found_blocks[0], temp_path, gpg_agent)
+    decrypted_first = tapestry.TaskDecrypt(os.path.join(temp_path, found_blocks[0]), temp_path, gpg_agent)
     decrypted_first = decrypted_first()
-    if decrypted_first.split()[1].lower == "success":
-        tar = tarfile.open(os.path.join(temp_path, found_blocks[0]), "r:*")
+    debug_print("MRF: decrypted_first is: %s" % decrypted_first)
+    debug_print("MRF: The conditional is therefore: %s" % decrypted_first.split(" ")[1].lower())
+    if decrypted_first.split(" ")[1].lower() == "success":
+        tar = tarfile.open(os.path.join(temp_path, decrypted_first.split(" ")[3].rstrip(".")), "r:*")  # Hideous string management hack.
         tapfile_contents = tar.getnames()
+        debug_print("The provided block contains: %s" % str(tapfile_contents))
 
         if "recovery-pkl" in tapfile_contents:
             index_file = tar.extractfile("recovery-pkl")
         elif "recovery-riff" in tapfile_contents:
             index_file = tar.extractfile("recovery-riff")
         else:
-            index_file = open("/dev/null", "rb") # Just for giggles
+            index_file = open("/dev/null", "rb")  # Just for giggles
             print("Something has gone wrong!")
             print("One or more blocks are corrupt and missing their recovery index.")
             print("This is a fatal error.")
