@@ -295,9 +295,10 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
             if not ns.debug:
                 message = "Working..."
             rounds_complete += 1
-            status_print(rounds_complete, sum_jobs, "Encrypting", message)
             if rounds_complete == sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.
+            if rounds_complete <= sum_jobs:
+                status_print(rounds_complete, sum_jobs, "Encrypting", message)
             done.task_done()
         jobs.join()
         for w in workers:
@@ -732,13 +733,15 @@ def sign_blocks(namespace, gpg_agent):
         out = ns.drop
         jobs = mp.JoinableQueue()
         for root, bar, files in os.walk(namespace.drop):
+            debug_print(str(files)+"\n")
             for file in files:
                 if file.endswith(".tap"):
                     target = os.path.join(root, file)
-                    job = tapestry.TaskEncrypt(target, ns.sigFP, out, gpg_agent)
+                    job = tapestry.TaskSign(target, ns.sigFP, out, gpg_agent)
                     jobs.put(job)
         workers = []
         sum_jobs = int(jobs.qsize())
+        debug_print(sum_jobs)
         done = mp.JoinableQueue()
         for i in range(os.cpu_count()):
             workers.append(tapestry.ChildProcess(jobs, done, ns.workDir, ns.debug))
@@ -754,9 +757,10 @@ def sign_blocks(namespace, gpg_agent):
             if not ns.debug:
                 message = "Working..."
             rounds_complete += 1
-            status_print(rounds_complete, sum_jobs, "Signing", message)
             if rounds_complete == sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.
+            if rounds_complete <= sum_jobs:  # Patches the 200% bug.
+                status_print(rounds_complete, sum_jobs, "Signing", message)
             done.task_done()
         jobs.join()
         for w in workers:
