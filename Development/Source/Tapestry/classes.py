@@ -189,7 +189,7 @@ class TaskDecompress(object):
             signature = file.read()
             if signature.startswith(b"BZh"):  # Microheader that indicates a BZ2 file.
                 shutil.copy(self.tarf, (self.tarf + ".temp"))
-                with bz2.BZ2File(self.tarf + ".temp", "rb") as compressed:
+                with bz2.BZ2File((self.tarf + ".temp"), "rb") as compressed:
                     with open(self.tarf, "wb") as uncompressed:
                         shutil.copyfileobj(compressed, uncompressed)
                 os.remove(self.tarf+".temp")  # No sense in cluttering up the drive.
