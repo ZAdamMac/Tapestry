@@ -186,7 +186,8 @@ class TaskDecompress(object):
 
     def __call__(self):
         with open(self.tarf, "rb") as file:
-            signature = file.read()
+            signature = file.read(3)
+            #print(signature)
             if signature.startswith(b"BZh"):  # Microheader that indicates a BZ2 file.
                 shutil.copy(self.tarf, (self.tarf + ".temp"))
                 with bz2.BZ2File((self.tarf + ".temp"), "rb") as compressed:

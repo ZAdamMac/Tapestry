@@ -180,6 +180,53 @@ def debug_print(body):
         print(output_string)
 
 
+def decompress_blocks(namespace):
+    """Provided a namespace object, this function will crawl the defined
+    working directory, looking for decrypted tap files to decompress for
+    performance purposes.
+
+    :param namespace: The system namespace object.
+    :return:
+    """
+    ns = namespace
+
+    found_decrypted = []  # Need to find all the decrypted blocks
+    for foo, bar, files in os.walk(ns.workDir):
+        for file in files:
+            if file.endswith(".decrypted"):
+                found_decrypted.append(os.path.join(foo, file))
+
+    tasks = mp.JoinableQueue()  # Let's populate the queue
+    for file in found_decrypted:
+        tasks.put(tapestry.TaskDecompress(file))
+    sum_jobs = tasks.qsize()
+
+    workers = []
+    done = mp.JoinableQueue()
+    for i in range(os.cpu_count()):
+        workers.append(tapestry.ChildProcess(tasks, done, ns.workDir, ns.debug))
+    rounds_complete = 0
+    status_print(rounds_complete, sum_jobs, "Decompressing", "Working...")
+    for w in workers:
+        w.start()
+    working = True
+    while working:
+        message = done.get()
+        if message is None:
+            working = False
+        else:
+            if not ns.debug:
+                message = "Working..."
+            rounds_complete += 1
+            status_print(rounds_complete, sum_jobs, "Decompressing", message)
+            if rounds_complete == sum_jobs:
+                done.put(None)  # Use none as a poison pill to kill the queue.
+            done.task_done()
+    tasks.join()
+    for w in workers:
+        tasks.put(None)
+
+
 def decrypt_blocks(ns, verified_blocks, gpg_agent):
     """Iterates over the provided list of verified blocks, producing decrypted
     versions in the same directory, using the provided gpg agent. This is done
@@ -260,6 +307,7 @@ def do_recovery(namespace, gpg_agent):
         debug_print("DoRecovery: namespace after MRF: %s" % namespace)
     verified_blocks = verify_blocks(namespace, gpg_agent)
     decrypt_blocks(namespace, verified_blocks, gpg_agent)
+    decompress_blocks(namespace)
     unpack_blocks(namespace)
     clean_up(namespace.workDir)
     # TODO Add the Exit Message
@@ -396,7 +444,7 @@ def ftp_retrieve_files(ns, gpg):
                 exit()
         else:
             print("Something has gone wrong in initial decryption.")
-            print("Verify you have the key for the blocks provided and try again.")
+            print("Veryify you have the key for the blocks provided and try again.")
             exit()
         ns.rec_index = tapestry.RecoveryIndex(index_file)
         return ns
