@@ -211,21 +211,25 @@ def decrypt_blocks(ns, verified_blocks, gpg_agent):
         for w in workers:
             w.start()
         working = True
-        while working:
-            message = done.get()
-            if message is None:
-                working = False
-            else:
-                if not ns.debug:
-                    message = "Working..."
-                rounds_complete += 1
-                status_print(rounds_complete, sum_jobs, "Packing", message)
-                if rounds_complete == sum_jobs:
-                    done.put(None)  # Use none as a poison pill to kill the queue.
-                done.task_done()
-        tasks.join()
-        for w in workers:
-            tasks.put(None)
+        if sum_jobs > 0:  # This would be the case if the block fails.
+            status_print(rounds_complete, sum_jobs, "Decrypting", "Working...")
+            while working:
+                message = done.get()
+                if message is None:
+                    working = False
+                else:
+                    if not ns.debug:
+                        message = "Working..."
+                    rounds_complete += 1
+                    status_print(rounds_complete, sum_jobs, "Decrypting", message)
+                    if rounds_complete == sum_jobs:
+                        done.put(None)  # Use none as a poison pill to kill the queue.
+                    done.task_done()
+            tasks.join()
+            for w in workers:
+                tasks.put(None)
+        else:
+            print("""Skipping Decryption as the current backup was decrypted during initial preparation.""")
 
 
 def do_main(namespace, gpg_agent):
@@ -247,18 +251,19 @@ def do_main(namespace, gpg_agent):
 def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
     ns = namespace
-    if namespace.modeNetwork.lower() == "ftp":
+    if ns.modeNetwork.lower() == "ftp":
         namespace = ftp_retrieve_files(namespace, gpg_agent)
     else:
         rec_index = media_retrieve_files(namespace.recovery_path, namespace.workDir,
                                          gpg_agent)
         namespace.rec_index = rec_index
-    verified_blocks = verify_blocks(ns.workDir, gpg_agent)
-    decrypt_blocks(ns, verified_blocks, gpg_agent)
-    unpack_blocks(ns)
-    clean_up(ns.workDir)
+        debug_print("DoRecovery: namespace after MRF: %s" % namespace)
+    verified_blocks = verify_blocks(namespace, gpg_agent)
+    decrypt_blocks(namespace, verified_blocks, gpg_agent)
+    unpack_blocks(namespace)
+    clean_up(namespace.workDir)
+    # TODO Add the Exit Message
     exit()
-    return namespace
 
 
 def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
@@ -821,10 +826,11 @@ def unpack_blocks(namespace):
         with tarfile.open(block, "r:*") as tap:
             members = tap.getnames()
             for file in members:
-                files_to_unpack.update({file, block})
+                #debug_print("UB: Trying to unblock %s" % str({file: block}))
+                files_to_unpack.update({file: block})
 
     tasks = mp.JoinableQueue()  # Let's populate the queue
-    for file, block in files_to_unpack:
+    for file in files_to_unpack:
         skip = False
         category_label, sub_path = ns.rec_index.find(file)
         if category_label == b"404":
@@ -836,7 +842,7 @@ def unpack_blocks(namespace):
         except KeyError:
             category_dir = ns.drop
         if not skip:
-            tap_absolute = os.path.join(ns.workDir, block)
+            tap_absolute = os.path.join(ns.workDir, files_to_unpack[file])
             tasks.put(tapestry.TaskTarUnpack(tap_absolute, file, category_dir, sub_path))
     sum_jobs = tasks.qsize()
 
@@ -845,6 +851,7 @@ def unpack_blocks(namespace):
     for i in range(os.cpu_count()):
         workers.append(tapestry.ChildProcess(tasks, done, ns.workDir, ns.debug))
     rounds_complete = 0
+    status_print(rounds_complete, sum_jobs, "Unpacking", "Working...")
     for w in workers:
         w.start()
     working = True
@@ -853,9 +860,10 @@ def unpack_blocks(namespace):
         if message is None:
             working = False
         else:
+            if not ns.debug:
+                message = "Working..."
             rounds_complete += 1
-            status_print(rounds_complete, sum_jobs, "Unpacking")
-            debug_print(message)
+            status_print(rounds_complete, sum_jobs, "Unpacking", message)
             if rounds_complete == sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.
             done.task_done()
@@ -864,10 +872,10 @@ def unpack_blocks(namespace):
         tasks.put(None)
 
 
-def verify_blocks(namespace, gpg_agent):
+def verify_blocks(ns, gpg_agent):
     """Verifies blocks and returns a list of verified blocks as a result"""
-    ns = namespace
     gpg = gpg_agent
+    debug_print("VB: We think that ns = %s" % ns)
     found_blocks = []
     approved_fingerprints = []
     valid_blocks = []
@@ -892,6 +900,8 @@ def verify_blocks(namespace, gpg_agent):
                 if "y" in resume.lower():
                     valid_blocks.append(block)
                     approved_fingerprints.append(fingerprint)
+
+    debug_print("VB: We've verified the following blocks: %s" % valid_blocks)
     return valid_blocks
 
 

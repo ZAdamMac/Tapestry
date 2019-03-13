@@ -136,11 +136,13 @@ class TaskTarUnpack(object):
     def __call__(self):
         path_end = self.pathend.strip('~/')
         abs_path_out = os.path.join(self.catdir, path_end)
-        placement, name_proper = os.path.split(
-            abs_path_out)
+        placement, name_proper = os.path.split(abs_path_out)
         # split the pathend component into the subpath from the category dir, and the original filename.
-        with tarfile.open(self.tar, "r") as tf:
+        #print("Attempting to pull %s" % self.fid)
+        with tarfile.open(self.tar, "r:*") as tf:
+            #print("Now opened: %s" % self.tar)
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
+            #print("Extracted %s" % self.fid)
             placed = os.path.join(placement, self.fid)
             os.rename(placed, abs_path_out)  # and now it's named correctly.
         return "Restored %s to %s" % (self.fid, abs_path_out)
@@ -456,31 +458,31 @@ class RecoveryIndex(object):
         else:  # We have entered a cursed state...
             raise RecoveryIndexError("The self.mode variable is an unexpected value. Are you hacking?")
 
-        def find(file_key):
-            """Expectes a FID value as the argument and will return the
-            category and sub-path accordingly.
+    def find(self, file_key):
+        """Expectes a FID value as the argument and will return the
+        category and sub-path accordingly.
 
-            :param file_key: A string representing a valid file ID.
-            """
-            if file_key.lower() in ["recovery-pkl", "recovery-riff"]:
-                category = "skip"
-                sub_path = "skip"
-                return category, sub_path
-            elif self.mode == "json":
-                try:
-                    category = self.file_index[file_key]["category"]
-                    sub_path = self.file_index[file_key]["fpath"]
-                except KeyError:
-                    category = b"404"
-                    sub_path = b"404"
-            elif self.mode == "pkl":
-                try:
-                    category = self.rec_sections[file_key]
-                    sub_path = self.rec_paths[file_key]
-                except KeyError:
-                    category = b"404"
-                    sub_path = b"404"
-            else:
-                raise RecoveryIndexError("The self.mode variable is an unexpected value. Are you hacking?")
-
+        :param file_key: A string representing a valid file ID.
+        """
+        if file_key.lower() in ["recovery-pkl", "recovery-riff"]:
+            category = "skip"
+            sub_path = "skip"
             return category, sub_path
+        elif self.mode == "json":
+            try:
+                category = self.file_index[file_key]["category"]
+                sub_path = self.file_index[file_key]["fpath"]
+            except KeyError:
+                category = b"404"
+                sub_path = b"404"
+        elif self.mode == "pkl":
+            try:
+                category = self.rec_sections[file_key]
+                sub_path = self.rec_paths[file_key]
+            except KeyError:
+                category = b"404"
+                sub_path = b"404"
+        else:
+            raise RecoveryIndexError("The self.mode variable is an unexpected value. Are you hacking?")
+
+        return category, sub_path
