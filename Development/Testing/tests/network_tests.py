@@ -46,11 +46,14 @@ def runtime():
     log.log("\n\n-------------------------[NETWORK CONNECTIVITY TESTS]--------------------------")
     log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
     hasher = hashlib.sha256()
-    hasher.update(open("../Source/dev.py", "rb").read())
+    hasher.update(open("../Source/Tapestry/__main__.py", "rb").read())
     taphash = hasher.hexdigest()
-    log.log("\n"+str(taphash)+"\n")
-    os.chdir(perma_home)
-
+    log.log("\n" + str(taphash) + "\n")
+    log.log("\nWhich relies on the classes library with hash:")
+    hasher = hashlib.sha256()
+    hasher.update(open("../Source/Tapestry/classes.py", "rb").read())
+    taphash = hasher.hexdigest()
+    log.log("\n" + str(taphash) + "\n")
 # We use popen not to block the test script while the servers are running, but
 # we need to close them later, so we catch the processes in some vars.
     inst_ftp = None

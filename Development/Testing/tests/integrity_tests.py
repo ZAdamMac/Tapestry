@@ -38,9 +38,15 @@ def runtime():
     log.log("\n\n-------------------------------[INTEGRITY TESTS]-------------------------------")
     log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
     hasher = hashlib.sha256()
-    hasher.update(open("../Source/dev.py", "rb").read())
+    hasher.update(open("../Source/Tapestry/__main__.py", "rb").read())
     taphash = hasher.hexdigest()
     log.log("\n" + str(taphash) + "\n")
+    log.log("\nWhich relies on the classes library with hash:")
+    hasher = hashlib.sha256()
+    hasher.update(open("../Source/Tapestry/classes.py", "rb").read())
+    taphash = hasher.hexdigest()
+    log.log("\n" + str(taphash) + "\n")
+
     counter_mismatch = 0
     identical = False
 
