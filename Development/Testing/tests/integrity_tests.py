@@ -98,7 +98,7 @@ def runtime():
                         print("Signature at %s verified." % file)
                     else:
                         print("WARNING: Signature at %s insufficiently trusted." % file)
-                        log.log("Signature mismatch in file: %s" % file)
+                        log.log("Signature mismatch in file: %s" % os.path.join(foo, file))
                         failures = + 1
     print("Signature verification completed with %s failures." % failures)
     if failures < 1:
