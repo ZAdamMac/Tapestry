@@ -288,23 +288,32 @@ def do_main(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire build process."""
     debug_print("Entering do_main")
     ns = namespace
+    print("Gathering a list of files to archive - this could take a few minutes.")
     ops_list = build_ops_list(namespace)
     debug_print("Have ops list")
+    print("Sorting the files to be archived - this could take a few minutes")
     raw_recovery_index, namespace.sum_size = build_recovery_index(ops_list)
     debug_print("Have RI, Proceeding to Pack")
     list_blocks = pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
     encrypt_blocks(list_blocks, gpg_agent, ns.fp, ns)
     sign_blocks(namespace, gpg_agent)
+    if namespace.modeNetwork.lower() == "ftp":
+        ftp_deposit_files(namespace)
     clean_up(namespace.workDir)
+    print("The temporary working directories have been cleared and your files")
+    print("are now stored here: %s" % namespace.drop)
     exit()
 
 
 def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
     ns = namespace
+    print("Entering Recovery Mode")
     if ns.modeNetwork.lower() == "ftp":
+        print("Fetching available blocks from the FTP server.")
         namespace = ftp_retrieve_files(namespace, gpg_agent)
+        print("FTP Fetch Completed")
     else:
         rec_index = media_retrieve_files(namespace.recovery_path, namespace.workDir,
                                          gpg_agent)
@@ -362,6 +371,36 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
         for w in workers:
             jobs.put(None)
         jobs.join()
+
+
+def ftp_deposit_files(ns):
+    """Based on the usual network config, sends any local blocks in ns.drop."""
+    if ns.modeNetwork.lower() == "ftp":
+        input("""Tapestry is presently configured to use an FTP drop. 
+        Please ensure you have a connection, and press any key to continue.""")
+        pw = getpass.getpass("Enter the FTP password now (if required):")
+        ftp_link = ftp_establish_connection(ns.addrNet, ns.portNet, get_ssl_context(ns), ns.nameNet, pw)
+        list_outbound_files = []
+        for location, sub_dirs, files in os.walk(ns.drop):
+            for file in files:
+                if file.endswith(".tap") or file.endswith(".sig"):
+                    list_outbound_files.append(os.path.join(location, file))
+        print("The following files will be uploaded to the FTP:")
+        for file in list_outbound_files:
+            print(os.path.basename(file))
+        print("Now beggining the upload. You will be notified when this process is completed.")
+        for file in list_outbound_files:
+            ftp_send_block(file, ftp_link, ns.dirNet)
+        if ns.retainLocal:
+            print("The upload process is now completed.")
+            print("You have selected to store local copies of these files.")
+            print("Those files can be found here %s" % ns.drop)
+        else:
+            print("You have not configured to retain local copies, so we will delete those for you.")
+            for file in list_outbound_files:
+                os.remove(file)
+            print("The files which were archived to the FTP have been removed.")
+            print("Other output files, such as logs or the RIFF, are not removed.")
 
 
 def ftp_establish_connection(url, port, ssl_context, username, password):
@@ -449,10 +488,26 @@ def ftp_retrieve_files(ns, gpg):
                 exit()
         else:
             print("Something has gone wrong in initial decryption.")
-            print("Veryify you have the key for the blocks provided and try again.")
+            print("Verify you have the key for the blocks provided and try again.")
             exit()
         ns.rec_index = tapestry.RecoveryIndex(index_file)
         return ns
+
+
+def ftp_send_block(fname, ftp_connect, dir_destination):
+    """Send target to the server"""
+    list_remote_directories = ftp_connect.dir()
+    if dir_destination not in list_remote_directories:
+        try:
+            ftp_connect.mkd(dir_destination)
+        except ftplib.all_errors:
+            print("Something went wrong while creating the target directory on the FTP.")
+            print("The archives are being retained locally. Please upload manually.")
+            print("Check your tapestry and FTP configuration.")
+            exit()
+        command = "STOR %s" % fname
+        with open(fname, "rb") as fd:
+            ftp_connect.storbinary(command, fd)
 
 
 def get_ssl_context(ns, test=False):
@@ -525,7 +580,8 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
     :param gpg_agent: a python-gnupg gpg agent object
     :return:
     """
-
+    print("Now searching local media for the first block. This includes decrypting")
+    print("the first block in order to obtain the recovery index. Please wait.")
     found_blocks = []
     found_sigs = []
     initial_block_hunt = True
@@ -741,7 +797,7 @@ def parse_config(namespace):
         ns.addrNet = config.get("Network Configuration", "server")
         ns.portNet = config.getint("Network Configuration", "port")
         ns.nameNet = config.get("Network Configuration", "username")
-        ns.nameNet = config.get("Network Configuration", "remote drop location")
+        ns.dirNet = config.get("Network Configuration", "remote drop location")
         ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
         ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
             2 ** 20)  # The math is necessary to go from MB to Bytes)
