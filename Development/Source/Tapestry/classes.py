@@ -140,9 +140,9 @@ class TaskTarUnpack(object):
         # split the pathend component into the subpath from the category dir, and the original filename.
         #print("Attempting to pull %s" % self.fid)
         with tarfile.open(self.tar, "r:*") as tf:
-            print("Now opened: %s" % self.tar)
+            # print("Now opened: %s" % self.tar)  # Debugging statement, uncomment to use.
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
-            print("Extracted %s" % self.fid)
+            # print("Extracted %s" % self.fid)  # Debugging statement, uncomment to use.
             placed = os.path.join(placement, self.fid)
             os.rename(placed, abs_path_out)  # and now it's named correctly.
         return "Restored %s to %s" % (self.fid, abs_path_out)
