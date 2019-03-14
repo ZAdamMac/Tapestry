@@ -456,6 +456,8 @@ def ftp_retrieve_files(ns, gpg):
         if use_default_comp_id == "n":
             print("Please enter the name of the computer you wish to recover files for:")
             compid = input("Case Sensitive: ")
+        else:
+            compid = ns.compid
         print("Please enter the date for which you wish to recover files:")
         tgt_date = input("YYYY-MM-DD")
         pw = getpass.getpass("Enter the FTP password now (if required):")
