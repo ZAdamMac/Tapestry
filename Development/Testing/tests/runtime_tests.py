@@ -66,7 +66,7 @@ def runtime():
     log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
     log.log(str(waiting))
 
-    cfg.read("tapestry-test.cfg")
+    cfg.read("tapestry-test.cfg.bak")
     cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
     with open("tapestry-test.cfg", "w") as warp:
         cfg.write(warp)

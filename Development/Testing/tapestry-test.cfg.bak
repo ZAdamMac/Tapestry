@@ -2,11 +2,11 @@
 uid = patches
 compid = Testbed
 blocksize = 4096
-expected fp = AC45484B88A1754BA489191609CB2144128D9069
+expected fp = D1739B8CB7B8FCB647D7A63E2280DCA03F183D4C
 sign by default = True
 signing fp = 09A30461ED7E1388C271F4C49CD1CEE8E4473D3F
-recovery path = /home/patches/Desktop/Tapestry FT Data/Test/Inc
-output path = /home/patches/Desktop/Tapestry FT Data/Test/Non-Inc/
+recovery path = /home/patches/Desktop/Tapestry FT Data/Test/
+output path = /home/patches/Desktop/Tapestry FT Data/Test/
 keysize = 2048
 use compression = True
 compression level = 1
@@ -20,12 +20,11 @@ remote drop location = ""
 keep local copies = True
 
 [Default Locations/Nix]
-docs = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/documents
-photos = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/photos
+docs = /home/patches/Desktop/Tapestry FT Data/Test/Corpus/documents
+photos = /home/patches/Desktop/Tapestry FT Data/Test/Corpus/photos
 
 [Additional Locations/Nix]
-video = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/videos
-music = /home/patches/Desktop/Tapestry FT Data/Control/Corpus/music
+video = /home/patches/Desktop/Tapestry FT Data/Test/Corpus/videos
 
 [Default Locations/Win]
 docs = C:/Users/patches/Desktop/Tapestry FT Data/Documents
