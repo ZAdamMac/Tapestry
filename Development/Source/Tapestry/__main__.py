@@ -225,6 +225,7 @@ def decompress_blocks(namespace):
     tasks.join()
     for w in workers:
         tasks.put(None)
+    tasks.join()
 
 
 def decrypt_blocks(ns, verified_blocks, gpg_agent):
@@ -275,8 +276,12 @@ def decrypt_blocks(ns, verified_blocks, gpg_agent):
             tasks.join()
             for w in workers:
                 tasks.put(None)
+            tasks.join()
         else:
             print("""Skipping Decryption as the current backup was decrypted during initial preparation.""")
+            for w in workers:
+                tasks.put(None)
+            tasks.join()
 
 
 def do_main(namespace, gpg_agent):
@@ -310,7 +315,7 @@ def do_recovery(namespace, gpg_agent):
     decompress_blocks(namespace)
     unpack_blocks(namespace)
     clean_up(namespace.workDir)
-    # TODO Add the Exit Message
+    debug_print("REC: Got this far, so I should terminate")
     exit()
 
 
@@ -888,7 +893,7 @@ def unpack_blocks(namespace):
         try:
             category_dir = ns.category_paths[category_label]
         except KeyError:
-            category_dir = ns.drop
+            category_dir = os.path.join(ns.drop, str(category_label)) # Because cat_label sometimes comes back as b"404", we need to smash it back to strings.
         if not skip:
             tap_absolute = os.path.join(ns.workDir, files_to_unpack[file])
             tasks.put(tapestry.TaskTarUnpack(tap_absolute, file, category_dir, sub_path))
@@ -912,13 +917,13 @@ def unpack_blocks(namespace):
                 message = "Working..."
             rounds_complete += 1
             status_print(rounds_complete, sum_jobs, "Unpacking", message)
-            if rounds_complete == sum_jobs:
+            if rounds_complete >= sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.
             done.task_done()
     tasks.join()
     for w in workers:
         tasks.put(None)
-
+    tasks.join()
 
 def verify_blocks(ns, gpg_agent):
     """Verifies blocks and returns a list of verified blocks as a result"""
