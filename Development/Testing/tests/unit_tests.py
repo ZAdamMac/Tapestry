@@ -36,13 +36,13 @@ def establish_namespace():
     "sumBlock": 1,
     "sizeExtraLarge": 2000,
     "countFilesSum": 300,
-    "dateRec": 1540139133,
+    "dateRec": "1540139133",
     "comment": "This is just a test RIFF."
   },
   "index":{
     "fidentifier": {
       "fname": "somefilename.png",
-      "md5": "aefaf7502d52994c3b01957636a3cdd2",
+      "sha256": "aefaf7502d52994c3b01957636a3cdd2",
       "category": "files",
       "fpath": "/go/to/somefilename.png",
       "fsize": 200
@@ -199,7 +199,7 @@ def test_riff_compliance(ns):
             ns.logger.log("[FAIL] The following table was not found: %s" % key)
 
     for table in found_top_keys:
-        if table is not "index":  # The index table is a special case.
+        if table != "index":  # The index table is a special case.
             for column in control_riff[table]:
                 try:
                     value = test_riff[table][column]
@@ -214,11 +214,15 @@ def test_riff_compliance(ns):
                     ns.failed_once = True
                     ns.riff_compliance_pass = False
         else:  # The index table is a really special case.
-            index_table_test = test_riff[table]
-            for column in control_riff[table][0]:  # The UUID would never match
+            findex = test_riff["index"]
+            first_file = list(findex.keys())[0]
+            index_table_test = test_riff["index"][first_file]
+            print(index_table_test)
+            print(control_riff["index"]["fidentifier"])
+            for column in control_riff["index"]["fidentifier"]:  # The UUID would never match
                 try:
-                    value = index_table_test[0][column]
-                    control_type = type(control_riff[table][column])
+                    value = index_table_test[column]
+                    control_type = type(control_riff["index"]["fidentifier"][column])
                     test_type = type(value)
                     if control_type != test_type:
                         print("[WARN] %s was found in the %s table, but is of an unexpected type" % (column, table))
