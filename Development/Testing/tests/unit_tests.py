@@ -59,6 +59,7 @@ def establish_namespace():
     namespace.filename = "unit_test-" + str(namespace.uid) + "-" + str(date.today()) + ".log"
     namespace.logger = fw.SimpleLogger("Logs", namespace.filename, "unit-tests")
     namespace.failed_once = False  # Bool to show if any tests have failed.
+    namespace.cfg_path = "tapestry-test.cfg"
 
     return namespace
 
@@ -116,7 +117,7 @@ def test_config_compliance(ns):
     found_net = False
     local_success = True  # For heuristics, we have to assume we succeeded.
 
-    testparser = dev.parse_config(test=True)
+    testparser = dev.parse_config(ns)
     observed_sections = testparser.sections()
 
     # We need some found_ lists to work from!
@@ -182,8 +183,8 @@ def test_riff_compliance(ns):
     Compliance Test]---------------------------""")
     ns.riff_compliance_pass = True
     control_riff = json.loads(ns.goodRIFF)
-    lab_output = ns.cfg.get("Environment Variables", "output")
-    test_riff = json.load(os.path.join(lab_output, "index.riff"))
+    lab_output = ns.cfg.get("Environment Variables", "output path")
+    test_riff = json.loads(open(os.path.join(lab_output, "index.riff"), "r").read())
     found_top_keys = []  # Empty list we will use to hold the top-level keys we found.
 
     for key in control_riff:
@@ -289,10 +290,10 @@ def runtime(home):
     taphash = hasher.hexdigest()
     data.logger.log("\n" + str(taphash) + "\n")
     data = import_for_keys(data)
-    data = test_config_compliance(data)
+    #data = test_config_compliance(data)  # Deprecated - config is now variable.
     data = test_riff_compliance(data)
-    data = test_verification_good(data)
-    data = test_verification_bad(data)
+    #data = test_verification_good(data)  # These are covered in integration tests.
+    #data = test_verification_bad(data)
     if data.failed_once:
         print("Some tests were failed. Please try again.")
         data.logger.save()
