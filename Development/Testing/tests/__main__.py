@@ -7,7 +7,9 @@ results will appear in the logs.
 """
 
 from . import integrity_tests, network_tests, runtime_tests, unit_tests
+from os import getcwd
 
+home = getcwd()
 
 print("Okay, starting the tests.")
 print("Starting the Runtime Test.")
@@ -15,7 +17,7 @@ runtime_tests.runtime()
 print("Starting the Integrity Tests.")
 integrity_tests.runtime()
 print("Starting the Unit Tests")
-unit_tests.runtime()
+unit_tests.runtime(home)
 print("Starting the Network Tests.")
 network_tests.runtime()
 print("All tests complete.")

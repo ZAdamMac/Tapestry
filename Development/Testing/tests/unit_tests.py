@@ -23,8 +23,8 @@ def establish_namespace():
     configuration values around the program.
     """
     namespace = type('', (), {})()  # We need a general-purpose namespace object
-    namespace.key_sign_fp = "3B5ACC53FE33CB690AF28AA2B1116E0BE39BA873"
-    namespace.key_crypt_fp = "5EECD8B48E062B2520F518844C11667231468613"
+    namespace.key_sign_fp = "71564BF32FCC42472B357BF8B21697437C445"
+    namespace.key_crypt_fp = "E033817033B40245B6115919105C34E53B56FDED"
     #  goodRIFF is the string representation of a compliant RIFF structure.
     namespace.goodRIFF = """{
   "metaBlock": {
@@ -52,7 +52,9 @@ def establish_namespace():
 """
     namespace.gpg_instance = gnupg.GPG()
     namespace.cfg = configparser.ConfigParser()
-    namespace.cfg.read_file("tapestry-test.cfg")
+    print(os.getcwd())
+    with open("tapestry-test.cfg", "r") as cfg:
+        namespace.cfg.read_file(cfg)
     namespace.uid = namespace.cfg.get("Environment Variables", "uid")
     namespace.filename = "unit_test-" + str(namespace.uid) + "-" + str(date.today()) + ".log"
     namespace.logger = fw.SimpleLogger("Logs", namespace.filename, "unit-tests")
@@ -79,13 +81,13 @@ def import_for_keys(ns):
     else:
         if not found_enc_key:
             print("Importing the Test Encryption Key")
-            ns.gpg_instance.import_keys(open("test_enc_key", "r").read())
+            ns.gpg_instance.import_keys(open("test_enc_key", "rb").read())
             # No notification is required because this key does not need to be
             # trusted
             print("Done")
         if not found_sig_key:  # Without this sig tests fail.
             print("Importing the Test Signing Key")
-            ns.gpg_instance.import_keys(open("test_sig_key", "r").read())
+            ns.gpg_instance.import_keys(open("test_sig_key", "rb").read())
             print("In order to continue you should first escalate the trust of:")
             print("%s to at least Minimal" % ns.key_sign_fp)
             input("Press enter to continue.")
@@ -271,7 +273,8 @@ def test_verification_bad(ns):
     return ns
 
 
-def runtime():
+def runtime(home):
+    os.chdir(home)
     print("Now beginning the unit-tests for tapestry.")
     data = establish_namespace()
     data.logger.log("------------------------------[SAMPLE GENERATION]------------------------------")
