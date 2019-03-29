@@ -32,7 +32,7 @@ def runtime():
     # We create a backup of the config to restore to after testing.
     shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak")
 
-    path_control = out.replace("Test", "Control")
+    path_control = out.replace("/Test/", "/Control/")
 
     if not os.path.isdir(logs):
         os.mkdir(logs)
@@ -54,8 +54,7 @@ def runtime():
     hasher.update(open("../Source/Tapestry/classes.py", "rb").read())
     taphash = hasher.hexdigest()
     log.log("\n" + str(taphash) + "\n")
-# We use popen not to block the test script while the servers are running, but
-# we need to close them later, so we catch the processes in some vars.
+
     inst_ftp = None
 
     # Test the Bad Link First
@@ -63,7 +62,7 @@ def runtime():
     test_context.load_verify_locations(cafile="testcert.pem")
 
     try:
-        inst_ftp = dev.connectFTP("localhost", 201, test_context, test_ftp_user, test_ftp_pw)
+        inst_ftp = dev.ftp_establish_connection("localhost", 201, test_context, test_ftp_user, test_ftp_pw)
         print("Malicious Connection Test - FAIL - Connection Accepted.")
         log.log("[FAILED] Tapestry connected to the 'malicious' server and accepted it as a\nlegitimate connection.")
     except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
@@ -73,7 +72,7 @@ def runtime():
     # Now the Good Link
 
     try:
-        inst_ftp = dev.connectFTP("localhost", 211, test_context, test_ftp_user, test_ftp_pw)
+        inst_ftp = dev.ftp_establish_connection("localhost", 211, test_context, test_ftp_user, test_ftp_pw)
         print("Benign Connection Test - PASS - Connection Accepted.")
         log.log("[PASSED] The 'valid' server was accepted by the connection establishment\nfunction and a valid connection object is being passed to the next test.")
     except ConnectionRefusedError or ssl.SSLError:
@@ -89,9 +88,9 @@ def runtime():
         log.log("[FAILED] The network transfer tests could not be passed as no connection was\nestablished. Verify that vsftpd is configured correctly on the test machine and\nthat tapestry-test.cfg contains the correct credentials for the FTP test user.")
     else:
         print("Beginning file transfer tests using inert transfer article.")
-        dev.sendFile(inst_ftp, "testblock-2001-01-01.txt")
-        count_placed, list_placed = dev.grepBlocks("testblock", "2001-01-01", inst_ftp)
-        dev.fetchBlock("testblock-2001-01-01.txt", inst_ftp, out)
+        dev.ftp_send_block("testblock-2001-01-01.txt", inst_ftp, "")
+        count_placed, list_placed = dev.grep_blocks("testblock", "2001-01-01", inst_ftp)
+        dev.ftp_fetch_block("testblock-2001-01-01.txt", inst_ftp, out)
         hash_control_ftp = hashlib.md5()
         hash_control_ftp.update(open("testblock-2001-01-01.txt", "rb").read())
         hash_relay_ftp = hashlib.md5()
