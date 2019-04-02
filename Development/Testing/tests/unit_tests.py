@@ -184,7 +184,11 @@ def test_riff_compliance(ns):
     ns.riff_compliance_pass = True
     control_riff = json.loads(ns.goodRIFF)
     lab_output = ns.cfg.get("Environment Variables", "output path")
-    test_riff = json.loads(open(os.path.join(lab_output, "index.riff"), "r").read())
+    for foo, bar, files in os.walk(lab_output):
+        for file in files:
+            if file.endswith(".riff"):
+                test_riff = json.loads(open(os.path.join(foo, file), "r").read())
+            break
     found_top_keys = []  # Empty list we will use to hold the top-level keys we found.
 
     for key in control_riff:
