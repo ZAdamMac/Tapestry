@@ -59,7 +59,7 @@ def runtime():
 
     # Test the Bad Link First
     test_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
-    test_context.load_verify_locations(cafile="testcert.pem")
+    test_context.load_verify_locations(cafile="testcertgood.pem")
 
     try:
         inst_ftp = dev.ftp_establish_connection("localhost", 201, test_context, test_ftp_user, test_ftp_pw)
@@ -89,7 +89,7 @@ def runtime():
     else:
         print("Beginning file transfer tests using inert transfer article.")
         dev.ftp_send_block("testblock-2001-01-01.txt", inst_ftp, "")
-        count_placed, list_placed = dev.grep_blocks("testblock", "2001-01-01", inst_ftp)
+        count_placed, list_placed = dev.ftp_grep_blocks("testblock", "2001-01-01", inst_ftp)
         dev.ftp_fetch_block("testblock-2001-01-01.txt", inst_ftp, out)
         hash_control_ftp = hashlib.md5()
         hash_control_ftp.update(open("testblock-2001-01-01.txt", "rb").read())
