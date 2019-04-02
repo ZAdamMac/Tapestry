@@ -188,7 +188,7 @@ def test_riff_compliance(ns):
         for file in files:
             if file.endswith(".riff"):
                 test_riff = json.loads(open(os.path.join(foo, file), "r").read())
-            break
+                break
     found_top_keys = []  # Empty list we will use to hold the top-level keys we found.
 
     for key in control_riff:
@@ -221,8 +221,8 @@ def test_riff_compliance(ns):
             findex = test_riff["index"]
             first_file = list(findex.keys())[0]
             index_table_test = test_riff["index"][first_file]
-            print(index_table_test)
-            print(control_riff["index"]["fidentifier"])
+            #print(index_table_test)
+            #print(control_riff["index"]["fidentifier"])
             for column in control_riff["index"]["fidentifier"]:  # The UUID would never match
                 try:
                     value = index_table_test[column]
