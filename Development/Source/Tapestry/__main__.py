@@ -499,17 +499,18 @@ def ftp_retrieve_files(ns, gpg):
 def ftp_send_block(fname, ftp_connect, dir_destination):
     """Send target to the server"""
     list_remote_directories = ftp_connect.dir()
-    if dir_destination not in list_remote_directories:
-        try:
-            ftp_connect.mkd(dir_destination)
-        except ftplib.all_errors:
-            print("Something went wrong while creating the target directory on the FTP.")
-            print("The archives are being retained locally. Please upload manually.")
-            print("Check your tapestry and FTP configuration.")
-            exit()
-        command = "STOR %s" % fname
-        with open(fname, "rb") as fd:
-            ftp_connect.storbinary(command, fd)
+    if list_remote_directories is not None:
+        if dir_destination not in list_remote_directories:
+            try:
+                ftp_connect.mkd(dir_destination)
+            except ftplib.all_errors:
+                print("Something went wrong while creating the target directory on the FTP.")
+                print("The archives are being retained locally. Please upload manually.")
+                print("Check your tapestry and FTP configuration.")
+                exit()
+    command = "STOR %s" % fname
+    with open(fname, "rb") as fd:
+        ftp_connect.storbinary(command, fd)
 
 
 def get_ssl_context(ns, test=False):
