@@ -1,0 +1,33 @@
+===============================================================================
+This is a log of tests run against some version of Tapestry by the 
+unit-tests.py testing utility. The date is indicated in the filename. 
+It should be made clear that these tests do not indicate any sort of warranty 
+or guarantee of merchantability.
+
+=======TEST MACHINE SPECS=======
+Cores Available: 4 
+RAM Available: 11392 MB 
+================================
+
+
+
+================================BEGIN TESTING==================================
+------------------------------[SAMPLE GENERATION]------------------------------
+
+This log is for a test of a development version of Tapestry, with SHA256 hash:
+
+7ac664c41cde7cd0fff2c59d309556f03cea1e7b0b0b9f64826476c104b20111
+
+
+Which relies on the classes library with hash:
+
+29dec6e3cd7be82e9262d7fde66daea0bf6d4ed6b5716d953da8ae787cef31ec
+
+---------------------------[NewRIFF 
+    Compliance Test]---------------------------
+[PASS] The sample recovery index generated is NewRIFF compliant.
+
+
+===============================[END OF TESTING]===============================
+ Tester Comments: 
+ This test was run on 2019-04-09
