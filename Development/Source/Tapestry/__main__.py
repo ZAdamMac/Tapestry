@@ -814,9 +814,9 @@ def parse_config(namespace):
             ns.desktop = str("/home/" + ns.uid + "/Desktop")
             ns.gpgDir = str("/home/" + ns.uid + "/.gnupg")
         elif ns.currentOS == "Windows":
-            ns.workDir = "C:/Windows/Temp"
-            ns.desktop = str("C:/Users/" + ns.uid + "/Desktop")
-            ns.gpgDir = "C:/Program Files (x86)/GNU/GnuPG"
+            ns.workDir = "C:\\users\\" + ns.uid + "\\appdata\\local\\temp"
+            ns.desktop = str("C:\\Users\\" + ns.uid + "\\Desktop")
+            ns.gpgDir = "C:\\users\\" + ns.uid + "\\appdata\\local\\gnupg"
         ns.numConsumers = os.cpu_count()
         debug_print("I am operating with %s consumers." % ns.numConsumers)
 
