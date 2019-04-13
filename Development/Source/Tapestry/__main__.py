@@ -120,7 +120,7 @@ def clean_up(working_directory):
 def compress_blocks(ns, targets, do_compression=True, compression_level=1):
     """Iterates over a list of files, and then compresses them, using the
     multiprocessing framework.
-
+    :param ns: a tapestry namespace object
     :param targets: list of absolute paths to the files to be compressed.
     :param do_compression: boolean value indicting if we should use compression
     :param compression_level: integer value from 1-9 denoting the number of passes
@@ -618,7 +618,8 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
     debug_print("MRF: decrypted_first is: %s" % decrypted_first)
     debug_print("MRF: The conditional is therefore: %s" % decrypted_first.split(" ")[1].lower())
     if decrypted_first.split(" ")[1].lower() == "success":
-        tar = tarfile.open(os.path.join(temp_path, decrypted_first.split(" ")[3].rstrip(".")), "r:*")  # Hideous string management hack.
+        tar = tarfile.open(os.path.join(temp_path, decrypted_first.split(" ")[3].rstrip(".")), "r:*")
+        # Hideous string management hack.
         tapfile_contents = tar.getnames()
         debug_print("The provided block contains: %s" % str(tapfile_contents))
 
@@ -970,14 +971,14 @@ def start_gpg(ns):
 
 def status_print(done, total, job, message):
     """Prints a basic status message. If not interrupted, prints it on one line"""
-    lengthBar = 15.0
-    doneBar = int(round((done / total) * lengthBar))
-    doneBarPrint = str("#" * int(doneBar) + "-" * int(round((lengthBar - doneBar))))
+    length_bar = 15.0
+    done_bar = int(round((done / total) * length_bar))
+    done_bar_print = str("#" * int(done_bar) + "-" * int(round((length_bar - done_bar))))
     percent = int(round((done / total) * 100))
     if percent == 100:  # More Pretty Printing!
         if message == "Working...":
             message = "Done!    \n"
-    text = ("\r {0}: [{1}] {2}% - {3}".format(job, doneBarPrint, percent, message))
+    text = ("\r {0}: [{1}] {2}% - {3}".format(job, done_bar_print, percent, message))
     sys.stdout.write(text)
     sys.stdout.flush()
 
@@ -1003,7 +1004,7 @@ def unpack_blocks(namespace):
         with tarfile.open(block, "r:*") as tap:
             members = tap.getnames()
             for file in members:
-                #debug_print("UB: Trying to unblock %s" % str({file: block}))
+                # debug_print("UB: Trying to unblock %s" % str({file: block}))
                 files_to_unpack.update({file: block})
 
     tasks = mp.JoinableQueue()  # Let's populate the queue
@@ -1017,7 +1018,8 @@ def unpack_blocks(namespace):
         try:
             category_dir = ns.category_paths[category_label]
         except KeyError:
-            category_dir = os.path.join(ns.drop, str(category_label)) # Because cat_label sometimes comes back as b"404", we need to smash it back to strings.
+            category_dir = os.path.join(ns.drop, str(category_label))
+            # Because cat_label sometimes comes back as b"404", we need to smash it back to strings.
         if not skip:
             tap_absolute = os.path.join(ns.workDir, files_to_unpack[file])
             tasks.put(tapestry.TaskTarUnpack(tap_absolute, file, category_dir, sub_path))
@@ -1048,6 +1050,7 @@ def unpack_blocks(namespace):
     for w in workers:
         tasks.put(None)
     tasks.join()
+
 
 def verify_blocks(ns, gpg_agent):
     """Verifies blocks and returns a list of verified blocks as a result"""
