@@ -99,10 +99,6 @@ class TaskTarBuild(object):
 
     def __call__(self):
         global dict_locks
-        if os.path.exists(self.tarf):  # we need to know if we're starting a new file or not.
-            tarf_mode = "a:"
-        else:
-            tarf_mode = "r:"
 
         f_lock = dict_locks[self.block]  # Aquires the lock indicated in the index value from the master
         f_lock.acquire()
@@ -138,7 +134,7 @@ class TaskTarUnpack(object):
         abs_path_out = os.path.join(self.catdir, path_end)
         placement, name_proper = os.path.split(abs_path_out)
         # split the pathend component into the subpath from the category dir, and the original filename.
-        #print("Attempting to pull %s" % self.fid)
+        # print("Attempting to pull %s" % self.fid)
         with tarfile.open(self.tar, "r:*") as tf:
             # print("Now opened: %s" % self.tar)  # Debugging statement, uncomment to use.
             tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
@@ -187,7 +183,7 @@ class TaskDecompress(object):
     def __call__(self):
         with open(self.tarf, "rb") as file:
             signature = file.read(3)
-            #print(signature)
+            # print(signature)
             if signature.startswith(b"BZh"):  # Microheader that indicates a BZ2 file.
                 shutil.copy(self.tarf, (self.tarf + ".temp"))
                 with bz2.BZ2File((self.tarf + ".temp"), "rb") as compressed:
@@ -221,17 +217,16 @@ class TaskEncrypt(object):
         self.gpg = gpg
 
     def __call__(self):
-        with open(self.tarf, "r") as p:
-            path, tapped = os.path.split(self.tarf)
-            tapped = tapped.strip(".bz2")
-            tapped = tapped.replace(".tar", ".tap")
-            tgtOutput = os.path.join(self.out, tapped)
-            with open(self.tarf, "rb") as tgt:
-                k = self.gpg.encrypt_file(tgt, self.fp, output=tgtOutput, armor=True, always_trust=True)
-            if k.ok:
-                return "Encryption Success for %s." % self.tarf
-            elif not k.ok:
-                return "Encryption Failed for %s, status: %s" % (self.tarf, k.status)
+        path, tapped = os.path.split(self.tarf)
+        tapped = tapped.strip(".bz2")
+        tapped = tapped.replace(".tar", ".tap")
+        tgt_output = os.path.join(self.out, tapped)
+        with open(self.tarf, "rb") as tgt:
+            k = self.gpg.encrypt_file(tgt, self.fp, output=tgt_output, armor=True, always_trust=True)
+        if k.ok:
+            return "Encryption Success for %s." % self.tarf
+        elif not k.ok:
+            return "Encryption Failed for %s, status: %s" % (self.tarf, k.status)
 
 
 class TaskDecrypt(object):
@@ -290,10 +285,10 @@ class TaskSign(object):
             path, tapped = os.path.split(self.file)
             absolute_output = os.path.join(self.out, tapped)
             absolute_output += ".sig"
-            #print(absolute_output)
+            # print(absolute_output)
             k = self.gpg.sign_file(p, keyid=self.fp, output=absolute_output, detach=True)
-            #print(k)
-            #print("\n")
+            # print(k)
+            # print("\n")
             if k.status == "signature created":
                 return "Signing Success for %s." % tapped
             else:
@@ -306,18 +301,18 @@ class TaskCheckIntegrity(object):
     against it's known-good composition, based on the MD5 hash.
     """
 
-    def __init__(self, tarfile, fid, hash):
+    def __init__(self, tar_file, fid, kg_hash):
         """Provided with a tarfile, an FID found within it, and a known good
         hash, returns True or False if the file matches, as well as a string
         used in debugging.
 
-        :param tarfile: string denoting absolute path to the tarball
+        :param tar_file: string denoting absolute path to the tarball
         :param fid: GUID file identifier of the file in question.
         :param hash: the output of md5.hexdigest(), as found (e.g) in the RIFF
         """
-        self.tarf = tarfile
+        self.tarf = tar_file
         self.fid = fid
-        self.hash_good = hash
+        self.hash_good = kg_hash
 
     def __call__(self):
         hasher = hashlib.md5()
@@ -362,7 +357,7 @@ class Block(object):
         :param name: string, output filename
         :param max_size: int in bytes
         """
-        self.name = name # This string will be used as the final output filename
+        self.name = name  # This string will be used as the final output filename
         self.max_size = max_size
         self.size = 0
         self.file_index = {}
@@ -386,7 +381,7 @@ class Block(object):
             if self.remaining <= self.smallest:
                 self.full = True
             return True
-        else: # This file won't fit and has to be placed somewhere else.
+        else:  # This file won't fit and has to be placed somewhere else.
             return False
 
     def meta(self, sum_blocks, sum_size, sum_files, datestamp, comment_string, full_index, drop_dir):
@@ -418,7 +413,6 @@ class Block(object):
         return os.path.join(drop_dir, (self.name+".riff"))
 
 
-
 class RecoveryIndex(object):
     """Special utility class for loading and translating Tapestry recovery
     index files and presenting them back to the script in a universal way. Made
@@ -428,7 +422,7 @@ class RecoveryIndex(object):
     def __init__(self, index_file):
         """Initialize the Recovery Index by handing it a working file.
 
-        :param file: a reader object containing the file in question.
+        :param index_file: a reader object containing the file in question.
         """
         self.pickle_failed = False
         self.json_failed = False
@@ -440,7 +434,7 @@ class RecoveryIndex(object):
 
         try:
             self.unpacked_json = json.load(index_file)
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             self.json_failed = True
 
         if self.pickle_failed and self.json_failed:
