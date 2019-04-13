@@ -294,7 +294,10 @@ def do_main(namespace, gpg_agent):
     print("Sorting the files to be archived - this could take a few minutes")
     raw_recovery_index, namespace.sum_size = build_recovery_index(ops_list)
     debug_print("Have RI, Proceeding to Pack")
-    list_blocks = pack_blocks(raw_recovery_index, ops_list, namespace)
+    if sys.platform == "win32":
+        list_blocks = windows_pack_blocks(raw_recovery_index, ops_list, namespace)
+    else:
+        list_blocks = unix_pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
     encrypt_blocks(list_blocks, gpg_agent, ns.fp, ns)
     sign_blocks(namespace, gpg_agent)
@@ -652,10 +655,13 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
     return rec_index
 
 
-def pack_blocks(sizes, ops_list, namespace):
+def unix_pack_blocks(sizes, ops_list, namespace):
     """Processes files by creating the individual tarred tapblock files, and
     returns a list of those files and their absolute paths to be processed by
-    the next stage of events.
+    the next stage of events. This version is specific to unix systems (defined
+    as all non-windows systems in this case) and uses the multiprocessing
+    module to gain about a 20% performance increase on average compared to the
+    windows version.
 
     :param sizes: a list object returned by build_recovery_index, made up of
     strings indicating file identifier values sorted by the size of the file.
@@ -769,6 +775,65 @@ def parse_args(namespace):
         ns.config_path = args.c
 
         return ns
+
+
+def windows_pack_blocks(sizes, ops_list, namespace):
+    """Processes files by creating the individual tarred tapblock files, and
+    returns a list of those files and their absolute paths to be processed by
+    the next stage of events. This version is meant to be used when the
+    detected operating system is windows (sys.platform == "win32"). This runs
+    in a single-process workflow because we've yet to implement an operating
+    locking method under windows.
+
+    :param sizes: a list object returned by build_recovery_index, made up of
+    strings indicating file identifier values sorted by the size of the file.
+    :param ops_list: The full ops list prepared by build_ops_list, which is
+    equivalent to the third portion of a recovery index file.
+    :param namespace: the entire namespace object.
+    :return:
+    """
+    ns = namespace
+    collection_blocks = []
+    block_final_paths = []
+    block_name_base = ns.compid + "-" + str(datetime.date.today())
+    counter = 1  # Remember to increment this later
+    smallest = ops_list[sizes[-1]]['fsize']
+    working_block = tapestry.Block(
+        (block_name_base + "-" + str(counter)), ns.block_size_raw, counter, smallest
+    )
+    packing = True
+    while packing:
+        for item in sizes:
+            placed = working_block.put(item, ops_list[item])
+            if placed:
+                sizes.remove(item)
+        if working_block.full:  # We need a new block, unpacked items.
+            collection_blocks.append(working_block)
+            counter += 1
+            working_block = tapestry.Block(
+                (block_name_base + "-" + str(counter)), ns.block_size_raw, counter, smallest
+            )
+        elif len(sizes) == 0:
+            collection_blocks.append(working_block)
+            packing = False  # The list is empty and we're therefore done.
+    sum_files = 0
+    for block in collection_blocks:
+        sum_files += block.files
+    sum_sizes = ns.sum_size
+    for block in collection_blocks:
+        tarf = os.path.join(ns.workDir, (block.name + ".tar"))
+        block_final_paths.append(tarf)
+        for fid, file_metadata in block.file_index.items():
+            path = os.path.join(ns.category_paths[file_metadata["category"]],
+                                file_metadata['fpath'])
+            with tarfile.open(tarf, "a:") as tf:
+                tf.add(path, arcname=fid, recursive=False)
+        this_riff = block.meta(len(collection_blocks), sum_sizes, sum_files,
+                               str(datetime.date.today()), None, ops_list, ns.drop)
+        with tarfile.open(tarf, "a:") as tf:
+            tf.add(this_riff, arcname="recovery-riff", recursive=False)
+
+    return block_final_paths
 
 
 def parse_config(namespace):
