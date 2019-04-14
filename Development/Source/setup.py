@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='tapestrydev',
       version='2.0.0.devbuild.05',
