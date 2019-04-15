@@ -16,12 +16,12 @@ RAM Available: 11392 MB
 
 This log is for a test of a development version of Tapestry, with SHA256 hash:
 
-7ac664c41cde7cd0fff2c59d309556f03cea1e7b0b0b9f64826476c104b20111
+f2c93c29b07d10afc03d92ad044d0428d1b2df8f16b921214cb7dee5cc1f9317
 
 
 Which relies on the classes library with hash:
 
-29dec6e3cd7be82e9262d7fde66daea0bf6d4ed6b5716d953da8ae787cef31ec
+49f5934fc201f90323d072dc056ce3bfe25458b4e69905db600ac174f3902ba4
 
 ---------------------------[NewRIFF 
     Compliance Test]---------------------------
@@ -30,4 +30,4 @@ Which relies on the classes library with hash:
 
 ===============================[END OF TESTING]===============================
  Tester Comments: 
- This test was run on 2019-04-09
+ This test was run on 2019-04-15
