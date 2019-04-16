@@ -1,7 +1,7 @@
 # Testing Documentation for Tapestry Project
 ## Current as of release 2.0
 
-This document is intended to lay out a brief explanation of the correct use of the provided scripts in testing Tapestry, for use in development. **No fork or branch may be pushed to Master until its version of dev.py passes all tests.** Primary coverage is to be provided by unit testing of individual functions or rountine-functions, with Functional Testing to provide assurance the whole program functions as intended. Going forward, new features should be added in such a way that they are unit-testable whenever possible.
+This document is intended to lay out a brief explanation of the correct use of the provided scripts in testing Tapestry, for use in development. **No fork or branch may be pushed to Master until it passes testing.** Primary coverage is to be provided by unit testing of individual functions or rountine-functions, with Functional Testing to provide assurance the whole program functions as intended. Going forward, new features should be added in such a way that they are unit-testable whenever possible.
 
 ## Preparing the Test Environment and tapestry-test.cfg
 The test suite relies on a testing environment to run its target script against. That environment can be constructed relatively simply using the included `corpusmaker.py`. The method of preparing this environment is simple:
@@ -14,7 +14,7 @@ The test suite relies on a testing environment to run its target script against.
 7. If it is not already present, install vsftpd. vsftpd will be automatically invoked by the test framework itself; if desired, the developer may choose to disable vsftpd as a startup script. A dummy account should be created for ftp testing purposes so as not to interfere with the normal operation of users on the account (and allow account whitelisting for the security-conscious.)
 
 ## Testing a Development Build
-In order to test some variation of `dev.py`, start two copies of vsftpd (one for each config) and run `run-tests.py`. The vsftpd daemons must be run separately as superuser is required. **Note to Windows Testers:** While vsftpd isn't required (and indeed isn't available on windows), you must be able to configure your daemon in a similar way to the vsftp config. Specifically:
+In order to test some variation of tapestry, start two copies of vsftpd (one for each config) and run `python -m tests`. The vsftpd daemons must be run separately as superuser is required. **Note to Windows Testers:** While vsftpd isn't required (and indeed isn't available on windows), you must be able to configure your daemon in a similar way to the vsftp config. Specifically:
 - There must be two instances, each using one of testcertbad.pem and testcertgood.pem,
 - the good server should listen on 201, and the bad on 211, and,
 - you must upload the config files (passwords scrubbed if present) along with your logs when submitting your pull request.
