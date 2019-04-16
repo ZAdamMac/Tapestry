@@ -114,7 +114,7 @@ def clean_up(working_directory):
     """Releases the memory space used up by temp, because we're polite."""
     if __name__ == "__main__":
         if os.path.exists(working_directory):
-            shutil.rmtree(working_directory)
+            shutil.rmtree(working_directory, ignore_errors=True)
 
 
 def compress_blocks(ns, targets, do_compression=True, compression_level=1):
