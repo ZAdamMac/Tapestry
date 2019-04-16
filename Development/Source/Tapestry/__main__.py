@@ -802,6 +802,9 @@ def windows_pack_blocks(sizes, ops_list, namespace):
     working_block = tapestry.Block(
         (block_name_base + "-" + str(counter)), ns.block_size_raw, counter, smallest
     )
+    if not os.path.exists(ns.workDir):
+        os.mkdir(ns.workDir)
+
     packing = True
     while packing:
         for item in sizes:
@@ -880,9 +883,9 @@ def parse_config(namespace):
             ns.desktop = str("/home/" + ns.uid + "/Desktop")
             ns.gpgDir = str("/home/" + ns.uid + "/.gnupg")
         elif ns.currentOS == "Windows":
-            ns.workDir = "C:\\users\\" + ns.uid + "\\appdata\\local\\temp"
+            ns.workDir = "C:\\users\\" + ns.uid + "\\appdata\\local\\temp\\tapestry"
             ns.desktop = str("C:\\Users\\" + ns.uid + "\\Desktop")
-            ns.gpgDir = "C:\\users\\" + ns.uid + "\\appdata\\local\\gnupg"
+            ns.gpgDir = "C:\\users\\" + ns.uid + "\\appdata\\roaming\\gnupg"
         ns.numConsumers = os.cpu_count()
         debug_print("I am operating with %s consumers." % ns.numConsumers)
 
