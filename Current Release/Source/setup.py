@@ -5,7 +5,7 @@ with open("readme.md", "r") as f:
 
 setup(name='tapestry',
       version='2.0.0',
-      description='tapestry development build - not suitable for release',
+      description='Tapestry Bespoke Backup Utility',
       long_description=long_description,
       author='Zac Adam-MacEwen',
       author_email='zadammac@kenshosec.com',
