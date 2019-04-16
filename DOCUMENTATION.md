@@ -64,6 +64,7 @@ Tapestry supports the following arguments at runtime:
 |--inc|Performs an "inclusive run", adding all of the "additional locations" categories to the work list at runtime. Provides non-granular differentation between "quick" and "complete" backups.|
 |--rcv|Places the script in recovery mode, checking its recovery path for .tap files and their associated .sigs and recovering them programatically.
 |--debug|Increases the verbosity of both Tapestry and its gpg callbacks for light debugging purposes|
+|-c| the string which immediately follows should be a path to a configuration file.|
 
 If no runtime arguments are provided the program assumes you intended to do a "basic build", and runs the backup routine using only the relevant "default locations" list.
 
@@ -105,20 +106,6 @@ For home users it may be excessive, but as an organization I highly recommend ge
 Tapestry treats every location defined in its configuration file as the top of an os.walk() command. This means, in practical terms, that everything in every subdirectory of that location will be backed up. Therefore, it is important to consider if any symbolic links are going to be followed that may end up with unintended consequences.
 
 The specific locations you select are entirely up to you. At time of writing I personally use the documents and photos default folders in my default locations list, with my additional locations list including videos, music, and a subset of the hidden configuration directories.
-
-## Example Runsheet: First-Time Setup
-0. Download the latest version of tapestry from the github repo (at time of writing, 1.1.0), and verify it against its own signature. To do this you will need a copy of [this key](https://pgp.mit.edu/pks/lookup?op=vindex&search=0xF373FF4B43FC742F).
-1. Unpack the verified tar of Tapestry. It should contain Tapestry.py, README.md, DOCUMENTATION.md (versions 1.0 and up), and an example tapestry.cfg file.
-2. Open up tapestry.cfg in your text editor of choice and adjust the configuration as follows:
- - Refer to the configuration table above for explanations of the environment variables, and;
- - Define default and additional locations as required by your backup model.
-3. Run tapestry.py using the standard methods for invoking a python script, with the `--genKey` flag. This will be a command similar to:
-```
-python3 tapestry.py --genKey --inc
-```
-4. Follow the onscreen directions to generate your first disaster-recovery key.
-5. (Optional) Take the time now to generate a signing key if you don't already have one, as well as the revocation certificates for both. Be sure to back these up and store them securely.
-6. Store your keyfiles and the generated inclusive backup safely and securely.
 
 ## Network Storage Mode
 Tapestry is designed to use three different networking modes - Networked File Systems, FTP, and the purpose-designed Loom service.
