@@ -824,14 +824,17 @@ def windows_pack_blocks(sizes, ops_list, namespace):
     for block in collection_blocks:
         sum_files += block.files
     sum_sizes = ns.sum_size
+    current_counter = 0
     for block in collection_blocks:
         tarf = os.path.join(ns.workDir, (block.name + ".tar"))
         block_final_paths.append(tarf)
         for fid, file_metadata in block.file_index.items():
+            current_counter += 1
             path = os.path.join(ns.category_paths[file_metadata["category"]],
                                 file_metadata['fpath'])
             with tarfile.open(tarf, "a:") as tf:
                 tf.add(path, arcname=fid, recursive=False)
+            status_print(current_counter, sum_files, "Packing", None)
         this_riff = block.meta(len(collection_blocks), sum_sizes, sum_files,
                                str(datetime.date.today()), None, ops_list, ns.drop)
         with tarfile.open(tarf, "a:") as tf:
