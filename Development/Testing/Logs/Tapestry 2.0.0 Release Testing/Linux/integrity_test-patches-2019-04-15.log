@@ -1,0 +1,71 @@
+===============================================================================
+This is a log of tests run against some version of Tapestry by the 
+integrity-tests.py testing utility. The date is indicated in the filename. 
+It should be made clear that these tests do not indicate any sort of warranty 
+or guarantee of merchantability.
+
+=======TEST MACHINE SPECS=======
+Cores Available: 4 
+RAM Available: 11392 MB 
+================================
+
+
+
+================================BEGIN TESTING==================================
+
+
+-------------------------------[INTEGRITY TESTS]-------------------------------
+
+This log is for a test of a development version of Tapestry, with SHA256 hash:
+
+f2c93c29b07d10afc03d92ad044d0428d1b2df8f16b921214cb7dee5cc1f9317
+
+
+Which relies on the classes library with hash:
+
+49f5934fc201f90323d072dc056ce3bfe25458b4e69905db600ac174f3902ba4
+
+[PASSED] All files from the results of the recovery mode run were determined to 
+match the original test corpus by means of md5 hash comparison.
+
+
+-------------------------------[SIGNATURE TESTS]-------------------------------
+[PASSED] All of the signatures compared in the signature testing were trusted,  
+
+    and matched the expected value for their source document.                       
+
+-------------------------------------------------------------------------------
+
+
+-----------------------------[ENCRYPTION TESTING]------------------------------
+
+    [PASSED] Due to the passing of the Identity Test, it is not necessary to then
+
+    test the cryptographic properties of the test blocks - their successful
+
+    decryption is implied by the passage of the identity test.
+
+
+
+--------------------------[COMPRESSION EFFICACY TEST]--------------------------
+[PASSED] All files generated are smaller than their original blocksize.
+------------------------------------------------------------------------------
+
+
+------------------------[INCLUSIVE/EXCLUSIVE COMPARISON]-----------------------
+[PASSED] The output of the Inclusive Mode run was larger than the Key
+
+    Generation Mode Run. This indicates that the inclusive mode is likely working
+
+    correctly
+-------------------------------------------------------------------------------
+
+
+---------------------------[KEY IMPORT/EXPORT TEST]----------------------------
+[PASSED] The expected keyfiles were located and imported successfully.
+-------------------------------------------------------------------------------
+
+
+===============================[END OF TESTING]===============================
+ Tester Comments: 
+ This test was run on 2019-04-15

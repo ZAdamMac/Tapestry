@@ -72,10 +72,10 @@ v1.0 (legacy):
     -Added "output path" to configuration file for user config.
     -Returned bz2 compression in the form of the comTasker. Configured in the config.
 
-v1.0.1 (release):
+v1.0.1 (legacy):
     -Fixed an issue with the globally-declared "version" variable which prevented the program from functioning.
 
-v1.1.0 (dev):
+v1.1.0 (legacy):
     - Added a shebang to tapestry to make it immediately executable similar to a bash script.
     - Improved error handling to close issue #1 - missing keys are now correctly excepted.
     - Closed the security issue which could result in recovery from unauthenticated blocks without warning the user.
@@ -84,3 +84,9 @@ v1.1.0 (dev):
     - Removed the limitation on workers which was previously imposed by blocksize vs. available RAM.
     - Rewrote the testing framework to close issue #5 - Test are now a suite, refer to the documenation.
     - Added backup-to and recovery-via FTP with TLS support. Review the documentation.
+
+v 2.0.0 (release):
+    - Rewritten from the ground up to leverage return-oriented design principals.
+    -- addresses the issue with windows introduced in 0.3.0!
+    - Tapestry is now packaged as a module and installed and invoked as such.
+    - Places the (currently unutilized) integrity testing task classes into `classes.py` for future use.
