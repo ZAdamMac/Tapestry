@@ -4,7 +4,7 @@ Hey, thanks for checking us out! Tapestry's renaissance phase of development is 
 First off, let me just say that any contribution matters - from pull-requesting in new functions, to requesting new features, or even just reporting your crashes and bugs. Right now a lot of development is underway. A lot of our framework is super minimal. Tapestry doesn't have automated crash and bug reporting, and its unlikely it ever will. I'm just one guy with a few spare hours in the evening trying to put this thing together. Everything you contribute helps.
 
 Secondly, we do have a few resources for the eager:
-- [**Discord Server:**](https://discord.gg/56msGFT) easily the fastest way to join in the conversation or ask a question;
+- [**Discord Server:**](https://discord.gg/34KJfkg) easily the fastest way to join in the conversation or ask a question;
 - [Email Development Team](mailto:tapdev@psavlabs.com);
 - and, of course, this guide!
 
