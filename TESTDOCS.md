@@ -1,92 +1,41 @@
 # Testing Documentation for Tapestry Project
-## Current as of release 2.0
+## Current for releases 2.1 and later
 
-This document is intended to lay out a brief explanation of the correct use of the provided scripts in testing Tapestry, for use in development. **No fork or branch may be pushed to Master until it passes testing.** Primary coverage is to be provided by unit testing of individual functions or rountine-functions, with Functional Testing to provide assurance the whole program functions as intended. Going forward, new features should be added in such a way that they are unit-testable whenever possible.
+This document is intended to lay out a brief explanation of the correct use of the provided scripts in testing Tapestry, for use in development. A two-tiered testing model is in place, with unit testing coverage for "feature merges" and functional, runtime testing for "release merge".
 
-## Preparing the Test Environment and tapestry-test.cfg
-The test suite relies on a testing environment to run its target script against. That environment can be constructed relatively simply using the included `corpusmaker.py`. The method of preparing this environment is simple:
+## Feature Merging
+Moving forward, work toward a given new feature should comprise *it's own branch*, preferably forked from whatever the latest state of `release-dev` was current at the time. #####
 
-1. Create some directory `~/Tapestry FT Data/` on your testing machine's filesystem.
-2. Under this functional root, create `/Control` and `/Test`.
-3. Edit `corpusmaker.py` such that its `dest` global variable points at some sub-directory Corpus, ie `~/Tapestry FT Data/Control/Corpus`.
-4. Run corpusmaker. Depending on your system specifications this operation may take up to an hour to complete - you are generating a considerable amount of data after all.
-5. After running corpusmaker, you must configure the `tapestry-test.cfg`. This is simply a version of an ordinary tapestry config file. If you cloned the repo, simply edit its paths so that they point at your test environment instead of some guy named Patches.
-7. If it is not already present, install vsftpd. vsftpd will be automatically invoked by the test framework itself; if desired, the developer may choose to disable vsftpd as a startup script. A dummy account should be created for ftp testing purposes so as not to interfere with the normal operation of users on the account (and allow account whitelisting for the security-conscious.)
+Testing a feature merge prior to merging is a requirement. Ideally these tests would be run by the person submitting the PR. The person responsible for review would then run the tests again as a formality to verify the results - if possible, this latter step of testing should be automated where possible.
 
-## Testing a Development Build
-In order to test some variation of tapestry, start two copies of vsftpd (one for each config) and run `python -m tests`. The vsftpd daemons must be run separately as superuser is required. **Note to Windows Testers:** While vsftpd isn't required (and indeed isn't available on windows), you must be able to configure your daemon in a similar way to the vsftp config. Specifically:
-- There must be two instances, each using one of testcertbad.pem and testcertgood.pem,
-- the good server should listen on 201, and the bad on 211, and,
-- you must upload the config files (passwords scrubbed if present) along with your logs when submitting your pull request.
+This stage of testing relies on the Tapestry Unit Tests suite to perform on-the-fly unit tests of all known parts of Tapestry.
 
-Testing can take a considerable amount of time, during the early stages of which the developer will need to be semi-present. A future version may obviate these requirements. In particular, the following sequences will require user intervention:
-
-- Immediately upon running, when the script is testing `--genKey`, the developer will need to provide credentials for the key to be generated as though they were a user. Of particular note: the password will need to be provided twice, once during creation and once when the keys are exported. Blank passwords are allowed.
-- During the `--genKey` run, Tapestry will perform a non-inclusive run, as normal. Toward the end of this run the developer will have to supply the password a third time to execute a signing operation, if using a password-protected signing key for testing.
-- After finishing the first run, Tapestry will then begin an inclusive run. The user must assent to using the key provided (a press-any-key moment) if not deprecated. The run will then proceed as normal until the user provides a password for singing.
-- In some circumstances the user may have to intervene during the third, recovery run, if the signatures fail to match correctly, and provide the corresponding key to unpack. All of these interruptions come at the beginning of the recovery process.
-- From there on out, the user may allow the testing script to complete its run as normal. The system will run all of its tests and report their results to both STDOUT and a logfile stored under `~/Test`
-
-## Technical Details of Integrity Tests
-While the bulk of testing before focused on integrity tests applied to the corpus produced by the functional test, a few remain which are done in this way after Tapestry 2.0. 
-
-### Identity Tests
-The first test run in `integrity-tests` is an Identity Test, comparing the output version of the corpus to the known-good control corpus. Dictionaries are created listing every file in the control and test corpuses as key, with value being the md5 hash of the file. A simple comparison is then run and any deviations are logged.
-
-If there are no deviations, the test passes - the implication is that the backup was successfully restored. If any differences are observed, the test fails. Technically, it would be possible to use this test alone, but that is insufficiently granular.
-
-### Blocksize Compression Test
-The testing script compares the size of all of its output blocks (the .tap files) to the blocksize defined in `tapestry-test.cfg`. If none exceed, the test passes.
-
-### Export Test
-The testing script looks for, and attempts to import, DR.key and DRpub.key. If either fail, the corresponding test also fails.
-
-## Unit Tests
-In these tests, specific functions are imported from dev.py and their operation tested against known-good values.
-
-### Cryptographic Tests
-All cryptographic tests rely on known keys for stability reasons. These keys are included in the Testing package as "test_crypto.key" and "test_sign.key" respectively. If you choose to use different keys you will have to update the corresponding namespace variables in `establish_namespace()` of `unit-tests.py`.
-
-#### Signature Verification
-The script verifies the signature of a .tap file and reports success or failure. This is run regardless of the failure or success of other tests owing to the criticality of the signature function.
-
-Additionally, this test is run again against a known-bad dataset to ensure it captures, after a flaw was discovered in Tapestry 1.0.1.
-
-### Version Specificity/Backward Compatibility
-There are two tests which provide for an assurance of backward-compatibility under Tapestry: the config-comparitor and the NewRIFF Strucutral Test.
-
-#### Config Comparison
-The configuration comparison test must be rewritten with each release. This test is simple - it looks to see that every value which should be found in the configuration actually is. This test is necessary because a standard practice is to update .dev without overwriting the config file. Future versions should include code to catch exceptions when an expected config value is absent (and define sane defaults.)
-
-#### NewRIFF Structural Test
-Updated each development cycle, the NewRIFF structural test compares the value of an extracted RIFF from the test packages generated by `functional-test.py`. It then uses a hard-coded list of expected key values and seeks to make sure that all values found in the RIFF in old versions are still found in new versions. It will also alert if a new RIFF value is detected with a `[WARNING]` message.
-
-
-### Inclusivity Test
-The script captures the return of the buildRunList() test twice, passing in different arguments each time to produce an inclusive and non-inclusive return. If the values match their expected values, the test will pass.
-
-### Networking Tests
-#### Certificate Validity Tests
-Two tests run sequentially which first ensure Tapestry will reject an invalid certificate and accept a valid one.
-
-
-#### File Transfer Tests
-Back-and-forth tests, with hash comparison to make sure the files are unaltered in the process. Quite simple. A hash is taken of a sample file, which is then transferred to a "remote" server, and retrieved from it. The hashes of the original and received copies are compared and any deviations reported as failures.
-
-
-## What about $some_feature?
-### Extant Features
-Some extant features of Tapestry are not explicitly tested for. In most cases, their tests are implicit:
-- If Identity succeeds it didn't matter what the Blocksize value was set to.
-- "Bad Return" feature is implicitly tested for by the way in which the testing script runs the final recovery pass - if it is not working, Identity would fail.
-
-### New Features
-By the time development on a `release-dev` branch begins, any required tests *should* be merged to master. However, sometimes tests themselves need developing and tweaking - this should be done in a clear and well-explained manner with as much commenting and commit-message explanation provided as is practical.
-
-If your PR/development arc includes adding new functionality to the program that is not explicitly tested for, contact `tapestry@psavlabs.com` to discuss adding a test. It may be possible to construct your own under most circumstances.
-
-## My Tests Passed!
-Congratulations! Please include the passed output logs in your PR for public review. It is appreciated if you could sign your code and the test logs as well.
-
+### New Feature Testing
 *"The difference between science and screwing around is writing it down!"
 -- Adam Savage*
+
+While some cosmetic changes, bug fixes, and other "features" will be covered by the existing tests, some new features will introduce entirely new classes, methods, and functions into Tapestry. When this is the case, the necessary new tests should also be created and submitted as part of the relevant PR. The person supervising review should then take the new test code, review it, and if satisfied it is a suitable test, the new tests will be incorporated along with the new features when the PR is merged.
+
+It is important to note that any new function requires at least two new tests - a positive test showing that the object functions as designed when supplied with nominal inputs, and one or more negative controls which both prove the object will fail when it is supposed to AND fails gracefully in a manner that is consistent with good error handling practices.
+
+Please make sure any new tests are clearly documented and that their output is meaningful and consistent with the general style of the existing test suite.
+
+### Unit Tests Design Philosophy
+*Full Documentation of the Unit Tests can be found in docstring format within the tests themselves. This section discusses the general philosophy of the unit test design.*
+
+In general, there are three aims to this level of testing:
+1. Provide the greatest assurance possible that Tapestry would continue to pass functional testing;
+2. Provide the greatest assurance possible that Tapestry's design remains as secure as is reasonably possible given its dependencies, and;
+3. Do so in a manner that is both reproduceable and, as near as possible, stateless.
+
+Ideally the tests should be written and constructed in such a way that their output is clear, clean, and standardized. In cases where a test could have multiple failure conditions, those failure conditions should be expressed in such a way as to distinguish between them. Further, the docstring of a given test should provide enough insight into the test's purpose to aid in divining what a failure of that test should mean. Finally, errors in test cases *must* be caught. Failing to catch exceptions in testing will result in a crash of the test suite itself which is not an ideal situation.
+
+In keeping with number 3, no file should be relied upon in the testing that is not either committed as part of the test suite or, perhaps more ideally, expressed as a string in the tests themselves. This is to facilitate containerization of the tests for future automation/quality of life improvements.
+
+## Release Merges
+The release merge is the big day, the moment we've all been waiting for - the merge of `release-dev` into `master`, signifying the immanent release of a feature update! However, because unit tests are not the end-all-be-all, and because Tapestry has official support for both Linux and Windows systems (with implied support for MacOS), we need to do some additional testing to make sure everything works well.
+
+### Runtime Tests
+The runtime tests have been redesigned since 2.1, and so has the testing criteria. The need for a massive, 10+ GB test corpus is obviated. Unit testing can provide the assurances formerly provided by the large corpus, allowing for additional runtime tests to be performed.
+
+Much like was the case with the unit tests, specific documentation for the runtime tests can be found in the tests themselves. From a high-level, the general rule is that anything tapestry can be told to do should be tested as a functional test - any flag, really, apart from `--debug` and `--devtest` should be argued.
