@@ -299,7 +299,7 @@ def do_main(namespace, gpg_agent):
     else:
         list_blocks = unix_pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
-    encrypt_blocks(list_blocks, gpg_agent, ns.fp, ns)
+    encrypt_blocks(list_blocks, gpg_agent, ns.activeFP, ns)
     sign_blocks(namespace, gpg_agent)
     if namespace.modeNetwork.lower() == "ftp":
         ftp_deposit_files(namespace)
@@ -541,7 +541,7 @@ def generate_keys(namespace, gpg_agent):
                                   name_real=name_key, name_comment="Tapestry Recovery",
                                   name_email=contact_key)
     keypair = gpg_agent.gen_key(inp)
-    fp = keypair.fingerprint  # Changes the value of FP to the new key
+    namespace.activeFP = keypair.fingerprint  # Changes the value of FP to the new key
 
     config = configparser.ConfigParser()
 
