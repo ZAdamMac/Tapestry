@@ -547,7 +547,7 @@ def generate_keys(namespace, gpg_agent):
 
     if os.path.exists(namespace.config_path):
         config.read(namespace.config_path)
-    config.set("Environment Variables", "Expected FP", str(fp))  # sets this value in config
+    config.set("Environment Variables", "Expected FP", str(namespace.activeFP))  # sets this value in config
     namespace.activeFP = keypair.fingerprint
     with open(namespace.config_path, "w") as cf:
         config.write(cf)
@@ -555,13 +555,13 @@ def generate_keys(namespace, gpg_agent):
     if not os.path.isdir(namespace.drop):
         os.mkdir(namespace.drop)
     os.chdir(namespace.drop)
-    pub_out = gpg_agent.export_keys(fp)
+    pub_out = gpg_agent.export_keys(namespace.activeFP)
     pub_file = os.open("DRPub.key", os.O_CREAT | os.O_RDWR)
     pub_handle = os.fdopen(pub_file, "w")
     pub_handle.write(str(pub_out))
     pub_handle.close()
     try:
-        key_out = gpg_agent.export_keys(fp, True, expect_passphrase=False)
+        key_out = gpg_agent.export_keys(namespace.activeFP, True, expect_passphrase=False)
         key_file = os.open("DR.key", os.O_CREAT | os.O_RDWR)
         key_handle = os.fdopen(key_file, "w")
         key_handle.write(str(key_out))
