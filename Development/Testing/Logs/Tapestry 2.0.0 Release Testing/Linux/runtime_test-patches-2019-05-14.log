@@ -1,0 +1,37 @@
+===============================================================================
+This is a log of tests run against some version of Tapestry by the 
+runtime-tests.py testing utility. The date is indicated in the filename. 
+It should be made clear that these tests do not indicate any sort of warranty 
+or guarantee of merchantability.
+
+=======TEST MACHINE SPECS=======
+Cores Available: 4 
+RAM Available: 11392 MB 
+================================
+
+
+
+================================BEGIN TESTING==================================
+------------------------------[SAMPLE GENERATION]------------------------------
+
+This log is for a test of a development version of Tapestry, with SHA256 hash:
+
+4209d3337fe853b199b69ca2a1abf1b3784ae11dbe30b39c76c63cbe8fc2b0f9
+
+
+Which relies on the classes library with hash:
+
+eb780b9495e76005a8ff86c5cfd359c0a0f7473482757369ab8d55305c4b2f84
+
+Key Generation Mode Test Completed in 00:12:09 - Returned:
+CompletedProcess(args=['python3.6', '-m', 'tapestrydev', '--genKey', '--devtest', '-c', 'tapestry-test.cfg'], returncode=0)
+Inclusive Backup Mode Test Completed in 00:17:44 - Returned:
+CompletedProcess(args=['python3.6', '-m', 'tapestrydev', '--inc', '--devtest', '-c', 'tapestry-test.cfg'], returncode=0)
+Recovery Mode Test Completed in 00:47:45 - Returned:
+CompletedProcess(args=['python3.6', '-m', 'tapestrydev', '--rcv', '--devtest', '-c', 'tapestry-test.cfg'], returncode=0)
+-------------------------------------------------------------------------------
+
+
+===============================[END OF TESTING]===============================
+ Tester Comments: 
+ This test was run on 2019-05-14
