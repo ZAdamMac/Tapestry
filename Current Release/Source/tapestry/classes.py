@@ -133,14 +133,20 @@ class TaskTarUnpack(object):
         path_end = self.pathend.strip('~/')
         abs_path_out = os.path.join(self.catdir, path_end)
         placement, name_proper = os.path.split(abs_path_out)
-        # split the pathend component into the subpath from the category dir, and the original filename.
+        # split the pathend component into the subpath from the category dir, and the original filename
         # print("Attempting to pull %s" % self.fid)
-        with tarfile.open(self.tar, "r:*") as tf:
-            # print("Now opened: %s" % self.tar)  # Debugging statement, uncomment to use.
-            tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
-            # print("Extracted %s" % self.fid)  # Debugging statement, uncomment to use.
-            placed = os.path.join(placement, self.fid)
-            os.rename(placed, abs_path_out)  # and now it's named correctly.
+        unpacking = True
+        while unpacking:
+            try:  # Issue 13: need to catch the raise from tf.extract() when workers collide
+                with tarfile.open(self.tar, "r:*") as tf:
+                    # print("Now opened: %s" % self.tar)  # Debugging statement, uncomment to use.
+                    tf.extract(self.fid, path=placement)  # the file is now located where it needs to be.
+                    # print("Extracted %s" % self.fid)  # Debugging statement, uncomment to use.
+                    placed = os.path.join(placement, self.fid)
+                    os.rename(placed, abs_path_out)  # and now it's named correctly.
+                    unpacking = False
+            except FileExistsError:
+                unpacking = True
         return "Restored %s to %s" % (self.fid, abs_path_out)
 
 
