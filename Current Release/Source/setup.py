@@ -4,7 +4,7 @@ with open("readme.md", "r") as f:
       long_description = f.read()
 
 setup(name='tapestry',
-      version='2.0.0post1',
+      version='2.0.1',
       description='Tapestry Bespoke Backup Utility',
       long_description=long_description,
       author='Zac Adam-MacEwen',

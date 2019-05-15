@@ -90,3 +90,7 @@ v 2.0.0 (release):
     -- addresses the issue with windows introduced in 0.3.0!
     - Tapestry is now packaged as a module and installed and invoked as such.
     - Places the (currently unutilized) integrity testing task classes into `classes.py` for future use.
+
+v 2.0.1 (dev):
+    - Issue 12: rectified an NS attribute error that was causing runs with the genKey flag set to use the previous key (if any) rather than the newly-generated key
+    - Issue 13: Changed the behaviour for the creation of category directories to improve error handling in cases where the parent directory of a category is missing.
