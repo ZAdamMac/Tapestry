@@ -11,7 +11,7 @@ from os import getcwd
 
 home = getcwd()
 
-print("Okay, starting the tests.")
+print("Okay, starting the tests.old.")
 print("Starting the Runtime Test.")
 runtime_tests.runtime()
 print("Starting the Integrity Tests.")
@@ -20,5 +20,5 @@ print("Starting the Unit Tests")
 unit_tests.runtime(home)
 print("Starting the Network Tests.")
 network_tests.runtime()
-print("All tests complete.")
+print("All tests.old complete.")
 exit()

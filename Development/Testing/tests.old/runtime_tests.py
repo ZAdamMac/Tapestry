@@ -35,7 +35,7 @@ def runtime():
         os.mkdir(logs)
 
     logname = ("runtime_test-%s-%s.log" % (uid, str(date.today())))
-    log = framework.SimpleLogger(logs, logname, "runtime-tests")
+    log = framework.SimpleLogger(logs, logname, "runtime-tests.old")
 
     # Do the bulk runs and context switching to generate the test outputs
     # (make sure to seperate outputs between runs!)

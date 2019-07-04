@@ -30,7 +30,7 @@ def runtime():
         os.mkdir(logs)
 
     log_name = ("integrity_test-%s-%s.log" % (uid, str(date.today())))
-    log = SimpleLogger(logs, log_name, "integrity-tests")
+    log = SimpleLogger(logs, log_name, "integrity-tests.old")
 
     path_control = out.replace("Test", "Control")
 

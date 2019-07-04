@@ -38,7 +38,7 @@ def runtime():
         os.mkdir(logs)
 
     log_name = ("network_test-%s-%s.log" % (uid, str(date.today())))
-    log = SimpleLogger(logs, log_name, "network-tests")
+    log = SimpleLogger(logs, log_name, "network-tests.old")
 
     gpg = gnupg.GPG(gnupghome="/home/"+uid+"/.gnupg")
 
@@ -65,7 +65,7 @@ def runtime():
         inst_ftp = dev.ftp_establish_connection("localhost", 201, test_context, test_ftp_user, test_ftp_pw)
         print("Malicious Connection Test - FAIL - Connection Accepted.")
         log.log("[FAILED] Tapestry connected to the 'malicious' server and accepted it as a\nlegitimate connection.")
-    except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests are required
+    except ConnectionRefusedError:  # This should hopefully be the right exception but some offline tests.old are required
         print("Malicious Connection Test - PASS - Connection Refused.")
         log.log("[PASSED] The 'malicious' server was correctly rejected by Tapestry's connection\nestablishment function.")
 
@@ -76,7 +76,7 @@ def runtime():
         print("Benign Connection Test - PASS - Connection Accepted.")
         log.log("[PASSED] The 'valid' server was accepted by the connection establishment\nfunction and a valid connection object is being passed to the next test.")
     except ConnectionRefusedError or ssl.SSLError:
-        # This should hopefully be the right exception but some offline tests are required
+        # This should hopefully be the right exception but some offline tests.old are required
         print("Benign Connection Test - FAIL - Connection Refused.")
         log.log("[FAILED] The 'valid' server was rejected by the connection establishment\nfunction and the next test must be skipped.")
     log.log("-------------------------------------------------------------------------------")
@@ -85,9 +85,9 @@ def runtime():
     log.log("\n\n--------------------------[NETWORK PUSH/PULL TEST]-----------------------------")
     if inst_ftp is None:
         print("Skipping Transfer Tests - No FTP Connection could be Established.")
-        log.log("[FAILED] The network transfer tests could not be passed as no connection was\nestablished. Verify that vsftpd is configured correctly on the test machine and\nthat tapestry-test.cfg contains the correct credentials for the FTP test user.")
+        log.log("[FAILED] The network transfer tests.old could not be passed as no connection was\nestablished. Verify that vsftpd is configured correctly on the test machine and\nthat tapestry-test.cfg contains the correct credentials for the FTP test user.")
     else:
-        print("Beginning file transfer tests using inert transfer article.")
+        print("Beginning file transfer tests.old using inert transfer article.")
         dev.ftp_send_block("testblock-2001-01-01.txt", inst_ftp, "")
         count_placed, list_placed = dev.ftp_grep_blocks("testblock", "2001-01-01", inst_ftp)
         dev.ftp_fetch_block("testblock-2001-01-01.txt", inst_ftp, out)
