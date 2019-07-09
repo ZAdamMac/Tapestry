@@ -1,13 +1,16 @@
-"""Use me to run all the tests in the suite.
+"""
+This script is a component of the testing framework for the Tapestry
+back-up tool.
 
-This version is current as of the Tapestry version corresponding to __version__'s
-development cycle. Simply invoke, the script will call all the relevant runtimes, fetch
-config, etc.
+The intended purpose of the script is to be run prior to commit, with
+the appropriate flags set, for pre-commit code validation.
 
-As long as the tests themselves aren't buggy and Tapestry isn't raising any unhandled
-exceptions, the testing results will appear in the logs.
+Author: Zac Adam-MacEwen (zadammac@kenshosec.com)
+Tapestry is a product of Kensho Security Labs.
+Produced under license.
 
-Refer to TESTDOCs for updated usage instructions.
+Full license and documentation to be found at:
+https://github.com/ZAdamMac/Tapestry
 """
 
 from . import positive_tests, runtime_tests, negative_tests
