@@ -43,7 +43,7 @@ def parse_config():
 
     configuration = {"test_user": test_user, "path_logs": path_logs,
                      "path_config": path_config, "path_corpus": path_corpus,
-                     }
+                     "path_temp": path_temp}
 
     return configuration
 
