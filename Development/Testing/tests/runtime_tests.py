@@ -5,7 +5,7 @@ are skipped for most commits but a requirement for the final code-
 modifying commit prior to the packaging of a release PR.
 
 Author: Zac Adam-MacEwen (zadammac@kenshosec.com)
-Enumpi and Enumpi-Backend are products of Kensho Security Labs.
+Tapestry is a product of Kensho Security Labs.
 Produced under license.
 
 Full license and documentation to be found at:

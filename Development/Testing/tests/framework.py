@@ -1,15 +1,37 @@
-#! /usr/bin/Python3.6
-# Basics Module for the Tapestry Testing framework. Should be stored in same
-# dir as the test framework itself as the other tests.old all import from this.
+"""
+This script is a component of the Tapestry project's testing framework.
+Specifically, this component defines helper classes and repeated functions for
+all tests in the test script, in order to maximize reuse and provide a central
+location for tidiness.
 
-# Imports block - it's dependencies all the way down!
+Author: Zac Adam-MacEwen (zadammac@kenshosec.com)
+Tapestry is a product of Kensho Security Labs.
+Produced under license.
+
+Full license and documentation to be found at:
+https://github.com/ZAdamMac/Tapestry
+"""
+
+
 from datetime import date
 import os
 import time
 
 # Define the Classes We Use
-class SimpleLogger:  # dedicated skip-logging handler for use in buildBlocks
-    def __init__(self, landingdir,name, test):  # starts the skiplogger and tells it it will be writing to landingdir with name
+
+
+class SimpleLogger:
+    """A highly simplified logger used in tapestry's testing.
+    """
+
+    def __init__(self, landingdir, name, test):
+        """Return a SimpleLogger object with the below properties
+
+        :param landingdir: The path (ideally absolute) to the output file.
+        :param name: The name of that logfile
+        :param test: The name of the test being run.
+        """
+
         landingAbs = os.path.join(landingdir, name)
         if not os.path.exists(landingdir):
             os.makedirs(landingdir)
@@ -21,10 +43,12 @@ class SimpleLogger:  # dedicated skip-logging handler for use in buildBlocks
         self.loggerfile.write("RAM Available: %s MB \n" % RAM)
         self.loggerfile.write("================================\n\n\n\n================================BEGIN TESTING==================================\n")
 
-    def log(self, foo):  # Formats foo nicely and adds it to the log
+    def log(self, foo):
+        """# Formats foo nicely and adds it to the log"""
         self.loggerfile.write(foo + '\n')
 
-    def save(self):  # saves the file to disk. Once used you have to re-instance the logger
+    def save(self):
+        """saves the file to disk. Once used you have to re-instance the logger"""
         self.loggerfile.write("\n\n===============================[END OF TESTING]===============================")
         self.loggerfile.write("\n Tester Comments: ")
         self.loggerfile.write("\n This test was run on " + str(date.today()))
@@ -32,7 +56,14 @@ class SimpleLogger:  # dedicated skip-logging handler for use in buildBlocks
         self.loggerfile.close()
 
 # Define New Functions
-def elapsed(start):  #Quickly calculate the elapsed time between two points, to feed to the logger. Returns it formatted nicely.
+
+
+def elapsed(start):
+    """Quickly calculate the elapsed time between two points, to feed to the logger. Returns it formatted nicely.
+
+    :param start: a time value, preferably grabbed from time.monotonic()
+    :return:
+    """
     current = time.monotonic()
     secElapsed = current - start
     strElapsed = time.strftime("%H:%M:%S", time.gmtime(secElapsed))
