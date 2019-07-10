@@ -38,8 +38,12 @@ def parse_config():
     test_user = parser.get("Tester Information", "username")
     path_logs = parser.get("Environment Information", "Logs Path")
     path_config = parser.get("Environment Information", "Logs Path")
+    path_corpus = parser.get("Environment Information", "Corpus Path")
+    path_temp = parser.get("Environment Information", "Runtime Output Path")
 
-    configuration = {"test_user": test_user, "path_logs": path_logs, "path_config": path_config}
+    configuration = {"test_user": test_user, "path_logs": path_logs,
+                     "path_config": path_config, "path_corpus": path_corpus,
+                     }
 
     return configuration
 
