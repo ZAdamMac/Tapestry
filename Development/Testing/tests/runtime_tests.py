@@ -150,7 +150,7 @@ def test_rcv(config, logs):
     :param logs:
     :return:
     """
-    config_this = os.path.join(config["path_config"], "inc-test.cfg")
+    config_this = os.path.join(config["path_config"], "rcv-test.cfg")
 
     start = time.monotonic()
     waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devtest", "-c", config_this])
