@@ -112,7 +112,7 @@ def test_gen_key(config, logs):
     :param logs:
     :return:
     """
-    config_this = os.path.join(config["path_config"], "genkey-test.cfg")
+    config_this = os.path.join(config["path_config"], "/config/genkey-test.cfg")
 
     start = time.monotonic()
     waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--genKey", "--devtest", "-c", config_this])
@@ -131,7 +131,7 @@ def test_inc(config, logs):
     :param logs:
     :return:
     """
-    config_this = os.path.join(config["path_config"], "inc-test.cfg")
+    config_this = os.path.join(config["path_config"], "config/inc-test.cfg")
 
     start = time.monotonic()
     waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devtest", "-c", config_this])
@@ -150,7 +150,7 @@ def test_rcv(config, logs):
     :param logs:
     :return:
     """
-    config_this = os.path.join(config["path_config"], "rcv-test.cfg")
+    config_this = os.path.join(config["path_config"], "/config/rcv-test.cfg")
 
     start = time.monotonic()
     waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devtest", "-c", config_this])

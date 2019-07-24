@@ -37,7 +37,7 @@ def parse_config():
 
     test_user = parser.get("Tester Information", "username")
     path_logs = parser.get("Environment Information", "Logs Path")
-    path_config = parser.get("Environment Information", "Logs Path")
+    path_config = parser.get("Environment Information", "Resource Path")
     path_corpus = parser.get("Environment Information", "Corpus Path")
     path_temp = parser.get("Environment Information", "Runtime Output Path")
 
