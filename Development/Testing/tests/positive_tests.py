@@ -155,7 +155,11 @@ def test_block_meta(dict_config, block, logger):
 
     logger.log("------------------------[Block 'Meta' Method Tests]---------------------------")
     block.meta(1, 100, 1, str(date.today()), "This is just a test.", findex, dict_config["path_temp"])
-    logger.log("[PASS]Didn't crash trying to place the file.")
+
+    if os.path.exists(path_to_output_riff):
+        logger.log("[PASS]Didn't crash trying to place the file.")
+    else:
+        logger.log("[FAIL]The RIFF file would appear not to have been placed.")
 
     return path_to_output_riff
 
