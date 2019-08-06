@@ -134,7 +134,10 @@ def runtime(dict_config, do_network):
         test_status_print(dict_config, log)
         test_verify_blocks(dict_config, log)
         if do_network:
-            pass # TODO list off the network tests
+            ftp_connection = test_ftp_connect(dict_config, log)
+            test_ftp_deposit(dict_config, log, ftp_connection)
+            test_ftp_grep(dict_config, log, ftp_connection)
+            test_ftp_retrieve(dict_config, log, ftp_connection)
         log.save()
     else:
         print("Exiting the runtime tests as the config validity failed.")
