@@ -18,6 +18,7 @@ from . import framework
 import tapestry
 from datetime import date
 import hashlib
+import json
 import os
 import shutil
 import time
@@ -96,7 +97,7 @@ def establish_logger(config):
     return logger
 
 
-def runtime(dict_config):
+def runtime(dict_config, do_network):
     """A simple runtime function that does the actual operating floor. This is
     what gets called from the main script in order to actually run the tests.
 
@@ -112,8 +113,8 @@ def runtime(dict_config):
         test_block_yield_full(test_block, log)
         riff_out = test_block_meta(dict_config, test_block, log)
         test_riff = get_test_riff(dict_config, log)
-        test_riff_find(dict_config, test_riff, log)
-        test_riff_compliant(dict_config, riff_out, log)
+        test_riff_find(test_riff, log)
+        test_riff_compliant(riff_out, log)
         test_pkl = get_test_pkl(dict_config, log)
         test_pkl_find(dict_config, test_pkl)
         test_TaskCheckIntegrity_call(dict_config, log)
@@ -132,6 +133,8 @@ def runtime(dict_config):
         test_parse_config(dict_config, log)
         test_status_print(dict_config, log)
         test_verify_blocks(dict_config, log)
+        if do_network:
+            pass # TODO list off the network tests
         log.save()
     else:
         print("Exiting the runtime tests as the config validity failed.")
@@ -154,7 +157,7 @@ def test_block_meta(dict_config, block, logger):
               }
 
     logger.log("------------------------[Block 'Meta' Method Tests]---------------------------")
-    block.meta(1, 100, 1, str(date.today()), "This is just a test.", findex, dict_config["path_temp"])
+    block.meta(1, 100, 1, str(date.today()), "This is just a test.", {"testfile": findex}, dict_config["path_temp"])
 
     if os.path.exists(path_to_output_riff):
         logger.log("[PASS]Didn't crash trying to place the file.")
@@ -200,6 +203,100 @@ def test_block_yield_full(test_block, logger):
         logger.log("[FAIL] The block indicates it is not full. This is unexpected.")
     else:
         logger.log("[PASS] The block correctly identifies itself as full.")
+
+
+def test_riff_compliant(test_riff_path, logger):
+    """Provided a path to the RIFF file generated earlier, this will test it
+    for structural validity. This is currently rather dumb logic: the present
+    version does not allow for type validation.
+
+    :param test_riff_path:
+    :param logger:
+    :return:
+    """
+    logger.log("-------------------------[Riff Compliance Testing]----------------------------")
+    keys_expected_metarun = ["sumBlock", "sizeExtraLarge", "countFilesSum", "dateRec", "comment"]
+    keys_expected_metablock = ["numBlock", "sizeLarge", "sumFiles"]
+    keys_expected_findex = ["fname", "sha256", "fsize", "fpath", "category"]
+    do_metarun = True
+    do_metablock = True
+    do_findex = True
+
+    with open(test_riff_path, "r") as riff_file:
+        unpacked_riff = json.load(riff_file)
+
+    try:
+        sample_metarun = unpacked_riff["metaRun"]
+    except KeyError:
+        logger.log('[FAIL] The "metaRun" attribute is missing from the RIFF. Without this, many')
+        logger.log('future functions of Tapestry will fail. These failures can otherwise be silent')
+        logger.log('and are otherwise exposed only by testing.')
+        do_metarun = False
+        sample_metarun = {}
+    try:
+        sample_metablock = unpacked_riff["metaBlock"]
+    except KeyError:
+        logger.log('[FAIL] The "metaBlock" attribute is missing from the RIFF - this can lead to')
+        logger.log('unexpected failures and may cause broken userland features in future releases.')
+        do_metablock = False
+        sample_metablock = {}
+    try:
+        sample_file_entry = unpacked_riff["index"]["testfile"]
+    except KeyError:
+        logger.log('[FAIL] The "index" attribute is missing. This will cause absolute failure of')
+        logger.log('recoverability for files generated with the current codebase.')
+        do_findex = False
+        sample_file_entry = {}
+
+    if do_metarun:
+        for key in keys_expected_metarun:
+            try:
+                value = sample_metarun[key]
+                del value
+            except KeyError:
+                logger.log("[WARN] The %s attribute's %s key is absent." % ("metaRun", key))
+
+    if do_metablock:
+        for key in keys_expected_metablock:
+            try:
+                value = sample_metablock[key]
+                del value
+            except KeyError:
+                logger.log("[WARN] The %s attribute's %s key is absent." % ("metaBlock", key))
+
+    if do_findex:
+        for key in keys_expected_findex:
+            try:
+                value = sample_file_entry[key]
+                del value
+            except KeyError:
+                logger.log("[FAIL] The file index's %s key is unexpectedly absent. This will likely" % key)
+
+
+def test_riff_find(test_riff, logger):
+    """Takes a test riff object and verifies that it can find an expected file.
+    This is run against a loaded canonical riff to avoid a dependancy on
+    earlier tests also having worked correctly.
+
+    :param test_riff:
+    :param logger:
+    :return:
+    """
+    logger.log("----------------------------[Riff 'FIND' Test]--------------------------------")
+    try:
+        result_category, result_path = test_riff.find("testfile")
+    except tapestry.RecoveryIndexError:
+        logger.log("[FAIL]The Riff has loaded incorrectly - RecoveryIndexError!")
+        result_category = "failed"
+        result_path = "failed"
+
+    if result_category == "test" and result_path == "/docs/test":
+        logger.log("[PASS]The Find method returned the expected values based on the test RIFF.")
+    else:
+        logger.log("[FAIL]The find method is returning values other than the expected:")
+        logger.log("The current state of result_category was: %s" % result_category)
+        logger.log("The current state of result_path was: %s" % result_path)
+
 
 # We don't want execution from main
 if __name__ == "__main__":
