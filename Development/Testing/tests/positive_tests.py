@@ -116,7 +116,7 @@ def runtime(dict_config, do_network):
         test_riff_find(test_riff, log)
         test_riff_compliant(riff_out, log)
         test_pkl = get_test_pkl(dict_config, log)
-        test_pkl_find(dict_config, test_pkl)
+        test_pkl_find(test_pkl, log)
         test_TaskCheckIntegrity_call(dict_config, log)
         test_TaskCompress(dict_config, log)
         test_TaskDecompress(dict_config, log)
