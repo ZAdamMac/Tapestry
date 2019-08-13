@@ -208,6 +208,31 @@ def test_block_yield_full(test_block, logger):
         logger.log("[PASS] The block correctly identifies itself as full.")
 
 
+def test_pkl_find(test_pkl, logger):
+    """Takes a test riff object and verifies that it can find an expected file.
+    This is run against a loaded canonical riff to avoid a dependancy on
+    earlier tests also having worked correctly.
+
+    :param test_pkl:
+    :param logger:
+    :return:
+    """
+    logger.log("----------------------------[Riff 'FIND' Test]--------------------------------")
+    try:
+        result_category, result_path = test_pkl.find("testfile")
+    except tapestry.RecoveryIndexError:
+        logger.log("[FAIL]The PKL has loaded incorrectly - RecoveryIndexError!")
+        result_category = "failed"
+        result_path = "failed"
+
+    if result_category == "test" and result_path == "/docs/test":
+        logger.log("[PASS]The Find method returned the expected values based on the test Pickle.")
+    else:
+        logger.log("[FAIL]The find method is returning values other than the expected:")
+        logger.log("The current state of result_category was: %s" % result_category)
+        logger.log("The current state of result_path was: %s" % result_path)
+
+
 def test_riff_compliant(test_riff_path, logger):
     """Provided a path to the RIFF file generated earlier, this will test it
     for structural validity. This is currently rather dumb logic: the present
