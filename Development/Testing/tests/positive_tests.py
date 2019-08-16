@@ -385,6 +385,38 @@ def test_TaskCompress(config, log):
     else:
         log.log("[FAIL] Output file not found; was it created or is there a location error?")
 
+
+def test_TaskDecompress(config, log):
+    """Decompression verified both in terms of whether or not compression
+    detection is working, and whether or not the tarfile was changed as a
+    result.
+
+    :param config: dict_config
+    :param log: SimpleLogger Logger object
+    :return:
+    """
+    log.log("-----------------------------[Decompression Test]-----------------------------")
+    log.log("Test some decompression functionality and ensure there's no changes to the tar")
+    target = os.path.join(config["path_temp"], "test_tar.bz2")
+    control = os.path.join(config["path_temp"], "test_tar")
+    hash_target = hashlib.sha256
+    hash_control = hashlib.sha256
+    with open(control, "rb") as c:
+        hash_control.update(c.read())
+
+    task_test = tapestry.TaskDecompress(target)
+    result = task_test()
+
+    if result.startswith("File"):
+        log.log("[FAIL] TaskDecompress incorrectly assumed this file was not compressed.")
+    else:
+        with open(target, "rb") as t:
+            hash_target.update(t.read())
+            if hash_target.hexdigest == hash_control.hexdigest:
+                log.log("[PASS] Decompression fully successful without issues.")
+            else:
+                log.log("[FAIL] TaskDecompress output a file with a different hash than the original.")
+
 # We don't want execution from main
 if __name__ == "__main__":
     print("This script is not intended to be run in standalone mode. Run main.")
