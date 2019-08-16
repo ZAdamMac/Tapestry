@@ -379,7 +379,7 @@ def test_TaskCompress(config, log):
     expected = os.path.join(config["path_temp"], "test_tar.bz2")
 
     test_task = tapestry.TaskCompress(target, "1")
-    test.task()
+    test_task()
     if os.path.exists(expected):
         log.log("[PASS] Found the zipped tarball where it was expected.")
     else:
