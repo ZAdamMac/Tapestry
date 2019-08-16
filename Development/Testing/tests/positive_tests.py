@@ -364,6 +364,27 @@ of the test is sound.""")
     else:
         logs.log("[FAIL] The test article failed to pass TaskCheckIntegrity's test.")
 
+
+def test_TaskCompress(config, log):
+    """Very simplistic test. Generate instance of TaskCompress and see if the
+    output file goes where expected.
+
+    :param config: dict_config
+    :param log: A SimpleLogger logger instance.
+    :return:
+    """
+    log.log("------------------------------[Compression Test]------------------------------")
+    log.log("A simple test to see if TaskCompress outputs a file as expected.")
+    target = os.path.join(config["path_temp"], "test_tar")
+    expected = os.path.join(config["path_temp"], "test_tar.bz2")
+
+    test_task = tapestry.TaskCompress(target, "1")
+    test.task()
+    if os.path.exists(expected):
+        log.log("[PASS] Found the zipped tarball where it was expected.")
+    else:
+        log.log("[FAIL] Output file not found; was it created or is there a location error?")
+
 # We don't want execution from main
 if __name__ == "__main__":
     print("This script is not intended to be run in standalone mode. Run main.")
