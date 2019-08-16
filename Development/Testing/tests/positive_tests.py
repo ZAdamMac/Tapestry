@@ -328,6 +328,16 @@ def test_riff_find(test_riff, logger):
 
 
 def test_TaskCheckIntegrity_call(config, logs):
+    """This test creates a random string, inserting it into a file, then
+    tarring that file into a tarball in the temporary directory. The path to
+    the tarfile and the hash of the random string are then provided to an
+    instance of tapestry.TaskCheckIntegrity and the return value used to
+    determine if the class is responding correctly.
+
+    :param config: dict_config
+    :param logs: logger
+    :return:
+    """
     logs.log("""
     -------------------------[Integrity Checker Test]-----------------------------
 This test runs TaskCheckIntegrity for a known-good hash and ensures the logic
