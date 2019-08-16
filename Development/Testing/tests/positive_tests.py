@@ -20,8 +20,9 @@ from datetime import date
 import hashlib
 import json
 import os
-import shutil
-import time
+from random import choice
+from string import printable
+import tarfile
 
 __version__ = "2.1.0dev"
 # Begin Function Definitions
@@ -217,7 +218,7 @@ def test_pkl_find(test_pkl, logger):
     :param logger:
     :return:
     """
-    logger.log("----------------------------[Riff 'FIND' Test]--------------------------------")
+    logger.log("----------------------------[PKL  'FIND' Test]--------------------------------")
     try:
         result_category, result_path = test_pkl.find("testfile")
     except tapestry.RecoveryIndexError:
@@ -325,6 +326,33 @@ def test_riff_find(test_riff, logger):
         logger.log("The current state of result_category was: %s" % result_category)
         logger.log("The current state of result_path was: %s" % result_path)
 
+
+def test_TaskCheckIntegrity_call(config, logs):
+    logs.log("""
+    -------------------------[Integrity Checker Test]-----------------------------
+This test runs TaskCheckIntegrity for a known-good hash and ensures the logic
+of the test is sound.""")
+    dir_temp = config["path_temp"]
+    string_test = ''.join(choice(printable) for i in range(2048))
+    hasher = hashlib.sha256()
+    hasher.update(string_test)
+    control_hash = hasher.hexdigest
+    test_file = os.path.join(dir_temp, "hash_test")
+    test_tar = os.path.join(dir_temp, "test_tar")
+    with open(test_file, "w") as f:
+        f.write(string_test)
+
+    with tarfile.open(test_tar, "w:") as tf:
+        tf.add(test_file)
+
+    test_task = tapestry.TaskCheckIntegrity(test_tar, "hash_test", control_hash)
+    check_passed, foo = test_task()
+    del foo
+
+    if check_passed:
+        logs.log("[PASS] The test article passed TaskCheckIntegrity as expected.")
+    else:
+        logs.log("[FAIL] The test article failed to pass TaskCheckIntegrity's test.")
 
 # We don't want execution from main
 if __name__ == "__main__":
