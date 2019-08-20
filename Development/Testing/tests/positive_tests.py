@@ -20,6 +20,7 @@ from datetime import date
 import gnupg
 import hashlib
 import json
+import multiprocessing as mp
 import os
 from random import choice
 from string import printable
@@ -505,6 +506,70 @@ def test_TaskSign(config, log):
     else:
         log.log("[FAIL] Test signature does not exist. See response from TaskSign below.")
         log.log("Response: %s" % response)
+
+
+def test_TaskTarBuild(config, log):
+    """Simplified test of the TaskTarBuild class's call.
+
+    :param config:
+    :param log:
+    :return:
+    """
+    log.log("----------------------------[Unitary Tarring Test]----------------------------")
+    log.log("Calls TaskTarBuild in order to add a single file to a single tarfile. Simply")
+    log.log("validates that the tarfile was then created; a qualitative test of whether or")
+    log.log("not the tarring was handled properly comes later.")
+    temp = config["path_temp"]
+    tgt_old = os.path.join(temp, "hash_test.tar")
+    tgt = os.path.join(temp, "hash_test")
+    os.rename(tgt_old, tgt)
+
+    dict_locks = {}
+    dict_locks.update({"foo": mp.Lock()})
+    test_task = tapestry.TaskTarBuild(tgt+".tar", "hash_test", tgt, "foo")
+
+    response = test_task()
+
+    if os.path.exists(tgt+".tar"):
+        log.log("[PASS] Test file found at the expected location.")
+    else:
+        log.log("[FAIL] Test tarball was not created. See response from TaskTarBuild below.")
+        log.log("Response: " % response)
+
+
+def test_TaskTarBuild(config, log):
+    """Simplified test of the TaskTarUnpack class's call. Does hash validation
+    to ensure that what was unpacked matches what was packed.
+
+    :param config:
+    :param log:
+    :return:
+    """
+    log.log("---------------------------[Unitary Untarring Test]---------------------------")
+    log.log("Calls TaskTarUnpack to unpack a given tarfile and checks its contents against")
+    log.log("a control of known value.")
+    temp = config["path_temp"]
+    test_tarf = os.path.join(temp, "hash_test.tar")
+    expected = os.path.join(temp, "unpacked")
+
+    test_task = tapestry.TaskTarUnpack(test_tarf, "hash_test", temp, "unpacked")
+
+    test_task()
+
+    if os.path.isfile(expected):
+        with open(os.path.join(temp, "hash_test"), "rb") as f:
+            hash_control = hashlib.sha256()
+            hash_control.update(f.read())
+        with open(expected, "rb") as f:
+            hash_test = hashlib.sha256()
+            hash_test.update(f.read())
+
+        if hash_test.hexdigest == hash_control.hexdighest:
+            log.log("[PASS] The test file matches its original contents. Validation via SHA256.")
+        else:
+            log.log("[FAIL] The file in question has changed from the original.")
+    else:
+        log.log("[FAIL] The expected output file could not be located. Was an error thrown?")
 
 # We don't want execution from main
 if __name__ == "__main__":
