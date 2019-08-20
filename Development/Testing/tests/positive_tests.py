@@ -420,7 +420,14 @@ def test_TaskDecompress(config, log):
 
 
 def test_TaskEncrypt(config, log):
+    """A simplistic test to confirm that the TaskEncrypt function behaves as
+    expected. Because TaskDecrypt also has to be tested, decrypting the file
+    as part of the test would be redundant and only slow testing.
 
+    :param config:
+    :param log:
+    :return:
+    """
     log.log("-------------------------------[Encryption Test]------------------------------")
     log.log("Tests TaskEncrypt and determines if it successfully generates an output file.")
     test_fp = config["test_fp"]
@@ -437,6 +444,7 @@ def test_TaskEncrypt(config, log):
     else:
         log.log("[FAIL] Test file is not foud where expected.")
         log.log("Response from : %s" % response)
+
 
 # We don't want execution from main
 if __name__ == "__main__":
