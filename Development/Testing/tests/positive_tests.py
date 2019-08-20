@@ -419,7 +419,7 @@ def test_TaskDecompress(config, log):
                 log.log("[FAIL] TaskDecompress output a file with a different hash than the original.")
 
 
-def test_taskDecrypt(config, log):
+def test_TaskDecrypt(config, log):
     """Decrypts a test file as previously generated, then validates it matches
     the original file.
 
