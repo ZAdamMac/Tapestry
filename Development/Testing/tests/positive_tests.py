@@ -17,6 +17,7 @@ https://github.com/ZAdamMac/Tapestry
 from . import framework
 import tapestry
 from datetime import date
+import gnupg
 import hashlib
 import json
 import os
@@ -105,7 +106,7 @@ def runtime(dict_config, do_network):
     :param dict_config: required, provides all config information.
     :return:
     """
-    expects = ["test_user", "path_logs", "path_temp"]  # Add new dict_config keys here
+    expects = ["test_user", "path_logs", "path_temp", "test_fp"]  # Add new dict_config keys here
     can_run = framework.validate_dict_config(dict_config, expects)
     if can_run:  # Any new tests need to be added here.
         log = establish_logger(dict_config)
@@ -416,6 +417,26 @@ def test_TaskDecompress(config, log):
                 log.log("[PASS] Decompression fully successful without issues.")
             else:
                 log.log("[FAIL] TaskDecompress output a file with a different hash than the original.")
+
+
+def test_TaskEncrypt(config, log):
+
+    log.log("-------------------------------[Encryption Test]------------------------------")
+    log.log("Tests TaskEncrypt and determines if it successfully generates an output file.")
+    test_fp = config["test_fp"]
+    temp = config["path_temp"]
+    target = os.path.join(temp, "hash_test")
+    os.rename(target, target+".tar")  # Necessary to get the tap.
+    gpg = gnupg.GPG()
+    test_task = tapestry.TaskEncrypt(target, test_fp, temp, gpg)
+    response = test_task()
+    out_expected = target+".tap"
+
+    if os.path.isfile(out_expected):
+        log.log("[PASS] Test file exists as expected.")
+    else:
+        log.log("[FAIL] Test file is not foud where expected.")
+        log.log("Response from : %s" % response)
 
 # We don't want execution from main
 if __name__ == "__main__":
