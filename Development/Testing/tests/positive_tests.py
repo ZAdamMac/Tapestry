@@ -483,6 +483,29 @@ def test_TaskEncrypt(config, log):
         log.log("Response from : %s" % response)
 
 
+def test_TaskSign(config, log):
+    """Simplistic test of the signing class. Simply checks to see the output
+    goes as expected.
+
+    :param config:
+    :param log:
+    :return:
+    """
+    log.log("--------------------------------[Signing Test]--------------------------------")
+    log.log("Tests TaskSign and determines if a signature is present - signature will be")
+    log.log("validated by a later test.")
+    temp = config["path_temp"]
+    tgt = os.path.join(temp, "hash_test.tar")
+
+    test_task = tapestry.TaskSign(tgt, config["test_fp"], temp, gnupg.gpg())
+    response = test_task()
+
+    if os.path.isfile(tgt+".sig"):
+        log.log("[PASS] Test signature exists where expected.")
+    else:
+        log.log("[FAIL] Test signature does not exist. See response from TaskSign below.")
+        log.log("Response: %s" % response)
+
 # We don't want execution from main
 if __name__ == "__main__":
     print("This script is not intended to be run in standalone mode. Run main.")
