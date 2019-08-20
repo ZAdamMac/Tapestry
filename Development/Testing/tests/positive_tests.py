@@ -433,7 +433,7 @@ def test_taskDecrypt(config, log):
     target = os.path.join(temp, "hash_test.tap")
 
     if os.path.isfile(target):
-        task_test = tapestry.TaskDecrypt(target, temp, gpg.GPG())
+        task_test = tapestry.TaskDecrypt(target, temp, gnupg.GPG())
         response = task_test()
 
         expected = target+".decrypted"
