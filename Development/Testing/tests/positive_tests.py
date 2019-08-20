@@ -419,6 +419,43 @@ def test_TaskDecompress(config, log):
                 log.log("[FAIL] TaskDecompress output a file with a different hash than the original.")
 
 
+def test_taskDecrypt(config, log):
+    """Decrypts a test file as previously generated, then validates it matches
+    the original file.
+
+    :param config:
+    :param log:
+    :return:
+    """
+    log.log("-------------------------------[Decryption Test]------------------------------")
+    log.log("Tests TaskDecrypt and determines if the output file is conformant and present.")
+    temp = config["path_temp"]
+    target = os.path.join(temp, "hash_test.tap")
+
+    if os.path.isfile(target):
+        task_test = tapestry.TaskDecrypt(target, temp, gpg.GPG())
+        response = task_test()
+
+        expected = target+".decrypted"
+
+        if os.path.exists(expected):
+            with open(os.path.join(temp,"hash_test.tar"), "rb") as f:
+                hash_control = hashlib.sha256()
+                hash_control.update(f.read())
+            with open(expected, "rb") as f:
+                hash_test = hashlib.sha256()
+                hash_test.update(f.read())
+            if hash_test.hexdigest == hash_control.hexdigest:
+                log.log("[PASS] Test file exists as expected, and matches the original.")
+            else:
+                log.log("[FAIL] Test file checksum mismatched with control; something's gone wrong.")
+        else:
+            log.log("[FAIL] Test file was not present as expected.")
+            log.log("Response: " % response)
+    else:
+        log.log("[ERROR] No originating file. Did TaskEncrypt fail too?")
+
+
 def test_TaskEncrypt(config, log):
     """A simplistic test to confirm that the TaskEncrypt function behaves as
     expected. Because TaskDecrypt also has to be tested, decrypting the file
