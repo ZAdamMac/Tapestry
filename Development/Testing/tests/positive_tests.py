@@ -133,7 +133,7 @@ def runtime(dict_config, do_network):
         # is not currently part of the 2.0.1 feature set.
         # FUTURE work will be to add that functionality.
         test_build_ops_list(dict_config, log)
-        test_build_recovery_index(dict_config, log)
+        test_build_recovery_index(log)
         test_debug_print(dict_config, log)
         test_media_retrieve_files(dict_config, log)
         test_parse_config(dict_config, log)
@@ -234,8 +234,8 @@ def test_build_ops_list(config, log):
     namespace.categories_default = ["a"]
     namespace.categories_inclusive = ["b"]
     namespace.inc = False
-    namespace.category_paths = {"a": os.path.join(config["path_corpus"], "music"),
-                                "b": os.path.join(config["path_corpus"], "photos")}
+    namespace.category_paths = {"a": config["path_temp"],
+                                "b": config["path_config"]}
     namespace.block_size_raw = 30000000  # Don't care at all.
 
     # Argue to build ops list
@@ -418,6 +418,52 @@ def test_riff_compliant(test_riff_path, logger):
                 del value
             except KeyError:
                 logger.log("[FAIL] The file index's %s key is unexpectedly absent. This will likely" % key)
+
+
+def test_build_recovery_index(log):
+    """ Takes a known-size recovery index and makes sure it checks out.
+
+    :param log: Simplelogger
+    :return:
+    """
+    log.log("-------------------[Tests of Build Recovery Index Function]-------------------")
+    log.log("Runs build_recovery_index() against a known 'ops list' object, then evaluates.")
+    log.log("\n")
+    recovery_index = {"file1": {
+                                "fname": "b",
+                                "fpath": "b",
+                                "fsize": 1,
+                                "sha256": "aabb",
+                                "category": "a"
+                               },
+                      "file2": {
+                                "fname": "b",
+                                "fpath": "b",
+                                "fsize": 2,
+                                "sha256": "aabb",
+                                "category": "a"
+                                }
+                      }
+    test_index, sum_sizes = tapestry.build_recovery_index(recovery_index)
+
+    valid_size = False
+    valid_index = False
+
+    if sum_sizes == 3:
+        valid_size = True
+    else:
+        log.log("[FAIL] The sum_size value returned was unexpected. Should have been 3.")
+
+    # We need to know the top file is the biggest - we'd expect that.
+    biggest_file = test_index.pop()[0]
+
+    if biggest_file == "file2":
+        valid_index = True
+    else:
+        log.log("[FAIL] The recovery index did not appear to be sorted by size correctly.")
+
+    if valid_index and valid_size:
+        log.log("[PASS] All tests that are part of this set passed.")
 
 
 def test_riff_find(test_riff, logger):
