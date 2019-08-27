@@ -215,6 +215,16 @@ def test_block_yield_full(test_block, logger):
 
 
 def test_build_ops_list(config, log):
+    """Bundled set of 5 tests which confirm operation of
+    tapestry.build_ops_list(). Relies on just the config and log shared by all
+    tests. Validates inclusive/exclusive behaviour, index completion, and both
+    the set of keys used in each item's record in the recovery index as well
+    as the validity of those values. Has an overall pass/fail flag as well.
+
+    :param config:
+    :param log:
+    :return:
+    """
     log.log("--------------------[Tests of the Build Ops List Function]--------------------")
     log.log("A series of internally-contained tests to test the build_ops_list function of")
     log.log("Tapestry/__main__.py. Can fail in a number of ways.")
