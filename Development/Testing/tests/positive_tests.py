@@ -537,7 +537,7 @@ def test_TaskTarBuild(config, log):
         log.log("Response: " % response)
 
 
-def test_TaskTarBuild(config, log):
+def test_TaskTarUnpack(config, log):
     """Simplified test of the TaskTarUnpack class's call. Does hash validation
     to ensure that what was unpacked matches what was packed.
 
