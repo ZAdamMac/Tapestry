@@ -134,7 +134,6 @@ def runtime(dict_config, do_network):
         # FUTURE work will be to add that functionality.
         test_build_ops_list(dict_config, log)
         test_build_recovery_index(log)
-        test_debug_print(dict_config, log)
         test_media_retrieve_files(dict_config, log)
         test_parse_config(dict_config, log)
         test_status_print(dict_config, log)
