@@ -128,7 +128,10 @@ def runtime(dict_config, do_network):
         test_TaskSign(dict_config, log)
         test_TaskTarBuild(dict_config, log)
         test_TaskTarUnpack(dict_config, log)
-        test_generate_key(dict_config, log)
+        # test_generate_key(dict_config, log)
+        # testing the above function would require an interaction bypass that
+        # is not currently part of the 2.0.1 feature set.
+        # FUTURE work will be to add that functionality.
         test_build_ops_list(dict_config, log)
         test_build_recovery_index(dict_config, log)
         test_debug_print(dict_config, log)
@@ -209,6 +212,109 @@ def test_block_yield_full(test_block, logger):
         logger.log("[FAIL] The block indicates it is not full. This is unexpected.")
     else:
         logger.log("[PASS] The block correctly identifies itself as full.")
+
+
+def test_build_ops_list(config, log):
+    log.log("--------------------[Tests of the Build Ops List Function]--------------------")
+    log.log("A series of internally-contained tests to test the build_ops_list function of")
+    log.log("Tapestry/__main__.py. Can fail in a number of ways.")
+    log.log("\n")
+    namespace = tapestry.Namespace()
+    # We need a dummy namespace object. Not the whole thing, just enough.
+    namespace.categories_default = ["a"]
+    namespace.categories_inclusive = ["b"]
+    namespace.inc = False
+    namespace.category_paths = {"a": os.path.join(config["path_corpus"], "music"),
+                                "b": os.path.join(config["path_corpus"], "photos")}
+    namespace.block_size_raw = 30000000  # Don't care at all.
+
+    # Argue to build ops list
+    test_ops_reg = tapestry.build_ops_list(namespace)
+    # and again with Inc.
+    namespace.inc = True
+    test_ops_inc = tapestry.build_ops_list(namespace)
+
+    # validate the ops lists generated.
+    # Assume invalid by default
+    validity = {"count_short": False, "count_long": False, "all_keys": False,
+                "test_hash": False, "test_size": False}
+    # get a count of all items in directory "a"
+    count_short = 0
+    foo, bar, file = (None, None, None)  # satisfy the linter.
+    for foo, bar, files in os.walk(namespace.category_paths["a"]):
+        for file in files:
+            count_short += 1
+    del foo, bar, file
+    # get count of items in "b"
+    count_long = 0
+    for foo, bar, files in os.walk(namespace.category_paths["b"]):
+        for file in files:
+            count_long += 1
+    del foo, bar, file
+    # is len test_ops_reg = len A?
+    if len(test_ops_reg) == count_short:
+        log.log("[PASS] The overall count of a non-inclusive run matched the expected value.")
+        validity["count_short"] = True
+    else:
+        log.log("[FAIL] The overall count of a non-inclusive run did not match what was on disk")
+    # is len test_ops_inc = len A+B?
+    if len(test_ops_inc) == (count_short + count_long):
+        log.log("[PASS] The overall count of an inclusive run matched the expected value.")
+        validity["count_long"] = True
+    else:
+        log.log("[FAIL] The overall count of an inclusive run did not match the expected value")
+        log.log("""       This likely indicates a failure to add the inclusive directories to the""")
+        log.log("""       main run list.""")
+
+    del test_ops_inc  # We don't need this anymore and they can be weighty.
+    # get first record.
+    try:
+        sample_item = test_ops_reg.popitem()[1]  # Get just the dictionary at the first key
+    except KeyError:
+        log.log()  # Fail, nothing in the return!
+        return  # we can jump out of the function here, nothing else will pass.
+    # These are all the keys expected in this index:
+    expected = ["fname", "sha256", "category", "fpath", "fsize"]
+    failed_keys = False  # For now.
+    for key in expected:
+        if key not in sample_item.keys():
+            log.log("[FAIL] Key `%s` is missing from the sample item. This won't likely recover." % str(key))
+            failed_keys = True
+
+    if not failed_keys:
+        validity["all_keys"] = True
+        log.log("[PASS] All keys were found in the sample item as expected. This would recover.")
+
+    # figure out where it is in reality.
+    if not failed_keys:  # We need to have all the keys for this test.
+        test_cat = sample_item["category"]
+        path_origin = os.path.join(namespace.category_paths[test_cat],
+                                   sample_item["fpath"])
+        test_size = os.path.getsize(path_origin)
+        test_hash = hashlib.sha256()
+        with open(path_origin, "rb") as f:
+            test_hash.update(f.read())
+        if test_size == sample_item["fsize"]:
+            log.log("[PASS] The item referred to as a sample has the expected SHA256 Hash.")
+            validity["test_hash"] = True
+        else:
+            log.log("[FAIL] The item referred to has an unexpected SHA256 hash. Bad pathing?")
+        if test_size == sample_item["test_size"]:
+            log.log("[PASS] The item referred to as a sample has the expected overall size on disk.")
+            validity["test_size"] = True
+        else:
+            log.log("[FAIL] The item referred to has a sample has an unexpected size. Bad pathing?")
+
+    # Finally, did everything pass?
+    count_failed = 0
+    for each in validity:
+        if not validity[each]:
+            count_failed += 1
+    log.log("\n")
+    if count_failed <= 0:
+        log.log("[OVERALL PASS] All tests that are part of this set passed.")
+    else:
+        log.log("[OVERALL FAIL] %s tests failed, therefore this set is considered failed.")
 
 
 def test_pkl_find(test_pkl, logger):
