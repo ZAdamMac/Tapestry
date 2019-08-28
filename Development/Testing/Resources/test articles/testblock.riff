@@ -1,0 +1,1 @@
+{"metaBlock": {"numBlock": 1, "sizeLarge": 100, "countFiles": 1}, "metaRun": {"sumBlock": 1, "sizeExtraLarge": 100, "countFilesSum": 1, "dateRec": "2019-07-30", "comment": "Static Test Riff"}, "index": {"testfile": {"fname": "test_file", "sha256": "NaN", "category": "test", "fpath": "/docs/test", "fsize": 100}}}
