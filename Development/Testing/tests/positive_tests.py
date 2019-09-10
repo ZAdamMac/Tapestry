@@ -22,6 +22,7 @@ import hashlib
 import json
 import multiprocessing as mp
 import os
+import platform
 from random import choice
 from string import printable
 import tarfile
@@ -781,6 +782,78 @@ def test_media_retrieve_files(config, log):
 
     if found_tap and found_sig and made_index:
         log.log("[PASS] Both files were placed as expected and a RecoveryIndex was returned.")
+
+
+def test_parse_config(ns, logger):
+    """Loads an expected control config file, running it through (parse_config),
+    then performs validation against the resulting NS object.
+
+    :param ns:
+    :param logger:
+    :return:
+    """
+    logger.log("------------------------[Test the Configuration Parser]-----------------------")
+    logger.log("Runs parse_config with a dummy namespace and a control config file, then uses")
+    logger.log("a dictionary of the known values of the control in order to validate the")
+    logger.log("namespace object which was returned.")
+    arg_ns = tapestry.Namespace()
+    arg_ns.conf_file = os.path.join(ns["path_config"], os.path.join("test articles", "control-config.cfg"))
+    parsed_conf = tapestry.parse_config(arg_ns)
+
+    # we know the state of the control config, so you can use a static dict to validate
+    dict_control = {
+        "activeFP": "AAAA-AAAA-AAAA-AAAA-AAAA", "fp": "AAAA-AAAA-AAAA-AAAA-AAAA",
+        "signing": True, "sigFP": "CCCC-CCCC-CCCC-CCCC-CCCC", "keysize": 2048,
+        "compress": True,"compressLevel": 9, "step": "none", "sumJobs": 0,
+        "jobsDone": 0, "modeNetwork": "sftp", "addrNet": "240.0.0.0", "portNet": 22,
+        "nameNet": "amartian", "dirNet": "olympus mons/the face", "retainLocal": True,
+        "block_size_raw": int(64 * 2 ** 20), "compid": "HAL 9000",
+        "recovery_path": "The Obelisk", "uid": "anothermartian", "drop": "area51",
+        "numConsumers": os.cpu_count(), "currentOS": platform.system()
+        }
+
+    # There are, however, dynamic constraints we have to test for
+    if dict_control["currentOS"] == "Linux":
+        catpaths = {"a": "nix_a", "b": "nix_b"}
+        os_args = {
+            "workDir": "/tmp/Tapestry/", "desktop": "/home/anothermartian/Desktop",
+            "gpgDir": "/home/anothermartian/.gnupg", "categories_default": ["a"],
+            "categories_inclusive": ["b"], "category_paths": catpaths
+            }
+        dict_control.update(os_args)
+    elif dict_control["currentOS"] == "Windows":
+        catpaths = {"a": "win_a", "b": "win_b"}
+        os_args = {
+            "workDir": "C:\\users\\anothermartian\\appdata\\local\\temp\\tapestry",
+            "desktop": "C:\\Users\\anothermartian\\Desktop",
+            "gpgDir": "C:\\Users\\anothermartian\\appdata\\roaming\\gnupg",
+            "categories_default": ["a"], "categories_inclusive": ["b"],
+            "category_paths": catpaths
+            }
+        dict_control.update(os_args)
+    else:
+        logger.log()
+        return
+
+    # Now, let's do this iteratively to make things simpler.
+    dict_failures = {}
+    for key in dict_control:
+        try:
+            result = parsed_conf.__getattribute__(key)
+            if result != dict_control[key]:
+                dict_failures.update({key: "did not have the expected value."})
+        except KeyError:
+            dict_failures.update({key: "was not assigned."})
+
+    # Finally, print the failures or passage
+    if len(dict_failures) == 0:
+        logger.log("[PASS] All config values read as expected")
+        logger.log("\n")
+    else:
+        logger.log("[FAIL] The following errors were detected in the return:")
+        for key in dict_failures:
+            logger.log("[ERROR] %s %s" % (key, dict_failures[key]))
+
 
 # We don't want execution from main
 if __name__ == "__main__":
