@@ -15,6 +15,7 @@ https://github.com/ZAdamMac/Tapestry
 
 from datetime import date
 import os
+from textwrap import wrap
 import time
 
 # Define the Classes We Use
@@ -69,6 +70,43 @@ def elapsed(start):
     strElapsed = time.strftime("%H:%M:%S", time.gmtime(secElapsed))
     return strElapsed
 
+
+def test_case(config, logger, test, str_title, str_head, str_pass, str_fail):
+    """
+    Allows the execution of some manner of test logic while wrapping all the
+    logger operations in a single call. This method allows a maximization of
+    code reuse for the tests.
+
+    The test function needs to accept only the dict_config object for
+    arguments and must return a list of error responses to be printed.
+
+    :param config: a dict_config object (really, anything) to pass to the test
+    :param logger: the SimpleLogger object being used by the test suite.
+    :param test: a function giving the actual logic of the test.
+    :param str_title: a string for the title bar of the test
+    :param str_head: a string for the header or explanation of the test
+    :param str_pass: a string to be added to the log if the test passed
+    :param str_fail: a string to be added to the log if the test failed
+    :return:
+    """
+    logger.log(str_title)
+    for line in wrap(str_head, width=79):  # width chosen for consistency reasons
+        logger.log(line)
+    logger.log("\n")
+
+    # Now we do the actual execution
+    errors = test(config)
+
+    if len(errors) == 0:
+        for line in wrap(str_pass, width=79):
+            logger.log(line)
+    else:
+        for line in wrap(str_fail, width=79):
+            logger.log(line)
+        for each in errors:
+            for line in wrap(each, width=79):
+                logger.log(line)
+    logger.log("\n")
 
 def validate_dict_config(config, expected):
     """Validate that everything needed in these tests is present in the config
