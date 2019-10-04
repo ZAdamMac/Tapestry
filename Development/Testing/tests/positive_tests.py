@@ -67,7 +67,8 @@ def runtime(dict_config, do_network):
     can_run = framework.validate_dict_config(dict_config, expects)
 
     # We're storing a lot of the externals of the testing in a config file.
-    with open(os.path.join(dict_config["path_config", "positive_tests.json"]), "rb") as f:
+    with open(os.path.join(dict_config["path_config"],
+                           os.path.join("config","positive_tests.json")), "rb") as f:
         dict_tests = json.load(f.read())
 
     # The following two lists should be populated with the function variables
