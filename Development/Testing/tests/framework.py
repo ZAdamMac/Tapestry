@@ -108,6 +108,7 @@ def test_case(config, logger, test, str_title, str_head, str_pass, str_fail):
                 logger.log(line)
     logger.log("\n")
 
+
 def validate_dict_config(config, expected):
     """Validate that everything needed in these tests is present in the config
     dictionary provided by main. This should be updated if any new parameters

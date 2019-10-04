@@ -14,9 +14,6 @@ Produced under license.
 Full license and documentation to be found at:
 https://github.com/ZAdamMac/Tapestry
 """
-
-__version__ = "prototype"
-
 from . import framework
 import tapestry
 from datetime import date
@@ -29,6 +26,55 @@ import platform
 from random import choice
 from string import printable
 import tarfile
+
+__version__ = "2.1.0dev"
+# Begin Function Definitions
+
+
+def get_test_pkl(config, logger):
+    """Call upon RecoveryIndex using a sample PKL file. Establishes
+    whether or not the legacy recovery format (pre 2.0) can still be
+    read by the version under test.
+
+    :param config: a tapestry testing dict_config object.
+    :param logger: the established logger object
+    :return:
+    """
+    logger.log("-----------------------------[Pickle Load Test]-------------------------------")
+    logger.log("This test establishes if the legacy archive format can still be parsed.")
+    file_pkl = os.path.join(config["path_config"], os.path.join("test articles", "sample.psk"))
+    try:
+        rec_index = tapestry.RecoveryIndex(open(file_pkl, "r"))
+        logger.log("[PASS] The recovery index object parsed the sample pickle file successfully.")
+    except tapestry.RecoveryIndexError:
+        logger.log("[FAIL] The recovery index object could not parse the target 'sample.pkl'. This\n"
+                   "usually means there is an issue with the object itself as the sample pkl should\nnot have changed.")
+        rec_index = False
+
+    return rec_index
+
+
+def get_test_riff(config, logger):
+    """Call upon RecoveryIndex using a sample RIFF file. Establishes
+    whether or not current-standard RIFF format can be read.
+
+    :param config: a tapestry testing dict_config object.
+    :param logger: the established logger object
+    :return:
+    """
+    logger.log("-----------------------------[NewRIFF Load Test]------------------------------")
+    logger.log("This test establishes if the standard archive format can still be parsed.")
+    file_riff = os.path.join(config["path_config"], os.path.join("test articles", "sample.riff"))
+    try:
+        rec_index = tapestry.RecoveryIndex(open(file_riff, "r"))
+        logger.log("[PASS] The recovery index object parsed the sample pickle file successfully.")
+    except tapestry.RecoveryIndexError:
+        logger.log("[FAIL] The recovery index object could not parse the target 'sample.riff'. This\n"
+                   "usually means there is an issue with the object itself as the sample riff should\nnot have changed."
+                   )
+        rec_index = False
+
+    return rec_index
 
 
 def establish_logger(config):
@@ -60,122 +106,115 @@ def runtime(dict_config, do_network):
     what gets called from the main script in order to actually run the tests.
 
     :param dict_config: required, provides all config information.
-    :param do_network: Boolean, controls if the network set are run.
     :return:
     """
     expects = ["test_user", "path_logs", "path_temp", "test_fp"]  # Add new dict_config keys here
     can_run = framework.validate_dict_config(dict_config, expects)
-
-    # We're storing a lot of the externals of the testing in a config file.
-    with open(os.path.join(dict_config["path_config", "positive_tests.json"]), "rb") as f:
-        dict_tests = json.load(f.read())
-
-    # The following two lists should be populated with the function variables
-    # Populate this list with all tests to be run locally.
-    list_local_tests = [test_block_valid_put, test_block_yield_full, test_block_meta,
-                        test_riff_find, test_riff_compliant, test_pkl_find,
-                        test_TaskCheckIntegrity, test_TaskCompress, test_TaskDecompress,
-                        test_TaskEncrypt, test_TaskDecrypt, test_TaskSign,
-                        test_TaskTarBuild, test_TaskTarUnpack, test_build_ops_list,
-                        test_build_recovery_index, test_media_retrieve_files,
-                        test_parse_config, test_status_print, test_verify_blocks
-                        ]
-    # Populate this list with all the network tests (gated by do_network)
-    list_network_tests = [test_ftp_connect, test_ftp_deposit, test_ftp_grep,
-                          test_ftp_retrieve]
-
     if can_run:  # Any new tests need to be added here.
         log = establish_logger(dict_config)
-        for test in list_local_tests:
-            test_name = test.__name__
-            try:
-                test_dict = dict_tests[test_name]
-                a = test_dict["title"]
-                b = test_dict["description"]
-                c = test_dict["pass message"]
-                d = test_dict["fail message"]
-                framework.test_case(dict_config, log, test, a, b, c, d)
-            except KeyError:
-                print("Test %s was undefined in the JSON file and skipped.")
-
+        test_block = tapestry.Block("testblock", 100, 1, 0)
+        test_block = test_block_valid_put(test_block, log)
+        test_block_yield_full(test_block, log)
+        riff_out = test_block_meta(dict_config, test_block, log)
+        test_riff = get_test_riff(dict_config, log)
+        test_riff_find(test_riff, log)
+        test_riff_compliant(riff_out, log)
+        test_pkl = get_test_pkl(dict_config, log)
+        test_pkl_find(test_pkl, log)
+        test_TaskCheckIntegrity_call(dict_config, log)
+        test_TaskCompress(dict_config, log)
+        test_TaskDecompress(dict_config, log)
+        test_TaskEncrypt(dict_config, log)
+        test_TaskDecrypt(dict_config, log)
+        test_TaskSign(dict_config, log)
+        test_TaskTarBuild(dict_config, log)
+        test_TaskTarUnpack(dict_config, log)
+        # test_generate_key(dict_config, log)
+        # testing the above function would require an interaction bypass that
+        # is not currently part of the 2.0.1 feature set.
+        # FUTURE work will be to add that functionality.
+        test_build_ops_list(dict_config, log)
+        test_build_recovery_index(log)
+        test_media_retrieve_files(dict_config, log)
+        test_parse_config(dict_config, log)
+        test_status_print(dict_config, log)
+        test_verify_blocks(dict_config, log)
         if do_network:
-            for test in list_network_tests:
-                test_name = test.__name__()
-                try:
-                    test_dict = dict_tests[test_name]
-                    a = test_dict["title"]
-                    b = test_dict["description"]
-                    c = test_dict["pass message"]
-                    d = test_dict["fail message"]
-                    framework.test_case(dict_config, log, test, a, b, c, d)
-                except KeyError:
-                    print("Test %s was undefined in the JSON file and skipped.")
+            ftp_connection = test_ftp_connect(dict_config, log)
+            test_ftp_deposit(dict_config, log, ftp_connection)
+            test_ftp_grep(dict_config, log, ftp_connection)
+            test_ftp_retrieve(dict_config, log, ftp_connection)
         log.save()
     else:
         print("Exiting the runtime tests as the config validity failed.")
         exit()
 
 
-def test_block_meta(dict_config):
+def test_block_meta(dict_config, block, logger):
     """Generates and places a RIFF file based on the meta() call. We use the
     resulting file later, so we return the path.
 
     :param dict_config:
+    :param block:
+    :param logger:
     :return:
     """
-    block = tapestry.Block("test_block", 600, 1, 30)
-
     file = block.name+'.riff'
     path_to_output_riff = os.path.join(dict_config["path_temp"], file)
     findex = {'fname': "test_file", 'sha256': "NaN", 'category': "test",
               'fpath': "/docs/test", 'fsize': 100
               }
-    block.put("test_file", findex)
 
+    logger.log("------------------------[Block 'Meta' Method Tests]---------------------------")
     block.meta(1, 100, 1, str(date.today()), "This is just a test.", {"testfile": findex}, dict_config["path_temp"])
 
     if os.path.exists(path_to_output_riff):
-        return []
+        logger.log("[PASS]Didn't crash trying to place the file.")
     else:
-        return ["[ERROR]The RIFF file appears not to have been placed."]
+        logger.log("[FAIL]The RIFF file would appear not to have been placed.")
+
+    return path_to_output_riff
 
 
-def test_block_valid_put(dict_config):
+def test_block_valid_put(block, logger):
     """Attempts to place a file that would definitively fit in the block.
     The test "file" has been calculated in such a way that the block should
     also become full.
 
     :param dict_config: the configuration dictionary object.
+    :param block: A Tapestry.classes.Block object.
+    :param logger: The test's logger object.
     :return:
     """
-    block = tapestry.Block("someblock", 100, 1, 0)
+    logger.log("------------------[Block Placement Test 1: Valid-Sized File]------------------")
     findex = {'fname': "test_file", 'sha256': "NaN", 'category': "test",
               'fpath': "/docs/test", 'fsize': 100
               }  # This mimics a generated file index entry.
     placed = block.put("test_file", findex)
 
     if not placed:
-        return["[ERROR] The block rejected this file in spite of the fact it was the correct size."]
+        logger.log("[FAIL] The block rejected this file in spite of the fact it was the correct\nsize.")
     else:
-        return []
+        logger.log("[PASS] The block correctly accepted the placement of this file.")
+
+    return block
 
 
-def test_block_yield_full(test_block):
+def test_block_yield_full(test_block, logger):
     """A very simple test to determine the state of the "full" attribute.
 
     :param test_block: The block unit under test
     :param logger: System logger
     :return:
     """
-    block = tapestry.Block("none", 1, 1, 0)
-    block.put("foo", {"fsize": 1})
+    logger.log("------------------[Block Placement Test 2: Check Full Flag]-------------------")
     if not test_block.full:
-        return["[FAIL] The block indicates it is not full. This is unexpected."]
+        logger.log("[FAIL] The block indicates it is not full. This is unexpected.")
     else:
-        return []
+        logger.log("[PASS] The block correctly identifies itself as full.")
 
 
-def test_build_ops_list(config):
+def test_build_ops_list(config, log):
     """Bundled set of 5 tests which confirm operation of
     tapestry.build_ops_list(). Relies on just the config and log shared by all
     tests. Validates inclusive/exclusive behaviour, index completion, and both
@@ -183,8 +222,13 @@ def test_build_ops_list(config):
     as the validity of those values. Has an overall pass/fail flag as well.
 
     :param config:
+    :param log:
     :return:
     """
+    log.log("--------------------[Tests of the Build Ops List Function]--------------------")
+    log.log("A series of internally-contained tests to test the build_ops_list function of")
+    log.log("Tapestry/__main__.py. Can fail in a number of ways.")
+    log.log("\n")
     namespace = tapestry.Namespace()
     # We need a dummy namespace object. Not the whole thing, just enough.
     namespace.categories_default = ["a"]
@@ -193,10 +237,6 @@ def test_build_ops_list(config):
     namespace.category_paths = {"a": config["path_temp"],
                                 "b": config["path_config"]}
     namespace.block_size_raw = 30000000  # Don't care at all.
-    errors = []
-    # This test is a special case where someone linked multiple tests into a
-    # Single test object. Therefore rather than relying on test_case's traditional
-    # reporting structure, we're flinging all logs into errors.
 
     # Argue to build ops list
     test_ops_reg = tapestry.build_ops_list(namespace)
@@ -210,7 +250,7 @@ def test_build_ops_list(config):
                 "test_hash": False, "test_size": False}
     # get a count of all items in directory "a"
     count_short = 0
-    foo, bar, file = [None, None, None]  # satisfy the linter.
+    foo, bar, file = (None, None, None)  # satisfy the linter.
     for foo, bar, files in os.walk(namespace.category_paths["a"]):
         for file in files:
             count_short += 1
@@ -223,38 +263,37 @@ def test_build_ops_list(config):
     del foo, bar, file
     # is len test_ops_reg = len A?
     if len(test_ops_reg) == count_short:
-        errors.append("[PASS] The overall count of a non-inclusive run matched the expected value.")
+        log.log("[PASS] The overall count of a non-inclusive run matched the expected value.")
         validity["count_short"] = True
     else:
-        errors.append("[FAIL] The overall count of a non-inclusive run did not match what was on disk")
+        log.log("[FAIL] The overall count of a non-inclusive run did not match what was on disk")
     # is len test_ops_inc = len A+B?
     if len(test_ops_inc) == (count_short + count_long):
-        errors.append("[PASS] The overall count of an inclusive run matched the expected value.")
+        log.log("[PASS] The overall count of an inclusive run matched the expected value.")
         validity["count_long"] = True
     else:
-        errors.append(
-            "[FAIL] The overall count of an inclusive run did not match the expected value." \
-            "This likely indicates a failure to add the inclusive directories to the " \
-            "main run list.")
+        log.log("[FAIL] The overall count of an inclusive run did not match the expected value")
+        log.log("""       This likely indicates a failure to add the inclusive directories to the""")
+        log.log("""       main run list.""")
 
     del test_ops_inc  # We don't need this anymore and they can be weighty.
     # get first record.
     try:
         sample_item = test_ops_reg.popitem()[1]  # Get just the dictionary at the first key
     except KeyError:
-        errors.append("Couldn't get a sample item - the ops list is empty!")
-        return errors  # we can jump out of the function here, nothing else will pass.
+        log.log()  # Fail, nothing in the return!
+        return  # we can jump out of the function here, nothing else will pass.
     # These are all the keys expected in this index:
     expected = ["fname", "sha256", "category", "fpath", "fsize"]
     failed_keys = False  # For now.
     for key in expected:
         if key not in sample_item.keys():
-            errors.append("[FAIL] Key `%s` is missing from the sample item. This won't likely recover." % str(key))
+            log.log("[FAIL] Key `%s` is missing from the sample item. This won't likely recover." % str(key))
             failed_keys = True
 
     if not failed_keys:
         validity["all_keys"] = True
-        errors.append("[PASS] All keys were found in the sample item as expected. This would recover.")
+        log.log("[PASS] All keys were found in the sample item as expected. This would recover.")
 
     # figure out where it is in reality.
     if not failed_keys:  # We need to have all the keys for this test.
@@ -266,71 +305,63 @@ def test_build_ops_list(config):
         with open(path_origin, "rb") as f:
             test_hash.update(f.read())
         if test_size == sample_item["fsize"]:
-            errors.append("[PASS] The item referred to as a sample has the expected SHA256 Hash.")
+            log.log("[PASS] The item referred to as a sample has the expected SHA256 Hash.")
             validity["test_hash"] = True
         else:
-            errors.append("[FAIL] The item referred to has an unexpected SHA256 hash. Bad pathing?")
+            log.log("[FAIL] The item referred to has an unexpected SHA256 hash. Bad pathing?")
         if test_size == sample_item["test_size"]:
-            errors.append("[PASS] The item referred to as a sample has the expected overall size on disk.")
+            log.log("[PASS] The item referred to as a sample has the expected overall size on disk.")
             validity["test_size"] = True
         else:
-            errors.append("[FAIL] The item referred to has a sample has an unexpected size. Bad pathing?")
+            log.log("[FAIL] The item referred to has a sample has an unexpected size. Bad pathing?")
 
     # Finally, did everything pass?
     count_failed = 0
     for each in validity:
         if not validity[each]:
             count_failed += 1
-    errors.append("\n")
+    log.log("\n")
     if count_failed <= 0:
-        errors.append("[OVERALL PASS] All tests that are part of this set passed.")
+        log.log("[OVERALL PASS] All tests that are part of this set passed.")
     else:
-        errors.append("[OVERALL FAIL] %s tests failed, therefore this set is considered failed."
-                      % count_failed)
+        log.log("[OVERALL FAIL] %s tests failed, therefore this set is considered failed.")
 
 
-def test_pkl_find(config):
-    """Creates a recovery index from PKL and verifies that it can find an expected file.
+def test_pkl_find(test_pkl, logger):
+    """Takes a test riff object and verifies that it can find an expected file.
     This is run against a loaded canonical riff to avoid a dependancy on
     earlier tests also having worked correctly.
 
-    :param config: The global test configuration
+    :param test_pkl:
+    :param logger:
     :return:
     """
-    errors = []
-    test_pkl_path = os.path.join(config["path_config"], os.path.join("test articles", "sample.psk"))
-    with open(test_pkl_path, "r") as f:
-        try:
-            test_pkl = tapestry.RecoveryIndex(f)
-        except tapestry.RecoveryIndexError:
-            errors.append("[ERROR] the sample file failed to unpack. This usually indicates that"
-                          " the RecoveryIndex class cannot parse Pickle files correctly.")
-            return errors
+    logger.log("----------------------------[PKL  'FIND' Test]--------------------------------")
     try:
         result_category, result_path = test_pkl.find("testfile")
     except tapestry.RecoveryIndexError:
-        errors.append("[ERROR]The PKL has loaded incorrectly - RecoveryIndexError!")
+        logger.log("[FAIL]The PKL has loaded incorrectly - RecoveryIndexError!")
         result_category = "failed"
         result_path = "failed"
 
     if result_category == "test" and result_path == "/docs/test":
-        pass  # we want the error list to remain len=0 to show the pass message.
+        logger.log("[PASS]The Find method returned the expected values based on the test Pickle.")
     else:
-        errors.append("[Error]The find method is returning values other than the expected:")
-        errors.append("The current state of result_category was: %s" % result_category)
-        errors.append("The current state of result_path was: %s" % result_path)
-
-    return errors
+        logger.log("[FAIL]The find method is returning values other than the expected:")
+        logger.log("The current state of result_category was: %s" % result_category)
+        logger.log("The current state of result_path was: %s" % result_path)
 
 
-def test_riff_compliant(config):
+def test_riff_compliant(test_riff_path, logger):
     """Provided a path to the RIFF file generated earlier, this will test it
     for structural validity. This is currently rather dumb logic: the present
     version does not allow for type validation.
 
-    :param config:
+    :param test_riff_path:
+    :param logger:
     :return:
     """
+    logger.log("-------------------------[Riff Compliance Testing]----------------------------")
     keys_expected_metarun = ["sumBlock", "sizeExtraLarge", "countFilesSum", "dateRec", "comment"]
     keys_expected_metablock = ["numBlock", "sizeLarge", "sumFiles"]
     keys_expected_findex = ["fname", "sha256", "fsize", "fpath", "category"]
@@ -338,33 +369,29 @@ def test_riff_compliant(config):
     do_metablock = True
     do_findex = True
 
-    errors = []
-    test_riff_path = os.path.join(config["path_config"],
-                                  os.path.join("test articles", "testblock.riff"))
-
     with open(test_riff_path, "r") as riff_file:
         unpacked_riff = json.load(riff_file)
 
     try:
         sample_metarun = unpacked_riff["metaRun"]
     except KeyError:
-        errors.append('[ERROR] The "metaRun" attribute is missing from the RIFF. Without this, many'
-                      ' future functions of Tapestry will fail. These failures can otherwise be '
-                      'silent and are otherwise exposed only by testing.')
+        logger.log('[FAIL] The "metaRun" attribute is missing from the RIFF. Without this, many')
+        logger.log('future functions of Tapestry will fail. These failures can otherwise be silent')
+        logger.log('and are otherwise exposed only by testing.')
         do_metarun = False
         sample_metarun = {}
     try:
         sample_metablock = unpacked_riff["metaBlock"]
     except KeyError:
-        errors.append('[ERROR] The "metaBlock" attribute is missing from the RIFF - this can lead to'
-                      ' unexpected failures and may cause broken userland features in future releases.')
+        logger.log('[FAIL] The "metaBlock" attribute is missing from the RIFF - this can lead to')
+        logger.log('unexpected failures and may cause broken userland features in future releases.')
         do_metablock = False
         sample_metablock = {}
     try:
         sample_file_entry = unpacked_riff["index"]["testfile"]
     except KeyError:
-        errors.append('[ERROR] The "index" attribute is missing. This will cause absolute failure of'
-                      'recoverability for files generated with the current codebase.')
+        logger.log('[FAIL] The "index" attribute is missing. This will cause absolute failure of')
+        logger.log('recoverability for files generated with the current codebase.')
         do_findex = False
         sample_file_entry = {}
 
@@ -374,7 +401,7 @@ def test_riff_compliant(config):
                 value = sample_metarun[key]
                 del value
             except KeyError:
-                errors.append("[WARN] The %s attribute's %s key is absent." % ("metaRun", key))
+                logger.log("[WARN] The %s attribute's %s key is absent." % ("metaRun", key))
 
     if do_metablock:
         for key in keys_expected_metablock:
@@ -382,7 +409,7 @@ def test_riff_compliant(config):
                 value = sample_metablock[key]
                 del value
             except KeyError:
-                errors.append("[WARN] The %s attribute's %s key is absent." % ("metaBlock", key))
+                logger.log("[WARN] The %s attribute's %s key is absent." % ("metaBlock", key))
 
     if do_findex:
         for key in keys_expected_findex:
@@ -390,18 +417,18 @@ def test_riff_compliant(config):
                 value = sample_file_entry[key]
                 del value
             except KeyError:
-                errors.append("[ERROR] The file index's %s key is unexpectedly absent. This will likely" % key)
-
-    return errors
+                logger.log("[FAIL] The file index's %s key is unexpectedly absent. This will likely" % key)
 
 
-def test_build_recovery_index(config):
+def test_build_recovery_index(log):
     """ Takes a known-size recovery index and makes sure it checks out.
 
-    :param config: as usual
+    :param log: Simplelogger
     :return:
     """
-    errors = []
+    log.log("-------------------[Tests of Build Recovery Index Function]-------------------")
+    log.log("Runs build_recovery_index() against a known 'ops list' object, then evaluates.")
+    log.log("\n")
     recovery_index = {"file1": {
                                 "fname": "b",
                                 "fpath": "b",
@@ -425,7 +452,7 @@ def test_build_recovery_index(config):
     if sum_sizes == 3:
         valid_size = True
     else:
-        errors.append("[ERROR] The sum_size value returned was unexpected. Should have been 3.")
+        log.log("[FAIL] The sum_size value returned was unexpected. Should have been 3.")
 
     # We need to know the top file is the biggest - we'd expect that.
     biggest_file = test_index.pop()[0]
@@ -433,46 +460,38 @@ def test_build_recovery_index(config):
     if biggest_file == "file2":
         valid_index = True
     else:
-        errors.append("[ERROR] The recovery index did not appear to be sorted by size correctly.")
+        log.log("[FAIL] The recovery index did not appear to be sorted by size correctly.")
 
-    return errors
+    if valid_index and valid_size:
+        log.log("[PASS] All tests that are part of this set passed.")
 
 
-def test_riff_find(config):
+def test_riff_find(test_riff, logger):
     """Takes a test riff object and verifies that it can find an expected file.
     This is run against a loaded canonical riff to avoid a dependancy on
     earlier tests also having worked correctly.
 
-    :param config:
+    :param test_riff:
+    :param logger:
     :return:
     """
-    errors = []
-    test_pkl_path = os.path.join(config["path_config"], os.path.join("test articles", "testblock.riff"))
-    with open(test_pkl_path, "r") as f:
-        try:
-            test_pkl = tapestry.RecoveryIndex(f)
-        except tapestry.RecoveryIndexError:
-            errors.append("[ERROR] the sample file failed to unpack. This usually indicates that"
-                          " the RecoveryIndex class cannot parse RIFF files correctly.")
-            return errors
+    logger.log("----------------------------[Riff 'FIND' Test]--------------------------------")
     try:
-        result_category, result_path = test_pkl.find("testfile")
+        result_category, result_path = test_riff.find("testfile")
     except tapestry.RecoveryIndexError:
-        errors.append("[ERROR]The RIFF has loaded incorrectly - RecoveryIndexError!")
+        logger.log("[FAIL]The Riff has loaded incorrectly - RecoveryIndexError!")
         result_category = "failed"
         result_path = "failed"
 
     if result_category == "test" and result_path == "/docs/test":
-        pass  # we want the error list to remain len=0 to show the pass message.
+        logger.log("[PASS]The Find method returned the expected values based on the test RIFF.")
     else:
-        errors.append("[Error]The find method is returning values other than the expected:")
-        errors.append("The current state of result_category was: %s" % result_category)
-        errors.append("The current state of result_path was: %s" % result_path)
-
-    return errors
+        logger.log("[FAIL]The find method is returning values other than the expected:")
+        logger.log("The current state of result_category was: %s" % result_category)
+        logger.log("The current state of result_path was: %s" % result_path)
 
 
-def test_TaskCheckIntegrity_call(config):
+def test_TaskCheckIntegrity_call(config, logs):
     """This test creates a random string, inserting it into a file, then
     tarring that file into a tarball in the temporary directory. The path to
     the tarfile and the hash of the random string are then provided to an
@@ -480,9 +499,13 @@ def test_TaskCheckIntegrity_call(config):
     determine if the class is responding correctly.
 
     :param config: dict_config
+    :param logs: logger
     :return:
     """
-    errors = []
+    logs.log("""
+    -------------------------[Integrity Checker Test]-----------------------------
+This test runs TaskCheckIntegrity for a known-good hash and ensures the logic
+of the test is sound.""")
     dir_temp = config["path_temp"]
     string_test = ''.join(choice(printable) for i in range(2048))
     hasher = hashlib.sha256()
@@ -501,12 +524,12 @@ def test_TaskCheckIntegrity_call(config):
     del foo
 
     if check_passed:
-        pass
+        logs.log("[PASS] The test article passed TaskCheckIntegrity as expected.")
     else:
-        errors.append("[FAIL] The test article failed to pass TaskCheckIntegrity's test.")
+        logs.log("[FAIL] The test article failed to pass TaskCheckIntegrity's test.")
 
 
-def test_TaskCompress(config):
+def test_TaskCompress(config, log):
     """Very simplistic test. Generate instance of TaskCompress and see if the
     output file goes where expected.
 
@@ -514,27 +537,30 @@ def test_TaskCompress(config):
     :param log: A SimpleLogger logger instance.
     :return:
     """
-    errors = []
+    log.log("------------------------------[Compression Test]------------------------------")
+    log.log("A simple test to see if TaskCompress outputs a file as expected.")
     target = os.path.join(config["path_temp"], "test_tar")
     expected = os.path.join(config["path_temp"], "test_tar.bz2")
 
     test_task = tapestry.TaskCompress(target, "1")
     test_task()
     if os.path.exists(expected):
-        pass
+        log.log("[PASS] Found the zipped tarball where it was expected.")
     else:
-        errors.append("[FAIL] Output file not found; was it created or is there a location error?")
+        log.log("[FAIL] Output file not found; was it created or is there a location error?")
 
 
-def test_TaskDecompress(config):
+def test_TaskDecompress(config, log):
     """Decompression verified both in terms of whether or not compression
     detection is working, and whether or not the tarfile was changed as a
     result.
 
     :param config: dict_config
+    :param log: SimpleLogger Logger object
     :return:
     """
-    errors = []
+    log.log("-----------------------------[Decompression Test]-----------------------------")
+    log.log("Test some decompression functionality and ensure there's no changes to the tar")
     target = os.path.join(config["path_temp"], "test_tar.bz2")
     control = os.path.join(config["path_temp"], "test_tar")
     hash_target = hashlib.sha256
@@ -546,26 +572,26 @@ def test_TaskDecompress(config):
     result = task_test()
 
     if result.startswith("File"):
-        errors.append("[FAIL] TaskDecompress incorrectly assumed this file was not compressed.")
+        log.log("[FAIL] TaskDecompress incorrectly assumed this file was not compressed.")
     else:
         with open(target, "rb") as t:
             hash_target.update(t.read())
             if hash_target.hexdigest == hash_control.hexdigest:
-                pass
+                log.log("[PASS] Decompression fully successful without issues.")
             else:
-                errors.append("[FAIL] TaskDecompress output a file with a different hash than the original.")
-
-    return errors
+                log.log("[FAIL] TaskDecompress output a file with a different hash than the original.")
 
 
-def test_TaskDecrypt(config):
+def test_TaskDecrypt(config, log):
     """Decrypts a test file as previously generated, then validates it matches
     the original file.
 
     :param config:
+    :param log:
     :return:
     """
-    errors = []
+    log.log("-------------------------------[Decryption Test]------------------------------")
+    log.log("Tests TaskDecrypt and determines if the output file is conformant and present.")
     temp = config["path_temp"]
     target = os.path.join(temp, "hash_test.tap")
 
@@ -583,27 +609,27 @@ def test_TaskDecrypt(config):
                 hash_test = hashlib.sha256()
                 hash_test.update(f.read())
             if hash_test.hexdigest == hash_control.hexdigest:
-                pass  # No change to errors is expected
+                log.log("[PASS] Test file exists as expected, and matches the original.")
             else:
-                errors.append("[ERROR] Test file checksum mismatched with control; something's gone wrong.")
+                log.log("[FAIL] Test file checksum mismatched with control; something's gone wrong.")
         else:
-            errors.append("[ERROR] Test file was not present as expected.")
-            errors.append("Response from TaskDecrypt: " % response)
+            log.log("[FAIL] Test file was not present as expected.")
+            log.log("Response: " % response)
     else:
-        errors.append("[ERROR] No originating file. Did TaskEncrypt fail too?")
-
-    return errors
+        log.log("[ERROR] No originating file. Did TaskEncrypt fail too?")
 
 
-def test_TaskEncrypt(config):
+def test_TaskEncrypt(config, log):
     """A simplistic test to confirm that the TaskEncrypt function behaves as
     expected. Because TaskDecrypt also has to be tested, decrypting the file
     as part of the test would be redundant and only slow testing.
 
     :param config:
+    :param log:
     :return:
     """
-    errors = []
+    log.log("-------------------------------[Encryption Test]------------------------------")
+    log.log("Tests TaskEncrypt and determines if it successfully generates an output file.")
     test_fp = config["test_fp"]
     temp = config["path_temp"]
     target = os.path.join(temp, "hash_test")
@@ -614,22 +640,23 @@ def test_TaskEncrypt(config):
     out_expected = target+".tap"
 
     if os.path.isfile(out_expected):
-        pass  # doing this here leaves len(errors)=0, which is the test_case pass condition.
+        log.log("[PASS] Test file exists as expected.")
     else:
-        errors.append("[ERROR] Test file is not found where expected.")
-        errors.append("Response from TaskEncrypt: %s" % response)
-
-    return errors
+        log.log("[FAIL] Test file is not foud where expected.")
+        log.log("Response from : %s" % response)
 
 
-def test_TaskSign(config):
+def test_TaskSign(config, log):
     """Simplistic test of the signing class. Simply checks to see the output
     goes as expected.
 
     :param config:
+    :param log:
     :return:
     """
-    errors = []
+    log.log("--------------------------------[Signing Test]--------------------------------")
+    log.log("Tests TaskSign and determines if a signature is present - signature will be")
+    log.log("validated by a later test.")
     temp = config["path_temp"]
     tgt = os.path.join(temp, "hash_test.tar")
 
@@ -637,21 +664,23 @@ def test_TaskSign(config):
     response = test_task()
 
     if os.path.isfile(tgt+".sig"):
-        pass  # doing this here leaves len(errors)=0, which is the test_case pass condition.
+        log.log("[PASS] Test signature exists where expected.")
     else:
-        errors.append("[ERROR] Test signature does not exist. See response from TaskSign below.")
-        errors.append("Response: %s" % response)
-
-    return errors
+        log.log("[FAIL] Test signature does not exist. See response from TaskSign below.")
+        log.log("Response: %s" % response)
 
 
-def test_TaskTarBuild(config):
+def test_TaskTarBuild(config, log):
     """Simplified test of the TaskTarBuild class's call.
 
     :param config:
+    :param log:
     :return:
     """
-    errors = []
+    log.log("----------------------------[Unitary Tarring Test]----------------------------")
+    log.log("Calls TaskTarBuild in order to add a single file to a single tarfile. Simply")
+    log.log("validates that the tarfile was then created; a qualitative test of whether or")
+    log.log("not the tarring was handled properly comes later.")
     temp = config["path_temp"]
     tgt_old = os.path.join(temp, "hash_test.tar")
     tgt = os.path.join(temp, "hash_test")
@@ -664,22 +693,23 @@ def test_TaskTarBuild(config):
     response = test_task()
 
     if os.path.exists(tgt+".tar"):
-        pass  # doing this here leaves len(errors)=0, which is the test_case pass condition.
+        log.log("[PASS] Test file found at the expected location.")
     else:
-        errors.append("[ERROR] Test tarball was not created. See response from TaskTarBuild below.")
-        errors.append("Response: " % response)
-
-    return errors
+        log.log("[FAIL] Test tarball was not created. See response from TaskTarBuild below.")
+        log.log("Response: " % response)
 
 
-def test_TaskTarUnpack(config):
+def test_TaskTarUnpack(config, log):
     """Simplified test of the TaskTarUnpack class's call. Does hash validation
     to ensure that what was unpacked matches what was packed.
 
     :param config:
+    :param log:
     :return:
     """
-    errors = []
+    log.log("---------------------------[Unitary Untarring Test]---------------------------")
+    log.log("Calls TaskTarUnpack to unpack a given tarfile and checks its contents against")
+    log.log("a control of known value.")
     temp = config["path_temp"]
     test_tarf = os.path.join(temp, "hash_test.tar")
     expected = os.path.join(temp, "unpacked")
@@ -697,14 +727,14 @@ def test_TaskTarUnpack(config):
             hash_test.update(f.read())
 
         if hash_test.hexdigest == hash_control.hexdighest:
-            pass  # doing this here leaves len(errors)=0, which is the test_case pass condition.
+            log.log("[PASS] The test file matches its original contents. Validation via SHA256.")
         else:
-            errors.append("[ERROR] The file in question has changed from the original.")
+            log.log("[FAIL] The file in question has changed from the original.")
     else:
-        errors.append("[ERROR] The expected output file could not be located. Was an error thrown?")
+        log.log("[FAIL] The expected output file could not be located. Was an error thrown?")
 
 
-def test_media_retrieve_files(config):
+def test_media_retrieve_files(config, log):
     """This is a simple test that uses an expected pair of files to call the
     media_retrieve_files function from tapestry, then inspects the filesystem
     to see that those files were placed where expected. Finally, it examines
@@ -725,12 +755,16 @@ def test_media_retrieve_files(config):
     any key.
 
     :param config:
+    :param log:
     :return:
     """
     # We need a small, known-good tap with a known-good riff and sig to exist
     # in resources. This should be reflected in the documentation and the VCS
     # and the corresponding key also needs to be made public!
-    errors = []
+    log.log("-------------------[Test the Media Retrieve Files Function]-------------------")
+    log.log("Runs media_retrieve_files, making sure both files are placed as expected, and")
+    log.log("checking that the returned object IS an instance of RecoveryIndex.")
+    log.log("\n")
 
     test_index = tapestry.media_retrieve_files(config["path_config"], config["path_temp"], gnupg.GPG())
     found_tap = os.path.isfile(os.path.join(config["path_temp"], "testtap.tap"))
@@ -740,25 +774,28 @@ def test_media_retrieve_files(config):
         made_index = isinstance(test_index, type(tapestry.RecoveryIndex(f)))
 
     if not found_tap:
-        errors.append("[ERROR] The %s file is not located in the working directory as expected." % "tap")
+        log.log("[FAIL] The %s file is not located in the working directory as expected." % "tap")
     if not found_sig:
-        errors.append("[ERROR] The %s file is not located in the working directory as expected." % "sig")
+        log.log("[FAIL] The %s file is not located in the working directory as expected." % "sig")
     if not made_index:
-        errors.append("[ERROR] media_retrieve_files did not return a RecoveryIndex object.")
+        log.log("[FAIL] media_retrieve_files did not return a RecoveryIndex object.")
 
-    # we don't need an explicit pass statement because of how test_case works.
+    if found_tap and found_sig and made_index:
+        log.log("[PASS] Both files were placed as expected and a RecoveryIndex was returned.")
 
-    return errors
 
-
-def test_parse_config(ns):
+def test_parse_config(ns, logger):
     """Loads an expected control config file, running it through (parse_config),
     then performs validation against the resulting NS object.
 
-    :param ns: the config argument for test_case
+    :param ns:
+    :param logger:
     :return:
     """
-    errors = []
+    logger.log("------------------------[Test the Configuration Parser]-----------------------")
+    logger.log("Runs parse_config with a dummy namespace and a control config file, then uses")
+    logger.log("a dictionary of the known values of the control in order to validate the")
+    logger.log("namespace object which was returned.")
     arg_ns = tapestry.Namespace()
     arg_ns.conf_file = os.path.join(ns["path_config"], os.path.join("test articles", "control-config.cfg"))
     parsed_conf = tapestry.parse_config(arg_ns)
@@ -795,9 +832,8 @@ def test_parse_config(ns):
             }
         dict_control.update(os_args)
     else:
-        errors.append("[ERROR] Received unexpected value for for currentOS - "
-                      "Are you on a supported platform?")
-        return errors
+        logger.log()
+        return
 
     # Now, let's do this iteratively to make things simpler.
     dict_failures = {}
@@ -811,13 +847,12 @@ def test_parse_config(ns):
 
     # Finally, print the failures or passage
     if len(dict_failures) == 0:
-        pass  # doing this here leaves len(errors)=0, which is the test_case pass condition.
+        logger.log("[PASS] All config values read as expected")
+        logger.log("\n")
     else:
-        errors.append("[FAIL] The following errors were detected in the return:")
+        logger.log("[FAIL] The following errors were detected in the return:")
         for key in dict_failures:
-            errors.append("[ERROR] %s %s" % (key, dict_failures[key]))
-
-    return errors
+            logger.log("[ERROR] %s %s" % (key, dict_failures[key]))
 
 
 # We don't want execution from main
