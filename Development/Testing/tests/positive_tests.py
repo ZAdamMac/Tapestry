@@ -74,7 +74,7 @@ def runtime(dict_config, do_network):
     # Populate this list with all tests to be run locally.
     list_local_tests = [test_block_valid_put, test_block_yield_full, test_block_meta,
                         test_riff_find, test_riff_compliant, test_pkl_find,
-                        test_TaskCheckIntegrity, test_TaskCompress, test_TaskDecompress,
+                        test_TaskCheckIntegrity_call, test_TaskCompress, test_TaskDecompress,
                         test_TaskEncrypt, test_TaskDecrypt, test_TaskSign,
                         test_TaskTarBuild, test_TaskTarUnpack, test_build_ops_list,
                         test_build_recovery_index, test_media_retrieve_files,
