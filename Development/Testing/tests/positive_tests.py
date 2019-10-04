@@ -78,7 +78,7 @@ def runtime(dict_config, do_network):
                         test_TaskEncrypt, test_TaskDecrypt, test_TaskSign,
                         test_TaskTarBuild, test_TaskTarUnpack, test_build_ops_list,
                         test_build_recovery_index, test_media_retrieve_files,
-                        test_parse_config, test_status_print, test_verify_blocks
+                        test_parse_config, test_verify_blocks
                         ]
     # Populate this list with all the network tests (gated by do_network)
     list_network_tests = [test_ftp_connect, test_ftp_deposit, test_ftp_grep,
