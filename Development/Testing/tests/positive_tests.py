@@ -235,8 +235,8 @@ def test_build_ops_list(config):
         validity["count_long"] = True
     else:
         errors.append(
-            "[FAIL] The overall count of an inclusive run did not match the expected value." \
-            "This likely indicates a failure to add the inclusive directories to the " \
+            "[FAIL] The overall count of an inclusive run did not match the expected value."
+            "This likely indicates a failure to add the inclusive directories to the "
             "main run list.")
 
     del test_ops_inc  # We don't need this anymore and they can be weighty.
@@ -290,6 +290,8 @@ def test_build_ops_list(config):
         errors.append("[OVERALL FAIL] %s tests failed, therefore this set is considered failed."
                       % count_failed)
 
+    return errors
+
 
 def test_pkl_find(config):
     """Creates a recovery index from PKL and verifies that it can find an expected file.
@@ -341,8 +343,7 @@ def test_riff_compliant(config):
     do_findex = True
 
     errors = []
-    test_riff_path = os.path.join(config["path_config"],
-                                  os.path.join("test articles", "testblock.riff"))
+    test_riff_path = os.path.join(config["path_temp"], "test_block.riff")
 
     with open(test_riff_path, "r") as riff_file:
         unpacked_riff = json.load(riff_file)
@@ -505,7 +506,9 @@ def test_TaskCheckIntegrity_call(config):
     if check_passed:
         pass
     else:
-        errors.append("[FAIL] The test article failed to pass TaskCheckIntegrity's test.")
+        errors.append("[ERROR] The test article failed to pass TaskCheckIntegrity's test.")
+
+    return errors
 
 
 def test_TaskCompress(config):
@@ -513,7 +516,6 @@ def test_TaskCompress(config):
     output file goes where expected.
 
     :param config: dict_config
-    :param log: A SimpleLogger logger instance.
     :return:
     """
     errors = []
@@ -635,7 +637,7 @@ def test_TaskSign(config):
     temp = config["path_temp"]
     tgt = os.path.join(temp, "hash_test.tar")
 
-    test_task = tapestry.TaskSign(tgt, config["test_fp"], temp, gnupg.gpg())
+    test_task = tapestry.TaskSign(tgt, config["test_fp"], temp, gnupg.GPG())
     response = test_task()
 
     if os.path.isfile(tgt+".sig"):
