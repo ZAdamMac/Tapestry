@@ -81,8 +81,9 @@ def runtime(dict_config, do_network):
                         test_parse_config, test_verify_blocks
                         ]
     # Populate this list with all the network tests (gated by do_network)
-    list_network_tests = [test_ftp_connect, test_ftp_deposit, test_ftp_grep,
-                          test_ftp_retrieve]
+    list_network_tests = []
+        # This list currently left blank as 2.0 network functionality is scrapped
+        # entirely in 2.1's release and is unnecessary at this stage of development.
 
     if can_run:  # Any new tests need to be added here.
         log = establish_logger(dict_config)
