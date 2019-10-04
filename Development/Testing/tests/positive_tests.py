@@ -820,6 +820,38 @@ def test_parse_config(ns):
     return errors
 
 
+def test_verify_blocks(config):
+    """A highly simplified test for the verify_blocks functionality that relies
+    on the same files as test_media_retrieve_files. Due to the nature of the
+    verify_blocks function this requires human intervention - future work will
+    be to include a bypass method to facilitate this test.
+
+    :param config:
+    :return:
+    """
+
+    errors = []
+    ns = tapestry.Namespace()
+    ns.workDir = os.path.join(config["path_config"], "test articles")
+
+    results = tapestry.verify_blocks(ns, gpg_agent=gnupg.GPG(verbose=True))
+
+    if len(results) == 1:
+        if results[0] == "testtap.tap":
+            pass  # doing this here leaves len(errors)=0, which is the test_case pass condition.
+        else:
+            errors.append("[ERROR] An unexpected value was returned for the validity list: %s"
+                          % results[0])
+    elif len(results) == 0:
+        errors.append("[ERROR] The verify_blocks function refused to validate the sample file."
+                      "Verify that the blocks are validly signed and try again.")
+    else:
+        errors.append("[ERROR] verify_blocks returned an unexpected number of items. See response.")
+        errors.append("Response: %s" % results)
+
+    return errors
+
+
 # We don't want execution from main
 if __name__ == "__main__":
     print("This script is not intended to be run in standalone mode. Run main.")
