@@ -15,8 +15,6 @@ Full license and documentation to be found at:
 https://github.com/ZAdamMac/Tapestry
 """
 
-__version__ = "prototype"
-
 from . import framework
 import tapestry
 from datetime import date
@@ -29,6 +27,8 @@ import platform
 from random import choice
 from string import printable
 import tarfile
+
+__version__ = "prototype"
 
 
 def establish_logger(config):
@@ -68,7 +68,7 @@ def runtime(dict_config, do_network):
 
     # We're storing a lot of the externals of the testing in a config file.
     with open(os.path.join(dict_config["path_config"],
-                           os.path.join("config","positive_tests.json")), "rb") as f:
+                           os.path.join("config", "positive_tests.json")), "rb") as f:
         dict_tests = json.load(f.read())
 
     # The following two lists should be populated with the function variables
@@ -83,8 +83,8 @@ def runtime(dict_config, do_network):
                         ]
     # Populate this list with all the network tests (gated by do_network)
     list_network_tests = []
-        # This list currently left blank as 2.0 network functionality is scrapped
-        # entirely in 2.1's release and is unnecessary at this stage of development.
+    # This list currently left blank as 2.0 network functionality is scrapped
+    # entirely in 2.1's release and is unnecessary at this stage of development.
 
     if can_run:  # Any new tests need to be added here.
         log = establish_logger(dict_config)
@@ -771,7 +771,7 @@ def test_parse_config(ns):
     dict_control = {
         "activeFP": "AAAA-AAAA-AAAA-AAAA-AAAA", "fp": "AAAA-AAAA-AAAA-AAAA-AAAA",
         "signing": True, "sigFP": "CCCC-CCCC-CCCC-CCCC-CCCC", "keysize": 2048,
-        "compress": True,"compressLevel": 9, "step": "none", "sumJobs": 0,
+        "compress": True, "compressLevel": 9, "step": "none", "sumJobs": 0,
         "jobsDone": 0, "modeNetwork": "sftp", "addrNet": "240.0.0.0", "portNet": 22,
         "nameNet": "amartian", "dirNet": "olympus mons/the face", "retainLocal": True,
         "block_size_raw": int(64 * 2 ** 20), "compid": "HAL 9000",
