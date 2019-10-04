@@ -40,10 +40,11 @@ def parse_config():
     path_config = parser.get("Environment Information", "Resource Path")
     path_corpus = parser.get("Environment Information", "Corpus Path")
     path_temp = parser.get("Environment Information", "Runtime Output Path")
+    test_fp = parser.get("Environment Information", "Testing Key Fingerprint")
 
     configuration = {"test_user": test_user, "path_logs": path_logs,
                      "path_config": path_config, "path_corpus": path_corpus,
-                     "path_temp": path_temp}
+                     "path_temp": path_temp, "test_fp": test_fp}
 
     return configuration
 
@@ -75,6 +76,8 @@ if __name__ == "__main__":
     print("These tests were designed to validate the tapestry version listed above.")
     dict_config = parse_config()
     dict_args = parse_args()
+    if not os.path.isdir(dict_config["path_temp"]):
+        os.mkdir(dict_config["path_temp"])
     if dict_args["do_network_tests"]:
         input("Start your FTP daemons for the network tests now, and press enter to continue.")
     if dict_args["runtime"]:

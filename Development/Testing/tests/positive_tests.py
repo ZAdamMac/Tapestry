@@ -43,12 +43,12 @@ def establish_logger(config):
     logger.log("----------------------------[Positive Unit Tests]-----------------------------")
     logger.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
     hasher = hashlib.sha256()
-    hasher.update(open("../Source/Tapestry/__main__.py", "rb").read())
+    hasher.update(open("../../Source/Tapestry/__main__.py", "rb").read())
     taphash = hasher.hexdigest()
     logger.log("\n" + str(taphash) + "\n")
     logger.log("\nWhich relies on the classes library with hash:")
     hasher = hashlib.sha256()
-    hasher.update(open("../Source/Tapestry/classes.py", "rb").read())
+    hasher.update(open("../../Source/Tapestry/classes.py", "rb").read())
     taphash = hasher.hexdigest()
     logger.log("\n" + str(taphash) + "\n")
 
@@ -68,8 +68,8 @@ def runtime(dict_config, do_network):
 
     # We're storing a lot of the externals of the testing in a config file.
     with open(os.path.join(dict_config["path_config"],
-                           os.path.join("config", "positive_tests.json")), "rb") as f:
-        dict_tests = json.load(f.read())
+                           os.path.join("config", "positive_tests.json")), "r") as f:
+        dict_tests = json.load(f)
 
     # The following two lists should be populated with the function variables
     # Populate this list with all tests to be run locally.
@@ -166,12 +166,11 @@ def test_block_yield_full(test_block):
     """A very simple test to determine the state of the "full" attribute.
 
     :param test_block: The block unit under test
-    :param logger: System logger
     :return:
     """
     block = tapestry.Block("none", 1, 1, 0)
     block.put("foo", {"fsize": 1})
-    if not test_block.full:
+    if not block.full:
         return["[FAIL] The block indicates it is not full. This is unexpected."]
     else:
         return []
@@ -303,9 +302,9 @@ def test_pkl_find(config):
     """
     errors = []
     test_pkl_path = os.path.join(config["path_config"], os.path.join("test articles", "sample.psk"))
-    with open(test_pkl_path, "r") as f:
+    with open(test_pkl_path, "rb") as f:
         try:
-            test_pkl = tapestry.RecoveryIndex(f)
+            test_pkl = tapestry.RecoveryIndex(f.read())
         except tapestry.RecoveryIndexError:
             errors.append("[ERROR] the sample file failed to unpack. This usually indicates that"
                           " the RecoveryIndex class cannot parse Pickle files correctly.")
@@ -451,7 +450,7 @@ def test_riff_find(config):
     """
     errors = []
     test_pkl_path = os.path.join(config["path_config"], os.path.join("test articles", "testblock.riff"))
-    with open(test_pkl_path, "r") as f:
+    with open(test_pkl_path, "rb") as f:
         try:
             test_pkl = tapestry.RecoveryIndex(f)
         except tapestry.RecoveryIndexError:
