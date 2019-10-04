@@ -114,7 +114,7 @@ def runtime(dict_config, do_network):
                     print("Test %s was undefined in the JSON file and skipped.")
         log.save()
     else:
-        print("Exiting the runtime tests as the config validity failed.")
+        print("Exiting the positive tests as the config validity failed.")
         exit()
 
 
