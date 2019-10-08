@@ -26,7 +26,7 @@ import sys
 import tarfile
 import uuid
 
-__version__ = "2.0.0"
+__version__ = "2.0.2"
 
 # Class Definitions
 
@@ -1087,6 +1087,7 @@ def verify_blocks(ns, gpg_agent, testing=False):
                 print("Compare to a known-good fingerprint for this user.")
                 if not testing:
                     resume = input("Approve this fingerprint? (y/n)")
+                else:
                     resume = "y"
                 if "y" in resume.lower():
                     valid_blocks.append(block)
