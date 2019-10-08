@@ -190,9 +190,9 @@ def test_verify_invalid_block(config):
 
     results = tapestry.verify_blocks(ns, gpg_agent=gnupg.GPG(verbose=True), testing=True)
 
-    if len(results) == 1:
+    if len(results) == 2:
        errors.append("[ERROR] The verify_blocks function accepted this invalid signature.")
-    elif len(results) == 0:
+    elif len(results) == 1:
         pass
     else:
         errors.append("[ERROR] verify_blocks returned an unexpected number of items. See response.")
