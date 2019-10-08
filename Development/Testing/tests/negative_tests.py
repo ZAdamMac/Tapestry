@@ -40,7 +40,7 @@ def establish_logger(config):
     :param config: dict_config.
     :return: logger, a logging object.
     """
-    name_log = ("positive_tests-%s-%s.log" % (config["test_user"], str(date.today())))
+    name_log = ("negative_tests-%s-%s.log" % (config["test_user"], str(date.today())))
     logger = framework.SimpleLogger(config["path_logs"], name_log, "positive-tests")
     logger.log("----------------------------[Negative Unit Tests]-----------------------------")
     logger.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
