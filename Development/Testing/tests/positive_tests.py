@@ -273,7 +273,7 @@ def test_build_ops_list(config):
             validity["test_hash"] = True
         else:
             errors.append("[FAIL] The item referred to has an unexpected SHA256 hash. Bad pathing?")
-            errors.append("Actual Value: %s" % test_hash.hexdigest)
+            errors.append("Actual Value: %s" % test_hash.hexdigest())
             errors.append("Expected Value: %s" % sample_item["sha256"])
         if test_size == sample_item["fsize"]:
             errors.append("[PASS] The item referred to as a sample has the expected overall size on disk.")
@@ -493,7 +493,7 @@ def test_TaskCheckIntegrity_call(config):
     string_test = ''.join(choice(printable) for i in range(2048))
     hasher = hashlib.sha256()
     hasher.update(string_test.encode('utf-8'))
-    control_hash = hasher.hexdigest
+    control_hash = hasher.hexdigest()
     test_file = os.path.join(dir_temp, "hash_test")
     test_tar = os.path.join(dir_temp, "test_tar")
     with open(test_file, "w") as f:
@@ -559,7 +559,7 @@ def test_TaskDecompress(config):
     else:
         with open(target, "rb") as t:
             hash_target.update(t.read())
-            if hash_target.hexdigest == hash_control.hexdigest:
+            if hash_target.hexdigest() == hash_control.hexdigest():
                 pass
             else:
                 errors.append("[FAIL] TaskDecompress output a file with a different hash than the original.")
@@ -591,7 +591,7 @@ def test_TaskDecrypt(config):
             with open(expected, "rb") as f:
                 hash_test = hashlib.sha256()
                 hash_test.update(f.read())
-            if hash_test.hexdigest == hash_control.hexdigest:
+            if hash_test.hexdigest() == hash_control.hexdigest():
                 pass  # No change to errors is expected
             else:
                 errors.append("[ERROR] Test file checksum mismatched with control; something's gone wrong.")
@@ -717,7 +717,7 @@ def test_TaskTarUnpack(config):
             hash_test = hashlib.sha256()
             hash_test.update(f.read())
 
-        if hash_test.hexdigest == hash_control.hexdigest:
+        if hash_test.hexdigest() == hash_control.hexdigest():
             pass  # doing this here leaves len(errors)=0, which is the test_case pass condition.
         else:
             errors.append("[ERROR] The file in question has changed from the original.")
