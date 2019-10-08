@@ -188,7 +188,7 @@ def test_verify_invalid_block(config):
     ns = tapestry.Namespace()
     ns.workDir = os.path.join(config["path_config"], "test articles")
 
-    results = tapestry.verify_blocks(ns, gpg_agent=gnupg.GPG(verbose=True))
+    results = tapestry.verify_blocks(ns, gpg_agent=gnupg.GPG(verbose=True), testing=True)
 
     if len(results) == 1:
        errors.append("[ERROR] The verify_blocks function accepted this invalid signature.")

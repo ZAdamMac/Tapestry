@@ -858,7 +858,7 @@ def test_verify_blocks(config):
     ns = tapestry.Namespace()
     ns.workDir = os.path.join(config["path_config"], "test articles")
 
-    results = tapestry.verify_blocks(ns, gpg_agent=gnupg.GPG(verbose=True))
+    results = tapestry.verify_blocks(ns, gpg_agent=gnupg.GPG(verbose=True), testing=True)
 
     if len(results) == 1:
         if results[0] == os.path.join(ns.workDir, "testtap.tap"):
