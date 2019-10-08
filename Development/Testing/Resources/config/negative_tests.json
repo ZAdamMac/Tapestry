@@ -1,0 +1,26 @@
+{
+  "test_block_invalid_put": {
+        "title": "------------------[Block Placement Test: Invalid-Sized File]------------------",
+        "description": "This test validates that a tapestry.Block object will not accept a put() request for a file that is larger than the remaining size of the block.",
+        "pass message": "[PASS] The Block object indicated it rejected the file.",
+        "fail message": "[FAIL] See Error:"
+    },
+  "test_verify_invalid_block": {
+        "title": "------------------[Block Signature Validation Test]------------------",
+        "description": "This test validates that tapestry will reject a file with invalid signatures",
+        "pass message": "[PASS] The verify_blocks correctly ignored the invalidly-signed file.",
+        "fail message": "[FAIL] See Error:"
+    },
+  "test_recovery_index_invalid": {
+        "title": "------------------[Recovery Index Confusion Test]------------------",
+        "description": "Makes sure that RecoveryIndexError is raised correctly when loading a tapestry.RecoveryIndex option with data.",
+        "pass message": "[PASS] Intercepted the expected exception.",
+        "fail message": "[FAIL] See Error:"
+    },
+  "test_decompress_uncompressed": {
+        "title": "------------------[Task_Decompress Test: Uncompressed Target]------------------",
+        "description": "This test validates that the expected response is returned by TaskDecompress when it is called against a target file that does not contain BZ2 compressed data.",
+        "pass message": "[PASS] The file was correctly skipped.",
+        "fail message": "[FAIL] See Error:"
+    }
+}
