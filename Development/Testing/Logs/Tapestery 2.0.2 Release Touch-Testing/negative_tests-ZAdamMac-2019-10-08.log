@@ -1,0 +1,62 @@
+===============================================================================
+This is a log of tests run against some version of Tapestry by the 
+positive-tests.py testing utility. The date is indicated in the filename. 
+It should be made clear that these tests do not indicate any sort of warranty 
+or guarantee of merchantability.
+
+=======TEST MACHINE SPECS=======
+Cores Available: 4 
+RAM Available: 11393 MB 
+================================
+
+
+
+================================BEGIN TESTING==================================
+----------------------------[Negative Unit Tests]-----------------------------
+
+This log is for a test of a development version of Tapestry, with SHA256 hash:
+
+616323e33dc0661c0c00054f61667f9128880496d6580040883ae328a654c069
+
+
+Which relies on the classes library with hash:
+
+eb780b9495e76005a8ff86c5cfd359c0a0f7473482757369ab8d55305c4b2f84
+
+------------------[Block Placement Test: Invalid-Sized File]------------------
+This test validates that a tapestry.Block object will not accept a put()
+request for a file that is larger than the remaining size of the block.
+
+
+[PASS] The Block object indicated it rejected the file.
+
+
+------------------[Block Signature Validation Test]------------------
+This test validates that tapestry will reject a file with invalid signatures
+
+
+[PASS] The verify_blocks correctly ignored the invalidly-signed file.
+
+
+------------------[Recovery Index Confusion Test]------------------
+Makes sure that RecoveryIndexError is raised correctly when loading a
+tapestry.RecoveryIndex option with data.
+
+
+[PASS] Intercepted the expected exception.
+
+
+------------------[Task_Decompress Test: Uncompressed Target]------------------
+This test validates that the expected response is returned by TaskDecompress
+when it is called against a target file that does not contain BZ2 compressed
+data.
+
+
+[PASS] The file was correctly skipped.
+
+
+
+
+===============================[END OF TESTING]===============================
+ Tester Comments: 
+ This test was run on 2019-10-08

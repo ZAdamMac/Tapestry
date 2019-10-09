@@ -89,6 +89,8 @@ def runtime(dict_config, do_network):
 
     if can_run:  # Any new tests need to be added here.
         log = establish_logger(dict_config)
+        if not os.path.exists(dict_config["path_temp"]):
+            os.mkdir(dict_config["path_temp"])
         for test in list_local_tests:
             test_name = test.__name__
             try:

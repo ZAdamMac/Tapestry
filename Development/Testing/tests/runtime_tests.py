@@ -112,10 +112,10 @@ def test_gen_key(config, logs):
     :param logs:
     :return:
     """
-    config_this = os.path.join(config["path_config"], "/config/genkey-test.cfg")
+    config_this = os.path.join(config["path_config"], "config/genkey-test.cfg")
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--genKey", "--devtest", "-c", config_this])
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--genKey", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--genKey completed in %s" % elapse)
     logs.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
@@ -134,7 +134,7 @@ def test_inc(config, logs):
     config_this = os.path.join(config["path_config"], "config/inc-test.cfg")
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devtest", "-c", config_this])
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--inc", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--inc completed in %s" % elapse)
     logs.log("Inclusive Mode Test Completed in %s - Returned:" % elapse)
@@ -150,10 +150,10 @@ def test_rcv(config, logs):
     :param logs:
     :return:
     """
-    config_this = os.path.join(config["path_config"], "/config/rcv-test.cfg")
+    config_this = os.path.join(config["path_config"], "config/rcv-test.cfg")
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devtest", "-c", config_this])
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--rcv", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--rcv completed in %s" % elapse)
     logs.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
