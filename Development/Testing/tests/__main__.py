@@ -59,7 +59,7 @@ def parse_args():
             Run through the automated testing for Tapestry development builds. 
             \n Full documentation at https://github.com/ZAdamMac/Tapestry/blob/master/TESTDOCS.md
                                             """)
-    parser.add_argument('--net', help="Skip network unit tests.",
+    parser.add_argument('--net', help="Include the network unit tests.",
                         action="store_true")
     parser.add_argument('--runtime', help="Include the full-runtime integration tests",
                         action="store_true")

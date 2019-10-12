@@ -15,6 +15,7 @@ https://github.com/ZAdamMac/Tapestry
 
 from datetime import date
 import os
+from platform import system
 from textwrap import wrap
 import time
 
@@ -40,6 +41,7 @@ class SimpleLogger:
         self.loggerfile.write("===============================================================================\nThis is a log of tests run against some version of Tapestry by the \n%s.py testing utility. The date is indicated in the filename. \nIt should be made clear that these tests do not indicate any sort of warranty \nor guarantee of merchantability.\n\n=======TEST MACHINE SPECS=======\n" % str(test))
         cores = os.cpu_count()
         self.loggerfile.write("Cores Available: %s \n" % cores)
+        self.loggerfile.write("Operating System: %s \n" % system())
         RAM = os.popen("free -m").readlines()[1].split()[1]
         self.loggerfile.write("RAM Available: %s MB \n" % RAM)
         self.loggerfile.write("================================\n\n\n\n================================BEGIN TESTING==================================\n")
