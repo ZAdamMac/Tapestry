@@ -49,3 +49,8 @@ Due to the requirement that all tests be PEP-8 compliant and include a docstring
 -**test_decompress_uncompressed** - calls an instance of `tapestry.TaskDecompress` against a non-bz2-compressed file, for which it is expected to return a response indicating the file was skipped.
 - **test_recovery_index_invalid** - calls an instance of RecoveryIndex against an invalid file to ensure the correct exception is raised.
 - **test_verify_invalid_block** - calls verify_blocks into a directory where a block with a deliberately-broken signiature exists and fails the test if any more than the one expected good file is accepted.
+- **test_sftp_connect_invalid** - Tests the SFTP connection function will not connect to servers other than the one with an explicitly-provided-trust in the config.
+- **test_sftp_connect_down** - Tests that the SFTP connection behaves in a predictable way when the SFTP server cannot be found, as a local-storage failover would be needed in such a case.
+- **test_sftp_place** - Validates a predictable failure mode when the sftp_place function tries to put a file somewhere it is not permitted to do so, as a local-storage failover would be needed in such a case.
+- **test_sftp_find** - What happens when we try to run find in a location that doesn't exist?
+- **test_sftp_fetch** - What happens when we try to retrieve a file that doesn't exist or for which we don't have permission? This shouldn't be possible based on how the fetch function is called, but you never know.

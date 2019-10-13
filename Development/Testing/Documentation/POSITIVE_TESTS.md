@@ -69,3 +69,7 @@ Due to the requirement that all tests be PEP-8 compliant and include a docstring
 - **test_TaskTarBuild** - As `test_TaskCompress`, but for tarring rather than compression.
 - **test_TaskTarUnpack** - Unpacks that which was created by test_TaskTarBuild by calling the appropriate task class out of tapestry, then validates the contents using a checksum.
 - **test_verify_blocks** - Uses the testing bypass to check that a tapestry block with a known-good signiature file would pass verify_blocks, without waiting for human interaction at the appropriate place.
+- **test_sftp_connect** - Makes sure a valid connection object is returned when attempting to connect to SFTP services.
+- **test_sftp_place** - Takes a known-to-exist SFTP sample file and makes sure it can be placed on a remote server.
+- **test_sftp_find** - Takes a "find" from the remote SFTP host and makes sure a known-to-exist file is present. See network setup for more information.
+- **test_sftp_fetch** - Retrieves a known-to-exist file and puts it in temporary storage, then makes sure the file arrived where it should have.

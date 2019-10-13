@@ -112,5 +112,29 @@
         "description": "Calls the verify_blocks function against a known-good block (as used in the MRF test) in order to validate that both the expected types of data are returned and that validation functions as intended.",
         "pass message": "[PASS] verify_blocks appears to work as designed.",
         "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_connnect": {
+        "title": "----------------------------[SFTP Connection Test]-----------------------------",
+        "description": "Calls sftp_connect against a known-good SFTP server using correct credentials, and ensures a valid response came back.",
+        "pass message": "[PASS] sftp_connect returns valid connection objects.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_place": {
+        "title": "----------------------------[SFTP Placement Test]------------------------------",
+        "description": "Attempts to place a file onto an SFTP server and observes results.",
+        "pass message": "[PASS] The file was delivered without errors raised.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_find": {
+        "title": "---------------------------[SFTP File Listing Test]----------------------------",
+        "description": "Calls sftp_find to obtain a listing of all files in the target directory on the SFTP, then verifies that a known-good control file appears.",
+        "pass message": "[PASS] SFTP File Listing returned the control file.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_fetch": {
+        "title": "--------------------------[SFTP File Retrieval Test]---------------------------",
+        "description": "Attempts to fetch a known-to-exist file from the SFTP share and ensures it is delivered in the expected location.",
+        "pass message": "[PASS] Control file appears correctly in local filesystem.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
     }
 }

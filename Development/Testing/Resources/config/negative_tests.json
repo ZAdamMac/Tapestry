@@ -22,5 +22,41 @@
         "description": "This test validates that the expected response is returned by TaskDecompress when it is called against a target file that does not contain BZ2 compressed data.",
         "pass message": "[PASS] The file was correctly skipped.",
         "fail message": "[FAIL] See Error:"
+    },
+    "test_TaskCheckIntegrity": {
+        "title": "----------------------------[Integrity Check Test]-----------------------------",
+        "description": "Feeds a garbage hash to TaskCheckIntegrity to ensure that files are correctly rejected by this test when necessary.",
+        "pass message": "[PASS] The hashing mismatch was correctly detected",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_connnect_invalid": {
+        "title": "-------------------------[SFTP Connection Trust Test]---------------------------",
+        "description": "Calls sftp_connect against a known-good SFTP server using an invalid trust, and ensures a valid response came back.",
+        "pass message": "[PASS] sftp_connect refused to connect to an untrusted server.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_connnect_down": {
+        "title": "-----------------------[SFTP Connection Failure Test]--------------------------",
+        "description": "Calls sftp_connect against a non-extant SFTP server and ensures the expected responses come back",
+        "pass message": "[PASS] sftp_connect behaves correctly when the target server is down.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_place": {
+        "title": "----------------------------[SFTP Placement Test]------------------------------",
+        "description": "Attempts to place a file onto an SFTP server without permissions and observes results.",
+        "pass message": "[PASS] sftp_place behaves as expected when write permissions are absent.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_find": {
+        "title": "---------------------------[SFTP File Listing Test]----------------------------",
+        "description": "Calls sftp_find to obtain a listing of all files in the target directory on the SFTP without adequate permissions.",
+        "pass message": "[PASS] sftp_find behaves as expected when write permissions are missing.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
+    },
+    "test_sftp_fetch": {
+        "title": "--------------------------[SFTP File Retrieval Test]---------------------------",
+        "description": "Attempts to fetch a known-to-exist file from the SFTP share without appropriate permission.",
+        "pass message": "[PASS] sftp_fetch behaves as expected on encountering an error.",
+        "fail message": "[FAIL] One or more errors were raised in testing:"
     }
 }

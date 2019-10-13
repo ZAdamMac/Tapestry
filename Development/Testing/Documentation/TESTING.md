@@ -3,12 +3,20 @@
 Use of the Tapestry Testing Framework is not yet quite a fully-automated process, executable with a keyboard shortcut prior to commit. There's still no CI framework in place, either.
 
 Right now, the general path of testing Tapestry under TTF looks something like this:
-0. Create a virtual environment to isolate your test version of tapestry from broad (optional but highly recommended)
+0. Create a virtual environment to isolate your test version of tapestry from production/default, and set up a network.
 1. Package the current version of tapestry you're developing.
 2. Install Tapestry from this local package
 3. Run the tests
 
 The Python Documentation has [better information on using virtual environments than we could ever hope to produce.](https://docs.python.org/3/tutorial/venv.html)
+
+# 0. Setting Up for Network Testing
+In order to set up for network testing, you require a system where you can establish an SFTP service. Within that service you require two folders below chroot:
+
+- `drop`, which can be named anything. You set this value as SFTP Directory in the test config. The SFTP user you authenticate as must be able to read and write to this directory.
+- `unreadable`, which must be called such. The SFTP user you authenticate as should not be able to read or write to that directory.
+
+You should place a file containing a few bytes of arbitrary data within drop named `control-file.txt` which is used in the positive version of test_sftp_fetch.
 
 # 1. Packaging Tapestry
 Much like the Development Team would do in order to get ready to push a new version of Tapestry to PyPI, the source of the development version of tapestry can be packaged quite nicely. From a shell located at `Tapestry/Development/Source`, run:

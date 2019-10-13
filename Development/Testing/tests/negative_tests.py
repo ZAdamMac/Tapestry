@@ -77,7 +77,7 @@ def runtime(dict_config, do_network):
     # The following two lists should be populated with the function variables
     # Populate this list with all tests to be run locally.
     list_local_tests = [test_block_invalid_put, test_verify_invalid_block,
-                        test_recovery_index_invalid, test_decompress_uncompressed
+                        test_recovery_index_invalid, test_decompress_uncompressed,
                         test_TaskCheckIntegrity]
     # Populate this list with all the network tests (gated by do_network)
     list_network_tests = [test_sftp_connect_invalid, test_sftp_connect_down, test_sftp_find,
@@ -380,7 +380,7 @@ def test_sftp_fetch(config):
                                  config["path_temp"])
 
     if raised:
-        if not raised.startswith("404")
+        if not raised.startswith("404"):
             errors.append("[ERROR] Raised: %s" % raised)
     else:
         for root, dirs, found in os.walk(config["path_temp"]):
