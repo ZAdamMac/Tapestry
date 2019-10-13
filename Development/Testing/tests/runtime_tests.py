@@ -1,109 +1,165 @@
-#  Functional Testing Script for Tapestry versions 1.0 and later
-#  For full commentary and documentation view TESTDOCS.md in the repo.
+"""
+This script is a component of the Tapestry project's testing framework.
+Specifically, this component defines all the full-runtime tests. These
+are skipped for most commits but a requirement for the final code-
+modifying commit prior to the packaging of a release PR.
 
-#  Imports Block
-import configparser as cp
+Author: Zac Adam-MacEwen (zadammac@kenshosec.com)
+Tapestry is a product of Kensho Security Labs.
+Produced under license.
+
+Full license and documentation to be found at:
+https://github.com/ZAdamMac/Tapestry
+"""
+
+from . import framework
 from datetime import date
 import hashlib
 import os
 import shutil
 import subprocess
-from . import framework
 import time
 
+__version__ = "2.1.0dev"
 
-def runtime():
-    perma_home = os.getcwd()
 
-    cfg = cp.ConfigParser()
-    cfg.read("tapestry-test.cfg")
-    out = cfg.get("Environment Variables", "output path")
-    uid = cfg.get("Environment Variables", "uid")
-    host = cfg.get("Environment Variables", "compID")
-    test_ftp_user = cfg.get("Network Configuration", "username")
-    logs = os.path.join(perma_home, "Logs")
-    block_size = cfg.get("Environment Variables", "blocksize")
-    dev_level, bar = os.path.split(perma_home)
-    full_path_tapestry = os.path.join(dev_level, "Source")
+def establish_logger(config):
+    """Establish a logger to use for this test. Based on the SimpleLogger, so
+    not actually appropriate for general use beyond this case.
 
-    shutil.copy("tapestry-test.cfg", "tapestry-test.cfg.bak")
-
-    path_control = out.replace("Test", "Control")
-
-    #  Establish a Logger for Test Output
-    if not os.path.isdir(logs):
-        os.mkdir(logs)
-
-    logname = ("runtime_test-%s-%s.log" % (uid, str(date.today())))
-    log = framework.SimpleLogger(logs, logname, "runtime-tests")
-
-    # Do the bulk runs and context switching to generate the test outputs
-    # (make sure to seperate outputs between runs!)
-    log.log("------------------------------[SAMPLE GENERATION]------------------------------")
-    log.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
+    :param config: dict_config.
+    :return: logger, a logging object.
+    """
+    name_log = ("runtime_test-%s-%s.log" % (config["test_user"], str(date.today())))
+    logger = framework.SimpleLogger(config["path_logs"], name_log, "runtime-tests")
+    logger.log("------------------------------[SAMPLE GENERATION]------------------------------")
+    logger.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
     hasher = hashlib.sha256()
-    hasher.update(open("../Source/Tapestry/__main__.py", "rb").read())
+    hasher.update(open("../../Source/tapestry/__main__.py", "rb").read())
     taphash = hasher.hexdigest()
-    log.log("\n"+str(taphash)+"\n")
-    log.log("\nWhich relies on the classes library with hash:")
+    logger.log("\n" + str(taphash) + "\n")
+    logger.log("\nWhich relies on the classes library with hash:")
     hasher = hashlib.sha256()
-    hasher.update(open("../Source/Tapestry/classes.py", "rb").read())
+    hasher.update(open("../../Source/tapestry/classes.py", "rb").read())
     taphash = hasher.hexdigest()
-    log.log("\n"+str(taphash)+"\n")
+    logger.log("\n" + str(taphash) + "\n")
 
-    cfg.read("tapestry-test.cfg")
-    cfg.set("Environment Variables", "output path", os.path.join(out, "Non-Inc"))
-    with open("tapestry-test.cfg", "w") as warp:
-        cfg.write(warp)
-    if not os.path.isdir(os.path.join(out, "Non-Inc")):
-        os.mkdir(os.path.join(out, "Non-Inc"))
-    print("Now Beginning the --genKey test")
-    here = os.getcwd()
+    return logger
+
+
+def runtime(dict_config):
+    """A simple runtime function that does the actual operating floor. This is
+    what gets called from the main script in order to actually run the tests.
+
+    :param dict_config: required, provides all config information.
+    :return:
+    """
+    expects = ["test_user", "path_logs", "path_config", "path_corpus", "path_temp"]  # Add new dict_config keys here
+    can_run = framework.validate_dict_config(dict_config, expects)
+    if can_run:  # Any new tests need to be added here.
+        log = establish_logger(dict_config)
+        test_gen_key(dict_config, log)
+        test_inc(dict_config, log)
+        test_rcv(dict_config, log)
+        delete = test_conformity(dict_config, log)
+        log.save()
+        if delete:
+            shutil.rmtree(dict_config["path_temp"])
+    else:
+        print("Exiting the runtime tests as the config validity failed.")
+        exit()
+
+
+def test_conformity(config, logs):
+    logs.log("-------------------------------[CHECK INTEGRITY]-------------------------------")
+
+    failure = False
+
+    for path_here, list_subdirs, files in os.walk(config["path_corpus"]):
+        for file in files:
+            hasher = hashlib.md5()
+            path_origin = os.path.join(path_here, file)
+            hasher.update(open(path_origin, "rb").read())
+            hash_origin = hasher.hexdigest()
+
+            hasher = hashlib.md5()
+            path_placed = path_origin.replace(config["path_corpus"], config["path_temp"])
+            try:
+                hasher.update(open(path_placed, "rb").read())
+                hash_test = hasher.hexdigest
+            except FileNotFoundError:
+                hash_test = b'0'
+
+            if hash_origin != hash_test:
+                failure = True
+
+    if failure:
+        print("[FAIL] Runtime Integrity Check Reveals mismatched or missing files.")
+        logs.log("[FAIL] Runtime Integrity Check Reveals mismatched or missing files.")
+    else:
+        print("[PASS] Runtime Integrity Check validates files unpacked as expected.")
+        logs.log("[PASS] Runtime Integrity Check validates files unpacked as expected.")
+
+    return not failure
+
+
+def test_gen_key(config, logs):
+    """Test the genkey runtime without inclusivity, and put the subprocess
+    output back into the logs. Relies on the "genkey-test.cfg" file in
+    Testing/Resources/config.
+
+    :param config:
+    :param logs:
+    :return:
+    """
+    config_this = os.path.join(config["path_config"], "config/genkey-test.cfg")
+
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--genKey", "--devtest", "-c", "tapestry-test.cfg"])
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--genKey", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--genKey completed in %s" % elapse)
-    log.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
-    log.log(str(waiting))
+    logs.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
+    logs.log(str(waiting))
 
-    cfg.read("tapestry-test.cfg.bak")
-    cfg.set("Environment Variables", "output path", os.path.join(out, "Inc"))
-    with open("tapestry-test.cfg", "w") as warp:
-        cfg.write(warp)
 
-    print("Now beginning --inc test.")
+def test_inc(config, logs):
+    """Test the inclusive runtime, and put the subprocess
+    output back into the logs. Relies on the "inc-test.cfg" file in
+    Testing/Resources/config.
+
+    :param config:
+    :param logs:
+    :return:
+    """
+    config_this = os.path.join(config["path_config"], "config/inc-test.cfg")
+
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--inc", "--devtest", "-c", "tapestry-test.cfg"])
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--inc", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--inc completed in %s" % elapse)
-    log.log("Inclusive Backup Mode Test Completed in %s - Returned:" % elapse)
-    log.log(str(waiting))
+    logs.log("Inclusive Mode Test Completed in %s - Returned:" % elapse)
+    logs.log(str(waiting))
 
-    cfg.read("tapestry-test.cfg")
-    cfg.set("Environment Variables", "output path", os.path.join(out,"Corpus"))
-    cfg.set("Environment Variables", "recovery path", os.path.join(out, "Inc"))
-    docs = cfg.get("Default Locations/Nix", "docs")
-    cfg.set("Default Locations/Nix", "docs", docs.replace("Control", "Test"))
-    pics = cfg.get("Default Locations/Nix", "photos")
-    cfg.set("Default Locations/Nix", "photos", pics.replace("Control", "Test"))
-    vids = cfg.get("Additional Locations/Nix", "video")
-    cfg.set("Additional Locations/Nix", "video", vids.replace("Control", "Test"))
-    cfg.remove_option("Additional Locations/Nix", "Music")
-    # This should still wind up in corpus if you didn't break directionless recovery.
-    with open("tapestry-test.cfg", "w") as warp:
-        cfg.write(warp)
 
-    print("Now beginning --rcv test.")
-    waiting = subprocess.run(["python3.6", "-m", "tapestrydev", "--rcv", "--devtest", "-c", "tapestry-test.cfg"])
+def test_rcv(config, logs):
+    """Test the Recovery runtime, and put the subprocess output back
+    into the logs. Relies on the "rcv-test.cfg" file in
+    Testing/Resources/config. View the testdocs for details.
+
+    :param config:
+    :param logs:
+    :return:
+    """
+    config_this = os.path.join(config["path_config"], "config/rcv-test.cfg")
+
+    start = time.monotonic()
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--rcv", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--rcv completed in %s" % elapse)
-    log.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
-    log.log("%s" % waiting)
+    logs.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
+    logs.log(str(waiting))
 
-    shutil.copy("tapestry-test.cfg.bak", "tapestry-test.cfg")
-    print("Sample generation complete!")
-    log.log("-------------------------------------------------------------------------------")
-    log.save()
 
 if __name__ == "__main__":
-    runtime()
+    print("This script is not intended to be run in standalone mode. Run main.")
+    exit(0)
