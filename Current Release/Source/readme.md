@@ -15,10 +15,10 @@ Full documentation is available as part of DOCUMENTATION.md
 
 Building Tapestry has been a large and time-consuming project, but it would have been even more so without the work of the developers of our dependencies - GnuPG, the Python-GnuPG module, and obvious python itself.
 
-If you would like to contribute to the development of Tapestry, feel free to submit a pull request, or perhaps buy me a coffee at [ko-fi.com/KenshoSec](https://ko-fi.com/KenshoSec)
+If you would like to contribute to the development of Tapestry, feel free to submit a pull request, or perhaps buy me a coffee at [ko-fi.com/KenshoSec](https://ko-fi.com/KenshoSec), or consider backing [@ZAdamMac on Github Sponsors](https://github.com/users/ZAdamMac/sponsorship.)
 	
 ## Security Considerations
-Tapestry relies on a well-known FOSS implementation of the PGP protocol in order to securely store the archives it generates, and also to provide a mechanism for verifying the individual who generated the backup. It does this using two separate keys - the Encryption Key (sometimes called the "Disaster Recovery" key, after the comment included on keys Tapestry generates) and an optional, though strongly recommended, signing key specified by the user.
+Tapestry relies on Gnu Privacy Guard (GPG), a well-known FOSS implementation of the PGP protocol, in order to securely store the archives it generates, and also to provide a mechanism for verifying the individual who generated the backup. It does this using two separate keys - the Encryption Key (sometimes called the "Disaster Recovery" key, after the comment included on keys Tapestry generates) and an optional, though strongly recommended, signing key specified by the user.
 
 ### Care and Feeding of the Disaster Recovery Key
 When you run Tapestry with the `--genKey` flag the program will export a new Disaster Recovery key from GPG as two separate files: `DR.key` and `DR-pub.key`. The former contains both the private and public keys of the RSA key-pair - the latter contains only the public portion.
@@ -27,15 +27,15 @@ The private key and its associated file should be kept in a secure location - pr
 
 By design, the public key can be widely distributed if desired, as it cannot be used to decrypt files it was used to encrypt, and public keys are not meant to be held as secret anyway.
 
-### In the Event of a Compromise, Do Not Break Glass
-It's possible that your `DR.key` file may be compromised through misuse, overuse, carelessness, or malicious action. Don't panic. If your archives are stored remotely and on offline, removable media they will not be immediately accessible to an attacker, necessarily. The decision to destroy these archives or not is ultimately up to the user.
+### Reacting to Key Compromises
+It's possible that your `DR.key` (private half) file may be compromised through misuse, overuse, carelessness, or malicious action. Don't panic. If your archives are stored remotely and on offline, removable media they will not be immediately accessible to an attacker, necessarily. The decision to destroy these archives or not is ultimately up to the user.
 
-If a compromise of your storage is not in your threat model, you can still issue the revocation certificate over your key server of choice, preventing further archives from being written to the corresponding public key. Doing only prevents new archives from being generated - the compromised key can still be used to open your files.
+If a compromise of your key storage is not in your threat model, you can still issue the revocation certificate over your key server of choice, preventing further archives from being written to the corresponding public key. Doing only prevents new archives from being generated - the compromised key can still be used to open your files.
 
 Do not simply change the passphrase - it will not save you now. Simply revoke and delete the old key, and generate a new one. A tool is under consideration in the future for retroactively recreating .tap archives to use your new key. At present, the only solution is to follow the usual recommendations in generating a fresh backup.
 
 ### Signing - Why and How
-If you are a single user operating Tapestry on one machine and your threat model does not include the possibility of a forged archive being addressed to you, you do not need signing. 
+If you are a single user operating Tapestry on one machine and your threat model does not include the possibility of a forged archive being addressed to you, because you are only storing your archives offline and in a space you physically control, you do not need signing. 
 
 However, if you are using Tapestry across many machines or you are concerned that your public key could be used to generate archives with malicious content, there is a solution, and it is part in parcel with the PGP protocol. In fact, it is the feature of cryptographic signatures that will allow future additions like a network storage mode to be used relatively safely.
 
@@ -66,7 +66,7 @@ Under Linux:
 Once you have all the requirements installed it's time to go ahead with installing Tapestry itself.
 
 ### Installing Tapestry
-Because of a naming collision, Tapestry is not yet available through PyPI - the existing python package by that name is entirely unrelated. We're working with the owners of that repo to try and gain access to the name.
+The following steps are for if you wish to download Tapestry's source files and install them locally. You can install tapestry all in one step using pip, for example: `python3.6 -m pip install tapestry`. This will always get you the current production-release version.
 
 **1. Begin by downloading the latest release of tapestry and its signature from the official github repo.** While older versions are made available for users of the older versions to aid recovery, it is always recommended to use the most recent release version. You should also download the corresponding signature file so that we can verify it. I'll show you how. If you haven't already, this is a good time to obtain the key with the fingerprint "E122 9B2A 2DF4 F2FE 50A5 A23F F373 FF4B 43FC 742F" from an appropriate keyserver. You'll need it to verify the package.
 
