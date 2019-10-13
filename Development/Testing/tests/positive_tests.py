@@ -85,10 +85,8 @@ def runtime(dict_config, do_network):
                         ]
     # Populate this list with all the network tests (gated by do_network)
     list_network_tests = [test_sftp_connect, test_sftp_place, test_sftp_find, test_ftp_fetch]
-    # This list currently left blank as 2.0 network functionality is scrapped
-    # entirely in 2.1's release and is unnecessary at this stage of development.
 
-    if can_run:  # Any new tests need to be added here.
+    if can_run:
         log = establish_logger(dict_config)
         skips = []
         if not os.path.exists(dict_config["path_temp"]):
@@ -907,7 +905,7 @@ def test_sftp_connect(config):
     """
     errors = []
     connection, resp_errors = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                    config["sftp_credential"])
+                                                    config["sftp_credential"], config["sftp_trust"])
 
     if not connection:
         errors.append("[ERROR] Raised: %s" % resp_errors)
@@ -935,7 +933,7 @@ def test_sftp_place(config):
                             os.path.join("test articles", "control-config.cfg"))
 
     connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                    config["sftp_credential"])
+                                                    config["sftp_credential"], config["sftp_trust"])
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
@@ -950,7 +948,8 @@ def test_sftp_place(config):
 
 
 def test_sftp_find(config):
-    """Predicated on the result of test_sftp_put, this test ensures that the list of returned items is as expected from the sftp share.
+    """Predicated on the result of test_sftp_put, this test ensures that the
+    list of returned items is as expected from the sftp share.
 
     :param config:
     :return:
@@ -958,7 +957,7 @@ def test_sftp_find(config):
     errors = []
 
     connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                config["sftp_credential"])
+                                                config["sftp_credential"], config["sftp_trust"])
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
@@ -988,7 +987,7 @@ def test_sftp_fetch(config):
     errors = []
 
     connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                config["sftp_credential"])
+                                                config["sftp_credential"], config["sftp_trust"])
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")

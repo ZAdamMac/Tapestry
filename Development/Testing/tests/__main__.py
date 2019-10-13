@@ -41,10 +41,18 @@ def parse_config():
     path_corpus = parser.get("Environment Information", "Corpus Path")
     path_temp = parser.get("Environment Information", "Runtime Output Path")
     test_fp = parser.get("Environment Information", "Testing Key Fingerprint")
+    sftp_id = parser.get("Network Configuration", "SFTP Hostname/Port")
+    sftp_credential = parser.get("Network Configuration", "SFTP Credential")
+    sftp_uid = parser.get("Network Configuration", "SFTP User")
+    sftp_rootpath = parser.get("Network Configuration", "SFTP Directory")
+    sftp_trust = parser.get("Network Configuration", "SFTP Trust")
 
     configuration = {"test_user": test_user, "path_logs": path_logs,
                      "path_config": path_config, "path_corpus": path_corpus,
-                     "path_temp": path_temp, "test_fp": test_fp}
+                     "path_temp": path_temp, "test_fp": test_fp,
+                     "sftp_id": sftp_id, "sftp_credential": sftp_credential,
+                     "sftp_uid": sftp_uid, "sftp_rootpath": sftp_rootpath,
+                     "sftp_trust": sftp_trust}
 
     return configuration
 
