@@ -26,7 +26,7 @@ import sys
 import tarfile
 import uuid
 
-__version__ = "2.0.0"
+__version__ = "2.0.2"
 
 # Class Definitions
 
@@ -175,9 +175,12 @@ def debug_print(body):
     or not to print the "body" argument to stout.
     """
     output_string = str(body)
-    global state
-    if state.debug:
-        print(output_string)
+    try:
+        global state
+        if state.debug:
+            print(output_string)
+    except NameError:  # In this edge case we are probably running in a test context
+        print(output_string)  # therefore output is likely desired
 
 
 def decompress_blocks(namespace):
@@ -849,69 +852,69 @@ def parse_config(namespace):
     """
     ns = namespace
     ns.currentOS = platform.system()
-    if __name__ == "__main__":
-        config = configparser.ConfigParser()
 
-        if os.path.exists(ns.config_path):
-            config.read(ns.config_path)
-        else:
-            print("The Appropriate config file: %s cannot be found." % ns.config_path)
-            exit()
+    config = configparser.ConfigParser()
 
-        ns.activeFP = config.get("Environment Variables", "Expected FP")
-        ns.fp = config.get("Environment Variables", "Expected FP")
-        ns.signing = config.getboolean("Environment Variables", "Sign by Default")
-        ns.sigFP = config.get("Environment Variables", "Signing FP")
-        ns.keysize = config.getint("Environment Variables", "keysize")
-        ns.compress = config.getboolean("Environment Variables", "Use Compression")
-        ns.compressLevel = config.getint("Environment Variables", "Compression Level")
-        ns.step = "none"
-        ns.sumJobs = 0
-        ns.jobsDone = 0
-        ns.modeNetwork = config.get("Network Configuration", "mode")
-        ns.addrNet = config.get("Network Configuration", "server")
-        ns.portNet = config.getint("Network Configuration", "port")
-        ns.nameNet = config.get("Network Configuration", "username")
-        ns.dirNet = config.get("Network Configuration", "remote drop location")
-        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
-        ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
-            2 ** 20)  # The math is necessary to go from MB to Bytes)
-        ns.compid = config.get("Environment Variables", "compid")
-        ns.recovery_path = config.get("Environment Variables", "recovery path")
-        ns.uid = config.get("Environment Variables", "uid")
-        ns.drop = config.get("Environment Variables", "Output Path")
+    if os.path.exists(ns.config_path):
+        config.read(ns.config_path)
+    else:
+        print("The Appropriate config file: %s cannot be found." % ns.config_path)
+        exit()
 
-        if ns.currentOS == "Linux":
-            ns.workDir = "/tmp/Tapestry/"
-            ns.desktop = str("/home/" + ns.uid + "/Desktop")
-            ns.gpgDir = str("/home/" + ns.uid + "/.gnupg")
-        elif ns.currentOS == "Windows":
-            ns.workDir = "C:\\users\\" + ns.uid + "\\appdata\\local\\temp\\tapestry"
-            ns.desktop = str("C:\\Users\\" + ns.uid + "\\Desktop")
-            ns.gpgDir = "C:\\users\\" + ns.uid + "\\appdata\\roaming\\gnupg"
-        ns.numConsumers = os.cpu_count()
-        debug_print("I am operating with %s consumers." % ns.numConsumers)
+    ns.activeFP = config.get("Environment Variables", "Expected FP")
+    ns.fp = config.get("Environment Variables", "Expected FP")
+    ns.signing = config.getboolean("Environment Variables", "Sign by Default")
+    ns.sigFP = config.get("Environment Variables", "Signing FP")
+    ns.keysize = config.getint("Environment Variables", "keysize")
+    ns.compress = config.getboolean("Environment Variables", "Use Compression")
+    ns.compressLevel = config.getint("Environment Variables", "Compression Level")
+    ns.step = "none"
+    ns.sumJobs = 0
+    ns.jobsDone = 0
+    ns.modeNetwork = config.get("Network Configuration", "mode")
+    ns.addrNet = config.get("Network Configuration", "server")
+    ns.portNet = config.getint("Network Configuration", "port")
+    ns.nameNet = config.get("Network Configuration", "username")
+    ns.dirNet = config.get("Network Configuration", "remote drop location")
+    ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
+    ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
+        2 ** 20)  # The math is necessary to go from MB to Bytes)
+    ns.compid = config.get("Environment Variables", "compid")
+    ns.recovery_path = config.get("Environment Variables", "recovery path")
+    ns.uid = config.get("Environment Variables", "uid")
+    ns.drop = config.get("Environment Variables", "Output Path")
 
-        # lastly, now that we know current OS, let's build the dictionary of categories
-        ns.category_paths = {}
-        ns.categories_default = []
-        ns.categories_inclusive = []  # May be Inc or Default
-        if ns.currentOS == "Linux":
-            relevant = "Default Locations/Nix"
-        else:
-            relevant = "Default Locations/Windows"
-        for category in config.options(relevant):
-            category_path = config.get(relevant, category)
-            ns.category_paths.update({category: category_path})
-            ns.categories_default.append(category)
-        if ns.currentOS == "Linux":
-            relevant = "Additional Locations/Nix"
-        else:
-            relevant = "Additional Locations/Windows"
-        for category in config.options(relevant):
-            category_path = config.get(relevant, category)
-            ns.category_paths.update({category: category_path})
-            ns.categories_inclusive.append(category)
+    if ns.currentOS == "Linux":
+        ns.workDir = "/tmp/Tapestry/"
+        ns.desktop = str("/home/" + ns.uid + "/Desktop")
+        ns.gpgDir = str("/home/" + ns.uid + "/.gnupg")
+    elif ns.currentOS == "Windows":
+        ns.workDir = "C:\\users\\" + ns.uid + "\\appdata\\local\\temp\\tapestry"
+        ns.desktop = str("C:\\Users\\" + ns.uid + "\\Desktop")
+        ns.gpgDir = "C:\\users\\" + ns.uid + "\\appdata\\roaming\\gnupg"
+    ns.numConsumers = os.cpu_count()
+    debug_print("I am operating with %s consumers." % ns.numConsumers)
+
+    # lastly, now that we know current OS, let's build the dictionary of categories
+    ns.category_paths = {}
+    ns.categories_default = []
+    ns.categories_inclusive = []  # May be Inc or Default
+    if ns.currentOS == "Linux":
+        relevant = "Default Locations/Nix"
+    else:
+        relevant = "Default Locations/Windows"
+    for category in config.options(relevant):
+        category_path = config.get(relevant, category)
+        ns.category_paths.update({category: category_path})
+        ns.categories_default.append(category)
+    if ns.currentOS == "Linux":
+        relevant = "Additional Locations/Nix"
+    else:
+        relevant = "Additional Locations/Windows"
+    for category in config.options(relevant):
+        category_path = config.get(relevant, category)
+        ns.category_paths.update({category: category_path})
+        ns.categories_inclusive.append(category)
 
     return ns
 
@@ -1058,7 +1061,7 @@ def unpack_blocks(namespace):
     tasks.join()
 
 
-def verify_blocks(ns, gpg_agent):
+def verify_blocks(ns, gpg_agent, testing=False):
     """Verifies blocks and returns a list of verified blocks as a result"""
     gpg = gpg_agent
     debug_print("VB: We think that ns = %s" % ns)
@@ -1082,7 +1085,10 @@ def verify_blocks(ns, gpg_agent):
                 print("This fingerprint requires approval: %s" % fingerprint)
                 print("The fingerprint claims to be for: %s" % result.username)
                 print("Compare to a known-good fingerprint for this user.")
-                resume = input("Approve this fingerprint? (y/n)")
+                if not testing:
+                    resume = input("Approve this fingerprint? (y/n)")
+                else:
+                    resume = "y"
                 if "y" in resume.lower():
                     valid_blocks.append(block)
                     approved_fingerprints.append(fingerprint)
