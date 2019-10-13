@@ -64,7 +64,8 @@ def runtime(dict_config, do_network):
     :param do_network: Boolean, controls if the network set are run.
     :return:
     """
-    expects = ["test_user", "path_logs", "path_temp", "test_fp"]  # Add new dict_config keys here
+    expects = ["test_user", "path_logs", "path_temp", "test_fp",  # Add new dict_config keys here
+               "sftp_id", "sftp_uid", "sftp_credential", "sftp_rootpath"]
     can_run = framework.validate_dict_config(dict_config, expects)
 
     # We're storing a lot of the externals of the testing in a config file.
@@ -83,12 +84,13 @@ def runtime(dict_config, do_network):
                         test_parse_config, test_verify_blocks
                         ]
     # Populate this list with all the network tests (gated by do_network)
-    list_network_tests = []
+    list_network_tests = [test_sftp_connect, test_sftp_place, test_sftp_find, test_ftp_fetch]
     # This list currently left blank as 2.0 network functionality is scrapped
     # entirely in 2.1's release and is unnecessary at this stage of development.
 
     if can_run:  # Any new tests need to be added here.
         log = establish_logger(dict_config)
+        skips = []
         if not os.path.exists(dict_config["path_temp"]):
             os.mkdir(dict_config["path_temp"])
         for test in list_local_tests:
@@ -100,13 +102,19 @@ def runtime(dict_config, do_network):
                 c = test_dict["pass message"]
                 d = test_dict["fail message"]
                 framework.test_case(dict_config, log, test, a, b, c, d)
-            except KeyError as f:
-                print("Test %s was undefined in the JSON file and skipped." % test_name)
-                print(f)
+            except KeyError:
+                msg = "Test %s was undefined in the JSON file and skipped." % test_name
+                print(msg)
+                skips.append(msg)
+            except AttributeError:
+                msg = ("Test %s rose an attribute error: is the right function defined?"
+                      % test_name)
+                print(msg)
+                skips.append(msg)
 
         if do_network:
             for test in list_network_tests:
-                test_name = test.__name__()
+                test_name = test.__name__
                 try:
                     test_dict = dict_tests[test_name]
                     a = test_dict["title"]
@@ -115,7 +123,16 @@ def runtime(dict_config, do_network):
                     d = test_dict["fail message"]
                     framework.test_case(dict_config, log, test, a, b, c, d)
                 except KeyError:
-                    print("Test %s was undefined in the JSON file and skipped.")
+                    msg = "Test %s was undefined in the JSON file and skipped." % test_name
+                    print(msg)
+                    skips.append(msg)
+                except AttributeError:
+                    msg = ("Test %s rose an attribute error: is the right function defined?"
+                           % test_name)
+                    print(msg)
+                    skips.append(msg)
+        for line in skips:
+            log.log(line)
         log.save()
     else:
         print("Exiting the positive tests as the config validity failed.")
@@ -504,14 +521,14 @@ def test_TaskCheckIntegrity_call(config):
     with tarfile.open(test_tar, "w:") as tf:
         tf.add(test_file)
 
-    # test_task = tapestry.TaskCheckIntegrity(test_tar, "hash_test", control_hash)
-    # check_passed, foo = test_task()
-    #del foo
+    test_task = tapestry.TaskCheckIntegrity(test_tar, "hash_test", control_hash)
+    check_passed, foo = test_task()
+    del foo
 
-    #if check_passed:
-    #    pass
-    #else:
-    #    errors.append("[ERROR] The test article failed to pass TaskCheckIntegrity's test.")
+    if check_passed:
+        pass
+    else:
+        errors.append("[ERROR] The test article failed to pass TaskCheckIntegrity's test.")
 
     return errors
 
@@ -874,6 +891,120 @@ def test_verify_blocks(config):
     else:
         errors.append("[ERROR] verify_blocks returned an unexpected number of items. See response.")
         errors.append("Response: %s" % results)
+
+    return errors
+
+
+def test_sftp_connect(config):
+    """A very simplistic test that validates a known-good set of SFTP
+    information can be used to connect to a given SFTP endpoint and return a
+    valid connection object. The errors returned by sftp_connect are added to
+    the logger output, as is an error if the returned object is not an
+    instance of the expected class.
+
+    :param config:
+    :return:
+    """
+    errors = []
+    connection, resp_errors = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
+                                                    config["sftp_credential"])
+
+    if not connection:
+        errors.append("[ERROR] Raised: %s" % resp_errors)
+
+    if connection:
+        if isinstance(connection, tapestry.SFTPConnection):
+            pass
+        else:
+            errors.append("[ERROR] sftp_connect returned a connection that is"
+                          " not an instance of the SFTPConnection class")
+
+    return errors
+
+
+def test_sftp_place(config):
+    """A quick test that attempts to place a copy of the test article
+    "control-config.cfg" onto the SFTP server. Can fail in two ways: a failure
+    of the dependent sftp_connect call, or actual failure to place the file.
+
+    :param config:
+    :return:
+    """
+    errors = []
+    tgt_file = os.path.join(config["path_config"],
+                            os.path.join("test articles", "control-config.cfg"))
+
+    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
+                                                    config["sftp_credential"])
+
+    if not connection:
+        errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
+        return errors
+
+    placed, raised = tapestry.sftp_place(connection, tgt_file, config["sftp_rootpath"])
+
+    if not placed:
+        errors.append("[ERROR] Raised: %s" % raised)
+
+    return errors
+
+
+def test_sftp_find(config):
+    """Predicated on the result of test_sftp_put, this test ensures that the list of returned items is as expected from the sftp share.
+
+    :param config:
+    :return:
+    """
+    errors = []
+
+    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
+                                                config["sftp_credential"])
+
+    if not connection:
+        errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
+        return errors
+
+    found, raised = tapestry.sftp_find(connection, config["sftp_rootpath"])
+
+    if len(found) == 0:
+        errors.append("[ERROR] Raised: %s" % raised)
+    else:
+        if "control-file.txt" not in found:
+            errors.append("[ERROR] The find operation returned the following "
+                          "list of items, but not the target item:")
+            errors.append(str(found))
+
+    return errors
+
+
+def test_sftp_fetch(config):
+    """A simple test to retreive a test file known to exist on the SFTP server,
+     and place it into path_temp. Tests for success by checking that the file
+    was actually placed.
+
+    :param config:
+    :return:
+    """
+    errors = []
+
+    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
+                                                config["sftp_credential"])
+
+    if not connection:
+        errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
+        return errors
+
+    raised = tapestry.sftp_fetch(connection, config["sftp_rootpath"], "control-file.txt",
+                                 config["path_temp"])
+
+    if raised:
+        errors.append("[ERROR] Raised: %s" % raised)
+    else:
+        for root, dirs, found in os.walk(config["path_temp"]):
+            if "control-file.txt" not in found:
+                errors.append("[ERROR] The find operation returned the following "
+                              "list of items, but not the target item:")
+                errors.append(str(found))
 
     return errors
 
