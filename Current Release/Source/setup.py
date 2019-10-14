@@ -11,6 +11,6 @@ setup(name='tapestry',
       author_email='zadammac@kenshosec.com',
       url='https://www.github.com/zadammac/Tapestry',
       packages=['tapestry'],
-      dependancies=['python-gnupg'],
+      dependencies=['python-gnupg'],
       long_description_content_type="text/markdown"
      )
