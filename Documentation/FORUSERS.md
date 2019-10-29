@@ -1,6 +1,8 @@
 # Tapestry Specialist Backup Tool - User Documentation
 *General-Use Documentation, prepared for Version 2.0.2*
 
+The goal of this specific documentation file is to provide a general overview and basic use cases for tapestry. More information about special use cases and considerations can be found in `FORADMINS.md`
+
 ## Full System Requirements
 Tapestry is a reasonably lightweight and flexible script in its essence, but it does involve some basic requirements.
 
@@ -15,7 +17,7 @@ Tapestry is a reasonably lightweight and flexible script in its essence, but it 
 - GnuPG 2.1.11 or Later
 
 ### Other Considerations
-Tapestry runs can be fairly long - on the order of 12 minutes per default-sized block, depending on your system resources and the amount of other processes running concurrently. Accordingly it's considered helpful to use cron jobs or other automation in order to run the backup overnight or during other periods of low-activity uptime. This has some special use considerations - see Documentation/ADMIN.md for details
+Tapestry runs can be fairly long - on the order of 12 minutes per default-sized block, depending on your system resources and the amount of other processes running concurrently. Accordingly it's considered helpful to use cron jobs or other automation in order to run the backup overnight or during other periods of low-activity uptime. This has some special use considerations - see Documentation/FORADMINS.md for details
 
 It is currently required due to software limitations that the recent version of GnuPG is installed as the primary instance. That is to say, a call to `gpg` should instantiate the latest version of it installed.
 
@@ -73,11 +75,6 @@ If no runtime arguments are provided the program assumes you intended to do a "b
 ## Key Security
 Tapestry relies on a two-asymmetric-key system for its protection, as a mechanism to eliminate the need for trust between the user and their storage solution. Tapestry is currently designed to produce only its own key automatically - for the moment it is taken as read that the user would know how to develop a signing key. Specific instructions for signing key generation can be found in the GnuPG manpage or their online documentation. For the purposes of this section, it will be enough to concern the active and passive key security considerations.
 
-### Disaster Recovery Key versus Signing Key
-Tapestry relies on two different keys, hereafter referred to as the Disaster Recovery Key and the Signing Key. It uses these keys for two separate operations: encryption and decryption of the backup files, and signing/signature verification of the same. Seperate keys are used to allow positive identification of the user or terminal (depending on use case) which generated the backup. Signed backups resist tampering in ways that unsigned backups would not - to forge a tapestry backup would require knowledge of the private side of the signing key. Without the signing key, it would be as simple as knowing the public side of the disaster recovery key.
-
-Why use asymmetric cryptography at all, when "keyphrase"-based symmetric cryptography would have sufficed? Distribution. 500 systems could comfortably share one disaster recovery key, with each system holding only the public key in its respective keyring, and a trusted admin or other "super-user" in posession of the private side of the key.
-
 ### Key Size and Passphrase
 By default, Tapestry creates a 2048-bit key when prompted to. This is the smallest common-size key we believe to be reasonably secure. If desired, this figure can be increased, though this is not recommended as it would impact both key generation and overall cryptographic operation time. With cryptography being the second-most computationally-expensive part of the system, and 4096-bit keys being excessive, we have settled on 2048 bit.
 
@@ -86,8 +83,6 @@ All keys use should be protected by a strong passphrase of at least 24 character
 ### Key Storage
 Tapestry expects to find the keys it is looking for on the default gnupg keyring, found under `~/.gnupg/`. There is currently no plan in the works to change this.
 
-However, we have some concerns that private keys stored directly in the keyring may not be secure under all circumstances, though we are, of course, professionally paranoid. For the home user, keyring storage is fine. If you are a small business or other organization, it may be preferable to use a smart-card based system. Your existing 2FA solution, such as a Yubikey, may provide this functionality in addition to its normal use. Configuration in this way is beyond the scope of this documentation but highly recommended - the developers have been treating their keys in this manner for some time and find the process highly seamless.
-
 Additionally, it is important to keep a master copy of the disaster recovery key offline and secure at all times as a backup. If you should happen to lose this key, your backups are unrecoverable.
 
 ### Passphrase Security
@@ -95,16 +90,7 @@ Tapestry, and Kensho Security Labs, endorse long passphrases punctuated randomly
 
 Tapestry itself never handles a passphrase you provide it, either for recovery decryption or signing of backups, or indeed for key generation. This is the reason for the requirement for a recent version of GnuPG to be installed. Tapestry provides the command for the operation to GPG without a passphrase, prompting newer versions of GPG to respond by invoking the pinentry program they are configured to use. On most OS integrations this presents as a system window appearing, asking for the passphrase.
 
-### Other Key Management Considerations
-Depending on the nature of your organization it may be desirable to have your Disaster Recovery Key expire - of course, as you are in posession of the master key, you can extend these expiries indefinitely. An expired key cannot be used to encrypt new messages, but it can still be used to decrypt messages sent to it.
-
-A similar principal of operation exists for revocation certificates. At present, it is not programatically possible for Tapestry to neatly generate a revocation certificate - you should perform this operation yourself as soon as a new key is generated and again, store it as securely as possible. In the event your private key becomes compromised, you can issue the revocation certificate by pushing it to any and all keyservers you are using, which prevents new backups being created which would be decodable by that key.
-
-While we encourage keeping a copy of the master DR key's private side offsite in case of catastrophe, we do not encourage using online services to do so.
-
-For home users it may be excessive, but as an organization I highly recommend generating keys on an offline machine, perhaps even from a known-clean live boot environment.
-
-## Selecting your "Locations"
+# Selecting your "Locations"
 Tapestry treats every location defined in its configuration file as the top of an `os.walk()` command. This means, in practical terms, that everything in every subdirectory of that location will be backed up. Therefore, it is important to consider if any symbolic links are going to be followed that may end up with unintended consequences.
 
 The specific locations you select are entirely up to you. At time of writing I personally use the documents and photos default folders in my default locations list, with my additional locations list including videos, music, and a subset of the hidden configuration directories.
