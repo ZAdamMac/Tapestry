@@ -84,7 +84,7 @@ def runtime(dict_config, do_network):
                         test_parse_config, test_verify_blocks
                         ]
     # Populate this list with all the network tests (gated by do_network)
-    list_network_tests = [test_sftp_connect, test_sftp_place, test_sftp_find, test_ftp_fetch]
+    list_network_tests = [test_sftp_connect, test_sftp_place, test_sftp_find, test_sftp_fetch]
 
     if can_run:
         log = establish_logger(dict_config)

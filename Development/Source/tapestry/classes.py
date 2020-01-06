@@ -322,7 +322,7 @@ class TaskCheckIntegrity(object):
 
     def __call__(self):
         hasher = hashlib.md5()
-        with tarfile.open(self.tarf, "rb") as tarball:
+        with tarfile.open(self.tarf, "r:") as tarball:
             file_under_test = tarball.extractfile(self.fid)
             if file_under_test is None:
                 return [False, "File %s not Found" % self.fid]

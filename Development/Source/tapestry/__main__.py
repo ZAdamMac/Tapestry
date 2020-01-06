@@ -855,10 +855,16 @@ def parse_config(namespace):
 
     config = configparser.ConfigParser()
 
+    if not ns.config_path:  # We need a default config file name to avoid some errors.
+        ns.config_path = "tapestry.cfg"
+
     if os.path.exists(ns.config_path):
         config.read(ns.config_path)
     else:
-        print("The Appropriate config file: %s cannot be found." % ns.config_path)
+        print("The indicated config file: %s cannot be found." % ns.config_path)
+        print("Generating a template config file in that location.")
+        print("Please edit this config file appropriately and rerun the program.")
+        place_config_template(ns.config_path)
         exit()
 
     ns.activeFP = config.get("Environment Variables", "Expected FP")
@@ -917,6 +923,64 @@ def parse_config(namespace):
         ns.categories_inclusive.append(category)
 
     return ns
+
+
+def place_config_template(path):
+    """Uses the default configuration dictionary to create a default config file
+    at the argued location. If used as part of tapestry this triggers when
+    parse_config cannot find the argued or default config file, and the script
+    exits as the next action after execution.
+
+    :param path: a string pointing to a valid path on the system
+    :return:
+    """
+
+    dict_default_config = {
+        "Environment Variables": {
+            "uid": "your_uid",
+            "compid": "your_hostname",
+            "blocksize": 4096,
+            "expected FP": "Provide Encryption Key Fingerprint or run with option --genKey",
+            "sign by default": True,
+            "signing FP": "Provide signing key fingerprint",
+            "recovery path": "Provide path to the recovery file location, ex. /media/ or D:/",
+            "output path": "Provide path to the output for recovery file and logs.",
+            "keysize": 2048,
+            "use compression": True,
+            "compression level": 2
+        },
+        "Network Configuration": {
+            "mode": "none",
+            "server": "localhost",
+            "port": 21,
+            "username": "ftptest",
+            "remote drop location": "path on the ftp to which to drop files",
+            "keep local copies": True
+        },
+        "Default Locations/Nix": {
+            "category": "path to top directory, reproduce as desired."
+        },
+        "Default Locations/Win": {
+            "category": "path to top directory, reproduce as desired."
+        },
+        "Additional Locations/Nix": {
+            "category": "path to top directory, reproduce as desired."
+        },
+        "Additional Locations/Win": {
+            "category": "path to top directory, reproduce as desired."
+        }
+    }
+    config = configparser.ConfigParser()
+
+    for section in dict_default_config:
+        options = dict_default_config[section]
+        config.add_section(section)
+        for option in options:
+            value = options[option]
+            config.set(section, option, value)
+
+    with open(path, "w") as file_config:
+        config.write(file_config)
 
 
 def sign_blocks(namespace, gpg_agent):
