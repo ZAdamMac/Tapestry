@@ -1,6 +1,6 @@
 """Defines the actual operating classes for Tapestry.py. There is essentially
 no executable code in this script - it's just used to hold the working classes
-for tapestry.py.
+for functions.py.
 
 Classes are to be organized by general purpose - see block comments for guidance.
 
