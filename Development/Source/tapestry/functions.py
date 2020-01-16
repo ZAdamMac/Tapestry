@@ -1232,3 +1232,22 @@ def prevalidate_blocks(namespace, list_blocks, index):
         for w in workers:  # Make extra certain all the children are dead.
             jobs.put(None)
         jobs.join()
+
+
+def recovery_validate_files(namespace):
+    """Provided a namespace object, this function will crawl the defined
+    working directory, looking for decrypted and decompressed tap files to
+    validate the contents of.
+
+    :param namespace: The system namespace object.
+    :return:
+    """
+    ns = namespace
+
+    found_decrypted = []  # Need to find all the decrypted blocks
+    for foo, bar, files in os.walk(ns.workDir):
+        for file in files:
+            if file.endswith(".decrypted"):
+                found_decrypted.append(os.path.join(foo, file))
+
+    prevalidate_blocks(ns, found_decrypted, ns.rec_index["index"])
