@@ -321,17 +321,19 @@ class TaskCheckIntegrity(object):
         self.hash_good = kg_hash
 
     def __call__(self):
-        hasher = hashlib.md5()
+        hasher = hashlib.sha256()  # Had to change this because switched to sha256 from md5 in functions.py.
         with tarfile.open(self.tarf, "r:") as tarball:
             file_under_test = tarball.extractfile(self.fid)
             if file_under_test is None:
-                return [False, "File %s not Found" % self.fid]
+                return [False, "File %s not found in block\n" % self.fid]
             else:
                 hasher.update(file_under_test.read())
         if hasher.hexdigest() == self.hash_good:
             return [True, "File %s has a valid hash." % self.fid]
         else:
-            return [False, "File %s has an invalid hash." % self.fid]
+            print(hasher.hexdigest())
+            print(self.hash_good)
+            return [False, "File %s has an invalid hash.\n" % self.fid]
 
 
 # Define Package Overrides

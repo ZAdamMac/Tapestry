@@ -233,7 +233,7 @@ def test_TaskCheckIntegrity(config):
     dir_temp = config["path_temp"]
     string_test = ''.join(choice(printable) for i in range(2048))
     hasher = hashlib.sha256()
-    hasher.update("this is not right".encode('utf-8')) # We just want a nonsense hash.
+    hasher.update("this is not right".encode('utf-8'))  # We just want a nonsense hash.
     control_hash = hasher.hexdigest()
     test_file = os.path.join(dir_temp, "hash_test")
     test_tar = os.path.join(dir_temp, "test_tar")
