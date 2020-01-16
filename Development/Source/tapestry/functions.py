@@ -298,6 +298,7 @@ def do_main(namespace, gpg_agent):
     else:
         list_blocks = unix_pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
+    prevalidate_blocks(ns, list_blocks, raw_recovery_index)
     encrypt_blocks(list_blocks, gpg_agent, ns.activeFP, ns)
     sign_blocks(namespace, gpg_agent)
     if namespace.modeNetwork.lower() == "ftp":
@@ -324,6 +325,7 @@ def do_recovery(namespace, gpg_agent):
     verified_blocks = verify_blocks(namespace, gpg_agent)
     decrypt_blocks(namespace, verified_blocks, gpg_agent)
     decompress_blocks(namespace)
+    recovery_block_validation(namespace)  # TODO ensure defined
     unpack_blocks(namespace)
     clean_up(namespace.workDir)
     debug_print("REC: Got this far, so I should terminate")
@@ -1173,7 +1175,6 @@ def verify_keys(ns, gpg):
     debug_print(ns.activeFP)
 
 
-#  Runtime Follows
 def runtime():
     global state
     state = Namespace()
@@ -1181,6 +1182,8 @@ def runtime():
     state = parse_config(state)
     gpg_conn = start_gpg(state)
     announce()
+    if state.demand_validate:
+        demand_validate(state)  # TODO ensure defined
     if state.genKey:
         state = generate_keys(state, gpg_conn)
     verify_keys(state, gpg_conn)
@@ -1190,3 +1193,42 @@ def runtime():
         do_main(state, gpg_conn)
     clean_up(state.workDir)
     exit()
+
+
+def prevalidate_blocks(namespace, list_blocks, index):
+    if namespace.do_validation:  # TODO add to configparse and argparse
+        ns = namespace
+        jobs = mp.JoinableQueue()
+        for file in list_blocks:
+            with tarfile.open(file, mode="r:") as tf:
+                list_members = tf.getnames()
+                for member in list_members:
+                    task = tapestry.TaskCheckIntegrity(file, member, index[member]['sha256'])
+                    jobs.put(task)
+        workers = []
+        sum_jobs = int(jobs.qsize())
+        debug_print(sum_jobs)
+        done = mp.JoinableQueue()
+        for i in range(os.cpu_count()):
+            workers.append(tapestry.ChildProcess(jobs, done, ns.workDir, ns.debug))
+        rounds_complete = 0
+        for w in workers:
+            w.start()
+        working = True
+        status_print(rounds_complete, sum_jobs, "Checking Block Integrity", "Working...")
+        # We removed the "... Working" message issue because this task returns useful messages.
+        # This might get replaced when/if we include runtime logging again.
+        while working:
+            message = done.get()
+            if message is None:
+                working = False
+            rounds_complete += 1
+            if rounds_complete == sum_jobs:
+                done.put(None)  # Use none as a poison pill to kill the queue.
+            if rounds_complete <= sum_jobs:  # Patches the 200% bug.
+                status_print(rounds_complete, sum_jobs, "Checking Block Integrity", message)
+            done.task_done()
+        jobs.join()
+        for w in workers:  # Make extra certain all the children are dead.
+            jobs.put(None)
+        jobs.join()
