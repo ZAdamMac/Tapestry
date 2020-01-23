@@ -1237,20 +1237,44 @@ def prevalidate_blocks(namespace, list_blocks, index):
         foo = input("Press Enter to Continue")  # Pausing for input here is not long-term acceptable; breaks automation
 
 
-def recovery_validate_files(namespace):
-    """Provided a namespace object, this function will crawl the defined
-    working directory, looking for decrypted and decompressed tap files to
-    validate the contents of.
+def demand_validate(ns, gpg):
+    """Provided the namespace and a gpg connection, take the argued path/list
+    of paths pointing to a tapestry block and performs validation of the
+    contents, then cleans itself up best as possible.
 
-    :param namespace: The system namespace object.
+    :param ns: The entire tapestry namespace object.
+    :param gpg: A valid GPG agent object.
     :return:
     """
-    ns = namespace
+    path_arg = ns.validation_target
+    if "," in path_arg:
+        paths = path_arg.split(",")
+    else:
+        paths = [path_arg]
 
-    found_decrypted = []  # Need to find all the decrypted blocks
-    for foo, bar, files in os.walk(ns.workDir):
-        for file in files:
-            if file.endswith(".decrypted"):
-                found_decrypted.append(os.path.join(foo, file))
+    for path in paths:
+        if not os.path.isfile(path):  # We want to autoskip missing paths.
+            paths.remove(path)
+            print("Skipping: %s, file does not exist." % path)
+        if not path.endswith(".tap"):  # We can only work with our files!
+            paths.remove(path)
+            print("Skipping %s, not a tapestry block file!" % path)
+    for path in paths:  # this list now consists of .tap files that actually exist!
+    # Validate each block individually in case they don't belong to the same set.
+        path_out = os.path.join(ns.workDir, os.path.basename(path))
+        print("Attempting to validate %s" % os.path.basename(path))
+        with open(path, "rb") as f:
+            print("Decrypting the Block.")
+            gpg.decrypt_file(f, always_trust=True, output=path_out)
+        with tarfile.open(path_out, "r:") as tf:
+            if "recovery-riff" in tf.getnames():
+                rec_file = tf.extractfile("recovery-riff")
+                rec_index = tapestry.RecoveryIndex(rec_file)
+                do_validate = True
+            else:
+                print("This file does not contain a RIFF-format recovery index and cannot be validated.")
+                print("The file may be damaged, or have been created by a Pre-2.0 version of Tapestry.")
+                do_validate = False
+        if do_validate: # We step out at this level to close the tarfile in advance.
+            prevalidate_blocks(ns, [path_out], rec_index)  # This allows multithreaded
 
-    prevalidate_blocks(ns, found_decrypted, ns.rec_index["index"])
