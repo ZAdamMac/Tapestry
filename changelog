@@ -32,7 +32,8 @@ v.0.2.0 (legacy):
 		-"--rcv" launches in recovery mode, as before.
 	-added Debugging Mode!
 		-called with "--debug" flag
-		-activates a series of debugging functions that display additional information during program operation. Not user-friendly.
+		-activates a series of debugging functions that display additional information during program operation. Not
+		 user-friendly.
 
 v.0.2.1 (legacy):
 	-Improved debugging output with clarifications
@@ -40,16 +41,19 @@ v.0.2.1 (legacy):
 	-Added automated signing and verification
 		-default signing mode toggled in "--setup"
 		-automatically signs blocks with the key indicated in setup
-		-verifies the signature for blocks read in -rcv mode. If the signature can't be sufficiently verified, asks the user whether or not to continue
+		-verifies the signature for blocks read in -rcv mode. If the signature can't be sufficiently verified, asks the
+		 user whether or not to continue
 		-full documentation in readme
 	-Added skipped file logging
-		-a list of files too large to fit into the user-defined block is now generated and saved together with the packaged blocks on the desktop
+		-a list of files too large to fit into the user-defined block is now generated and saved together with the
+		packaged blocks on the desktop
 
 v0.2.2 (release):
 	-Now possible to allow a "keyring-only mode", which skips keyloading/keyremoval.
 	-Fixed bug in recovery that would crash Tapestry on an unknown category.
 	-Organization improvements: outputs moved to a subdirectory on the desktop, rather than loose.
-	-Script will now check to see if loopback pinentry is enabled. If it is not, it will ask the user for permission to add it, or disable signing-by-default.
+	-Script will now check to see if loopback pinentry is enabled. If it is not, it will ask the user for permission to
+	add it, or disable signing-by-default.
 
 v0.3.0 (legacy):
     -Multiprocessing is now used for some steps of operation.
@@ -91,6 +95,19 @@ v 2.0.0 (release):
     - Tapestry is now packaged as a module and installed and invoked as such.
     - Places the (currently unutilized) integrity testing task classes into `classes.py` for future use.
 
-v 2.0.1 (dev):
-    - Issue 12: rectified an NS attribute error that was causing runs with the genKey flag set to use the previous key (if any) rather than the newly-generated key
-    - Issue 13: Changed the behaviour for the creation of category directories to improve error handling in cases where the parent directory of a category is missing.
+v 2.0.1 (release):
+    - Issue 12: rectified an NS attribute error that was causing runs with the genKey flag set to use the previous key
+    (if any) rather than the newly-generated key
+    - Issue 13: Changed the behaviour for the creation of category directories to improve error handling in cases where
+    the parent directory of a category is missing.
+
+v 2.1.0 (dev):
+    - Test Framework Redesign - better test coverage means more reliable software
+    - Updated documentation to facilitate security review and additional development efforts.
+    - Added new functionality surrounding file validation, either on-demand or at runtime.
+        - add `Build-Time File Validation: True` to your config file to activate.
+        - demand-validate specific block files with `--validate` (requires decryption)
+    - Fixed an unreported bug introduced in v2.0.0 that caused an error message at runtime.
+    - If no `-c` config file path is provided, tapestry will look for `tapestry.cfg` in the current working directory.
+     - If that file is also not found, Tapestry will generate a config file with sane defaults and save it in that
+     location.
