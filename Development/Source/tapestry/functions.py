@@ -325,7 +325,6 @@ def do_recovery(namespace, gpg_agent):
     verified_blocks = verify_blocks(namespace, gpg_agent)
     decrypt_blocks(namespace, verified_blocks, gpg_agent)
     decompress_blocks(namespace)
-    recovery_block_validation(namespace)  # TODO ensure defined
     unpack_blocks(namespace)
     clean_up(namespace.workDir)
     debug_print("REC: Got this far, so I should terminate")
