@@ -763,6 +763,8 @@ def parse_args(namespace):
                         action="store_true")
     parser.add_argument('--devtest', help="Starts testing mode, see documentation", action="store_true")
     parser.add_argument('-c', help="absolute or relative path to the config file", action="store")
+    parser.add_argument('--validate', help="Expects a path or csv string of paths describing blocks to validate.",
+                        action="store")
     args = parser.parse_args()
 
     ns.rcv = args.rcv
@@ -771,6 +773,7 @@ def parse_args(namespace):
     ns.devtest = args.devtest
     ns.genKey = args.genKey
     ns.config_path = args.c
+    ns.validation_target = args.validate
 
     return ns
 
@@ -1182,7 +1185,7 @@ def runtime():
     gpg_conn = start_gpg(state)
     announce()
     if state.demand_validate:
-        demand_validate(state, gpg_conn)  # TODO ensure defined
+        demand_validate(state, gpg_conn)
     if state.genKey:
         state = generate_keys(state, gpg_conn)
     verify_keys(state, gpg_conn)
@@ -1260,7 +1263,7 @@ def demand_validate(ns, gpg):
             paths.remove(path)
             print("Skipping %s, not a tapestry block file!" % path)
     for path in paths:  # this list now consists of .tap files that actually exist!
-    # Validate each block individually in case they don't belong to the same set.
+        # Validate each block individually in case they don't belong to the same set.
         path_out = os.path.join(ns.workDir, os.path.basename(path))
         print("Attempting to validate %s" % os.path.basename(path))
         with open(path, "rb") as f:
@@ -1275,6 +1278,6 @@ def demand_validate(ns, gpg):
                 print("This file does not contain a RIFF-format recovery index and cannot be validated.")
                 print("The file may be damaged, or have been created by a Pre-2.0 version of Tapestry.")
                 do_validate = False
-        if do_validate: # We step out at this level to close the tarfile in advance.
+        if do_validate:  # We step out at this level to close the tarfile in advance.
             prevalidate_blocks(ns, [path_out], rec_index)  # This allows multithreaded
 
