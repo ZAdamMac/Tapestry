@@ -1183,7 +1183,7 @@ def runtime():
     gpg_conn = start_gpg(state)
     announce()
     if state.demand_validate:
-        demand_validate(state)  # TODO ensure defined
+        demand_validate(state, gpg_conn)  # TODO ensure defined
     if state.genKey:
         state = generate_keys(state, gpg_conn)
     verify_keys(state, gpg_conn)
@@ -1222,16 +1222,20 @@ def prevalidate_blocks(namespace, list_blocks, index):
             message = done.get()
             if message is None:
                 working = False
+            if message[0]:  # We only need to output the actual output if the job fails.
+                message[1] = "Working"
             rounds_complete += 1
             if rounds_complete == sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.
             if rounds_complete <= sum_jobs:  # Patches the 200% bug.
-                status_print(rounds_complete, sum_jobs, "Checking Block Integrity", message)
+                status_print(rounds_complete, sum_jobs, "Checking Block Integrity", message[1])
             done.task_done()
         jobs.join()
         for w in workers:  # Make extra certain all the children are dead.
             jobs.put(None)
-        jobs.join()
+        jobs.join()  # TODO replace lines below with better logic during the improved logging process.
+        print("Please review the above lines for any failed files, and capture that information for your records.")
+        foo = input("Press Enter to Continue")  # Pausing for input here is not long-term acceptable; breaks automation
 
 
 def recovery_validate_files(namespace):
