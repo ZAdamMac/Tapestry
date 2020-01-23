@@ -886,6 +886,7 @@ def parse_config(namespace):
     ns.recovery_path = config.get("Environment Variables", "recovery path")
     ns.uid = config.get("Environment Variables", "uid")
     ns.drop = config.get("Environment Variables", "Output Path")
+    ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation", default=False)
 
     if ns.currentOS == "Linux":
         ns.workDir = "/tmp/Tapestry/"
@@ -944,7 +945,8 @@ def place_config_template(path):
             "output path": "Provide path to the output for recovery file and logs.",
             "keysize": 2048,
             "use compression": True,
-            "compression level": 2
+            "compression level": 2,
+            "Build-Time File Validation": True
         },
         "Network Configuration": {
             "mode": "none",
