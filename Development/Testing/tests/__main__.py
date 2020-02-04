@@ -79,6 +79,7 @@ def parse_args():
 
     return arguments
 
+
 if __name__ == "__main__":
     print("Tapestry Test Automation - Version %s" % __version__)
     print("These tests were designed to validate the tapestry version listed above.")

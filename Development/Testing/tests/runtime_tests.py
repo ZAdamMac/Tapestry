@@ -160,6 +160,48 @@ def test_rcv(config, logs):
     logs.log(str(waiting))
 
 
+def test_validate(config, logs):
+    """Test the Recovery runtime, and put the subprocess output back
+    into the logs. Relies on the "rcv-test.cfg" file in
+    Testing/Resources/config. View the testdocs for details.
+
+    :param config:
+    :param logs:
+    :return:
+    """
+    config_this = os.path.join(config["path_config"], "config/validate-test.cfg")
+    block_locate = locate_previous_block(config["path_corpus"])  # TODO define
+
+    start = time.monotonic()
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--devtest", "--validate", block_locate])
+    elapse = framework.elapsed(start)
+    print("--rcv completed in %s" % elapse)
+    logs.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
+    logs.log(str(waiting))
+
+
+def locate_previous_block(path_corpus):
+    """Attempt to locate one tapestry block and return its absolute path for
+    use by the test_validate block. Like the other runtime tests validation
+    requires human intervention to read the CLI output; however, the core
+    validation functionality is itself unit tested and we are only looking
+    for display conformity here.
+
+    :param path_corpus: A string representing the absolute path of the
+    corpus parent directory; this is assumed to be the output path for
+    all the various individual test config files.
+    """
+    # TODO update documentation re: configuration, this test's limitations.
+    for path, directories, files in os.walk(path_corpus):
+        for file in files:
+            if file.endswith(".tap"):
+                found_tap = True
+                tap = os.path.join(path, file)
+    if found_tap:
+        return tap
+    else:
+        raise FileNotFoundError
+
 if __name__ == "__main__":
     print("This script is not intended to be run in standalone mode. Run main.")
     exit(0)
