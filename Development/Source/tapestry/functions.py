@@ -1200,7 +1200,7 @@ def runtime():
 
 
 def prevalidate_blocks(namespace, list_blocks, index):
-    if namespace.do_validation:  # TODO add to configparse and argparse
+    if namespace.do_validation:
         ns = namespace
         jobs = mp.JoinableQueue()
         for file in list_blocks:

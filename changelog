@@ -89,7 +89,7 @@ v1.1.0 (legacy):
     - Rewrote the testing framework to close issue #5 - Test are now a suite, refer to the documenation.
     - Added backup-to and recovery-via FTP with TLS support. Review the documentation.
 
-v 2.0.0 (release):
+v 2.0.0 (legacy):
     - Rewritten from the ground up to leverage return-oriented design principals.
     -- addresses the issue with windows introduced in 0.3.0!
     - Tapestry is now packaged as a module and installed and invoked as such.

@@ -170,7 +170,7 @@ def test_validate(config, logs):
     :return:
     """
     config_this = os.path.join(config["path_config"], "config/validate-test.cfg")
-    block_locate = locate_previous_block(config["path_corpus"])  # TODO define
+    block_locate = locate_previous_block(config["path_corpus"])
 
     start = time.monotonic()
     waiting = subprocess.run(["python3.6", "-m", "tapestry", "--devtest", "--validate", block_locate])
@@ -192,6 +192,7 @@ def locate_previous_block(path_corpus):
     all the various individual test config files.
     """
     # TODO update documentation re: configuration, this test's limitations.
+    found_tap = False
     for path, directories, files in os.walk(path_corpus):
         for file in files:
             if file.endswith(".tap"):
@@ -201,6 +202,7 @@ def locate_previous_block(path_corpus):
         return tap
     else:
         raise FileNotFoundError
+
 
 if __name__ == "__main__":
     print("This script is not intended to be run in standalone mode. Run main.")
