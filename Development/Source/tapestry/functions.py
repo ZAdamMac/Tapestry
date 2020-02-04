@@ -298,7 +298,7 @@ def do_main(namespace, gpg_agent):
     else:
         list_blocks = unix_pack_blocks(raw_recovery_index, ops_list, namespace)
     list_blocks = compress_blocks(ns, list_blocks, ns.compress, ns.compressLevel)
-    prevalidate_blocks(ns, list_blocks, raw_recovery_index)
+    prevalidate_blocks(ns, list_blocks, ops_list)
     encrypt_blocks(list_blocks, gpg_agent, ns.activeFP, ns)
     sign_blocks(namespace, gpg_agent)
     if namespace.modeNetwork.lower() == "ftp":
@@ -774,6 +774,10 @@ def parse_args(namespace):
     ns.genKey = args.genKey
     ns.config_path = args.c
     ns.validation_target = args.validate
+    if ns.validation_target is not None:
+        ns.demand_validate = True
+    else:
+        ns.demand_validate = False
 
     return ns
 
@@ -886,7 +890,7 @@ def parse_config(namespace):
     ns.recovery_path = config.get("Environment Variables", "recovery path")
     ns.uid = config.get("Environment Variables", "uid")
     ns.drop = config.get("Environment Variables", "Output Path")
-    ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation", default=False)
+    ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation")
 
     if ns.currentOS == "Linux":
         ns.workDir = "/tmp/Tapestry/"
@@ -1204,11 +1208,12 @@ def prevalidate_blocks(namespace, list_blocks, index):
         ns = namespace
         jobs = mp.JoinableQueue()
         for file in list_blocks:
-            with tarfile.open(file, mode="r:") as tf:
+            with tarfile.open(file, mode="r:*") as tf:
                 list_members = tf.getnames()
                 for member in list_members:
-                    task = tapestry.TaskCheckIntegrity(file, member, index[member]['sha256'])
-                    jobs.put(task)
+                    if member != "recovery-riff":  #Obviously we can't validate this noise.
+                        task = tapestry.TaskCheckIntegrity(file, member, index[member]['sha256'])
+                        jobs.put(task)
         workers = []
         sum_jobs = int(jobs.qsize())
         debug_print(sum_jobs)
@@ -1226,8 +1231,9 @@ def prevalidate_blocks(namespace, list_blocks, index):
             message = done.get()
             if message is None:
                 working = False
-            if message[0]:  # We only need to output the actual output if the job fails.
-                message[1] = "Working"
+            else:
+                if message[0]:  # We only need to output the actual output if the job fails.
+                    message[1] = "Working"
             rounds_complete += 1
             if rounds_complete == sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.

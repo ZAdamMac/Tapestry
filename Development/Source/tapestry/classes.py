@@ -322,7 +322,7 @@ class TaskCheckIntegrity(object):
 
     def __call__(self):
         hasher = hashlib.sha256()  # Had to change this because switched to sha256 from md5 in functions.py.
-        with tarfile.open(self.tarf, "r:") as tarball:
+        with tarfile.open(self.tarf, "r:*") as tarball:
             file_under_test = tarball.extractfile(self.fid)
             if file_under_test is None:
                 return [False, "File %s not found in block\n" % self.fid]
