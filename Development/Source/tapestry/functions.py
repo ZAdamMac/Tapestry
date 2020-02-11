@@ -11,17 +11,17 @@ from . import classes as tapestry
 import argparse
 import configparser
 import datetime
-import ftplib
 import getpass
 import gnupg
 import hashlib
 import io
 import multiprocessing as mp
 import os
+import paramiko.ssh_exception as sshe
 import platform
+import pysftp
 from random import shuffle
 import shutil
-import ssl
 import sys
 import tarfile
 import uuid
@@ -731,8 +731,9 @@ def parse_config(namespace):
     ns.addrNet = config.get("Network Configuration", "server")
     ns.portNet = config.getint("Network Configuration", "port")
     ns.nameNet = config.get("Network Configuration", "username")
-    ns.network_credential_type = config.get("Network Configuration", "Auth Type")  # TODO add to default
-    ns.network_credential_value = config.get("Network Configuration", "Credential Path")  # TODO add to default
+    ns.network_credential_type = config.get("Network Configuration", "Auth Type")
+    ns.network_credential_value = config.get("Network Configuration", "Credential Path")
+    ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase")
     ns.dirNet = config.get("Network Configuration", "remote drop location")
     ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
     ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
@@ -811,7 +812,8 @@ def place_config_template(path):
             "remote drop location": "path on the ftp to which to drop files",
             "keep local copies": True,
             "Auth Type": "key",
-            "Credential Path": "~/.ssh/id_rsa"
+            "Credential Path": "~/.ssh/id_rsa",
+            "Credential Has Passphrase": True
         },
         "Default Locations/Nix": {
             "category": "path to top directory, reproduce as desired."
@@ -1043,6 +1045,10 @@ def runtime():
     state = parse_config(state)
     gpg_conn = start_gpg(state)
     announce()
+    if state.modeNetwork.lower() != "none":
+        if state.network_credential_pass or (state.network_credential_type == "passphrase"):
+            print("Tapestry is running in network storage mode and requires some credentialling information.")
+            state.network_credential_pass = getpass.getpass(prompt="Enter Network Credential Passphrase: ")
     if state.demand_validate:
         demand_validate(state, gpg_conn)
     if state.genKey:
@@ -1054,6 +1060,78 @@ def runtime():
         do_main(state, gpg_conn)
     clean_up(state.workDir)
     exit()
+
+
+def sftp_connect(namespace):
+    """Attempts to grab a pysftp.Connection() object for the relevant
+    config information stored in tapestry.cfg. In the event of any failures the
+    exceptions will be handled to allow a graceful exit.
+
+    Attaches the connection to the namespace object before returning it.
+
+    :param namespace:
+    :return:
+    """
+    ns = namespace
+
+    if ns.currentOS.lower() == "linux":
+        user_khp = "~/.ssh/known_hosts"
+        sys_khp = "/etc/ssh/known_hosts"
+    elif ns.currentOS.lower() == "windows":
+        user_khp = os.path.join(os.environ["USERPROFILE"], ".ssh\\known_hosts")
+        sys_khp = "C:\\Windows\\System32\\config\\systemprofile\\ssh\\known_hosts"
+    # First, find some known-hosts files (important for security)
+    if os.path.exists(user_khp):
+        cnopts = pysftp.CnOpts(knownhosts=user_khp)
+    elif os.path.exists(sys_khp):
+        cnopts = pysftp.CnOpts(knownhosts=sys_khp)
+    else:
+        # Exit with error; retain local files
+        print("Unable to find appropriate Known Hosts file, files will be retained locally.")
+        print("If you've never used SSH on this machine, try connecting to the server manually,")  # TODO note in docs
+        print("then run this utility again.")
+        print("Exiting")
+        clean_up(ns.workDir)
+        exit(1)
+    # Determine credential situation
+    # Also, wrapped this whole block in a giant Try case to handle the possible connection failures en bloc
+    try:
+        if ns.network_credential_type.lower() == "passphrase":
+            ns.sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
+                                                   password=ns.network_credential_pass)
+        if ns.network_credential_type.lower() == "key":
+            if not ns.network_credential_pass:
+                ns.sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
+                                                       private_key=ns.network_credential_value)
+            else:
+                ns.sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
+                                                       private_key=ns.network_credential_value,
+                                                       private_key_pass=ns.network_credential_pass)
+            else:
+            print("The configuration has specified an impossible or unrecognized SFTP connection type. Aborting.")
+            clean_up(ns.workDir)
+            exit(1)
+    except (sshe.AuthenticationException,sshe.PartialAuthentication) as e:
+        print("There was an error in authentication, cancelling. Files stored locally.")
+        clean_up(ns.workDir)
+        exit(1)
+    except sshe.BadAuthenticationType as e:
+        print("The authentication method attempted does not match which was expected by the server.")
+        print("Expected: %s, attempted %s" % (e.allowed_types, ns.network_credential_type))
+        clean_up(ns.workDir)
+        exit(1)
+    except sshe.PasswordRequiredException as e:
+        print("The private key indicated requires a passphrase, which was not provided.")
+        print("Storing the files locally until configuration can be corrected.")
+        clean_up(ns.workDir)
+        exit(1)
+    except (sshe.ChannelException, sshe.CouldNotCanonicalize, sshe.NoValidConnectionsError, sshe.ProxyCommandFailure,
+            sshe.SSHException):
+        print("Could not connect to the remote SFTP host. Retaining local files and shutting down.")
+        clean_up(ns.workDir)
+        exit(1)
+
+    return ns
 
 
 def prevalidate_blocks(namespace, list_blocks, index):
