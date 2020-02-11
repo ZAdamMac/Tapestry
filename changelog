@@ -109,5 +109,8 @@ v 2.1.0 (dev):
         - demand-validate specific block files with `--validate` (requires decryption)
     - Fixed an unreported bug introduced in v2.0.0 that caused an error message at runtime.
     - If no `-c` config file path is provided, tapestry will look for `tapestry.cfg` in the current working directory.
-     - If that file is also not found, Tapestry will generate a config file with sane defaults and save it in that
-     location.
+        - If that file is also not found, Tapestry will generate a config file with sane defaults and save it in that
+          location.
+    - Deprecates all former network functionality; this is being replaced with new SFTP functionality.
+        - Deemed acceptable as FTP/S is a rare arrangement by comparison to SFTP.
+        - Stashing on network shared drives still possible.

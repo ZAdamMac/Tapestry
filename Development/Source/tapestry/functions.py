@@ -731,6 +731,8 @@ def parse_config(namespace):
     ns.addrNet = config.get("Network Configuration", "server")
     ns.portNet = config.getint("Network Configuration", "port")
     ns.nameNet = config.get("Network Configuration", "username")
+    ns.network_credential_type = config.get("Network Configuration", "Auth Type")  # TODO add to default
+    ns.network_credential_value = config.get("Network Configuration", "Credential Path")  # TODO add to default
     ns.dirNet = config.get("Network Configuration", "remote drop location")
     ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
     ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
@@ -807,7 +809,9 @@ def place_config_template(path):
             "port": 21,
             "username": "ftptest",
             "remote drop location": "path on the ftp to which to drop files",
-            "keep local copies": True
+            "keep local copies": True,
+            "Auth Type": "key",
+            "Credential Path": "~/.ssh/id_rsa"
         },
         "Default Locations/Nix": {
             "category": "path to top directory, reproduce as desired."
