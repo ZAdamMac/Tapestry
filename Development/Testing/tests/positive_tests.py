@@ -24,6 +24,7 @@ import json
 import multiprocessing as mp
 import os
 import platform
+import pysftp
 from random import choice
 import shutil
 from string import printable
@@ -893,7 +894,7 @@ def test_verify_blocks(config):
     return errors
 
 
-def test_sftp_connect(config):
+def test_sftp_connect(config):  # TODO: Test Not Reflective of Reality (change args only)
     """A very simplistic test that validates a known-good set of SFTP
     information can be used to connect to a given SFTP endpoint and return a
     valid connection object. The errors returned by sftp_connect are added to
@@ -904,14 +905,21 @@ def test_sftp_connect(config):
     :return:
     """
     errors = []
-    connection, resp_errors = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                    config["sftp_credential"], config["sftp_trust"])
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
+
+    connection, resp_errors = tapestry.sftp_connect(ns)
 
     if not connection:
-        errors.append("[ERROR] Raised: %s" % resp_errors)
+        errors.append("[ERROR] Raised: '%s'" % resp_errors)
 
     if connection:
-        if isinstance(connection, tapestry.SFTPConnection):
+        if isinstance(connection, pysftp.Connection):
             pass
         else:
             errors.append("[ERROR] sftp_connect returned a connection that is"

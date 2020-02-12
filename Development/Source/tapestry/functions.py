@@ -1062,15 +1062,16 @@ def runtime():
     exit()
 
 
-def sftp_connect(namespace):
+def sftp_connect(namespace):  # TODO: Rework to make conformant with test expectations
     """Attempts to grab a pysftp.Connection() object for the relevant
     config information stored in tapestry.cfg. In the event of any failures the
-    exceptions will be handled to allow a graceful exit.
+    exceptions will be handled and reraised - the control logic should handle
+    those cases with a graceful exit.
 
     Attaches the connection to the namespace object before returning it.
 
     :param namespace:
-    :return:
+    :return: Connection (or None, if error), error (string)
     """
     ns = namespace
 
@@ -1087,51 +1088,43 @@ def sftp_connect(namespace):
         cnopts = pysftp.CnOpts(knownhosts=sys_khp)
     else:
         # Exit with error; retain local files
-        print("Unable to find appropriate Known Hosts file, files will be retained locally.")
-        print("If you've never used SSH on this machine, try connecting to the server manually,")  # TODO note in docs
-        print("then run this utility again.")
-        print("Exiting")
-        clean_up(ns.workDir)
-        exit(1)
+        error = "Tapestry was unable to find the appropriate known_hosts file to certify the SSH connection."
+        return None, error
     # Determine credential situation
     # Also, wrapped this whole block in a giant Try case to handle the possible connection failures en bloc
     try:
+        sftp_connection = None
         if ns.network_credential_type.lower() == "passphrase":
             ns.sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
                                                    password=ns.network_credential_pass)
         if ns.network_credential_type.lower() == "key":
             if not ns.network_credential_pass:
-                ns.sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
+                sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
                                                        private_key=ns.network_credential_value)
             else:
-                ns.sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
+                sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
                                                        private_key=ns.network_credential_value,
                                                        private_key_pass=ns.network_credential_pass)
-            else:
-            print("The configuration has specified an impossible or unrecognized SFTP connection type. Aborting.")
-            clean_up(ns.workDir)
-            exit(1)
+        else:
+            error = "The configuration has specified an impossible or unrecognized SFTP connection type."
+            sftp_connection = None
     except (sshe.AuthenticationException,sshe.PartialAuthentication) as e:
-        print("There was an error in authentication, cancelling. Files stored locally.")
-        clean_up(ns.workDir)
-        exit(1)
+        error = "There was an error in authentication, aborting connection."
     except sshe.BadAuthenticationType as e:
-        print("The authentication method attempted does not match which was expected by the server.")
-        print("Expected: %s, attempted %s" % (e.allowed_types, ns.network_credential_type))
-        clean_up(ns.workDir)
-        exit(1)
+        error = ("The authentication method attempted does not match which was expected by the server. " \
+                "Expected: %s, attempted %s" % (e.allowed_types, ns.network_credential_type))
     except sshe.PasswordRequiredException as e:
-        print("The private key indicated requires a passphrase, which was not provided.")
-        print("Storing the files locally until configuration can be corrected.")
-        clean_up(ns.workDir)
-        exit(1)
+        error = "The private key indicated requires a passphrase, which was not provided."
     except (sshe.ChannelException, sshe.CouldNotCanonicalize, sshe.NoValidConnectionsError, sshe.ProxyCommandFailure,
             sshe.SSHException):
-        print("Could not connect to the remote SFTP host. Retaining local files and shutting down.")
-        clean_up(ns.workDir)
-        exit(1)
+        error = "Could not connect to the remote SFTP host. Retaining local files and shutting down."
+    finally:
+        if not sftp_connection:
+            sftp_connection = None
+        if not error:
+            error = None
 
-    return ns
+    return sftp_connection, error
 
 
 def prevalidate_blocks(namespace, list_blocks, index):
