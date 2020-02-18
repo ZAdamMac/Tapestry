@@ -1179,6 +1179,23 @@ def sftp_find(sftp, storagedir):
     return list_returned
 
 
+def sftp_place(connection, tgt, remote_path):
+    if connection.getcwd().lower() == remote_path:
+        try:
+            connection.cd(remote_path)
+        except IOError:
+            error = "Couldn't place file at %s; no such directory on remote host" % remote_path
+            return error
+        try:
+            connection.put(tgt, localpath=work_path)
+        except IOError as e:
+            error = "Couldn't retrieve %s from remote host; %s" % e
+            return error
+
+        return None
+
+
+
 def sftp_select_retrieval_target(list_available):
     """Accepts an sftp_find output list, and does some data processing before
     polling the user. Ultimately, returns a list of just the files for the
