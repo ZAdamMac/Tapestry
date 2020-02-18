@@ -1142,6 +1142,22 @@ def sftp_connect(namespace):  # TODO: Rework to make conformant with test expect
     return sftp_connection, error
 
 
+def sftp_fetch(connection, remote_path, tgt, work_path):
+    if connection.getcwd().lower() == remote_path:
+        try:
+            connection.cd(remote_path)
+        except IOError:
+            error = "Couldn't retrieve file from %s; no such directory on remote host" % remote_path
+            return error
+        try:
+            connection.get(tgt, localpath=work_path)
+        except IOError:
+            error = "Couldn't retrieve %s from remote host; no such file in %s" % (tgt, remote_path)
+            return error
+
+        return None
+
+
 def sftp_find(sftp, storagedir):
     """A very basic function to fetch a list of all available files on the remote SFTP share.
     This data is then used by a glue logic function in order to handle the actual selection,
