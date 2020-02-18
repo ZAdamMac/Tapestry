@@ -424,6 +424,21 @@ def generate_keys(namespace, gpg_agent):
     return namespace
 
 
+def get_user_input(message, dict_data, resp_column):
+    # get the size of the terminal window
+    width, height = shutil.get_terminal_size((80, 24))
+    # get the width of each column
+    num_items = len(dict_data[list((dict_data.keys())[0])])
+    num_columns = len(list(dict_data.keys()))
+    index_column_width = len(str(num_items))+1
+    balance_width = width - index_column_width  # TODO Resume for this function here.
+    # add index
+    # Determine width budgets for each column
+    # Drop to the table printer.
+    # Get response
+    # Return looked-up value
+
+
 def media_retrieve_files(mountpoint, temp_path, gpg_agent):
     """Iterates over mountpoint, moving .tap files and their signatures to the
     temporary working directory. Early in operation, will retrieve the recovery
@@ -1125,6 +1140,79 @@ def sftp_connect(namespace):  # TODO: Rework to make conformant with test expect
             error = None
 
     return sftp_connection, error
+
+
+def sftp_find(sftp, storagedir):
+    """A very basic function to fetch a list of all available files on the remote SFTP share.
+    This data is then used by a glue logic function in order to handle the actual selection,
+    sftp_select_retrieval_target.
+
+    :param sftp: a connection object as returned by sftp_connect
+    :param storagedir: The remote root dir as passed through NS.
+    :return:
+    """
+    sftp.chdir(storagedir)
+    list_remote_files = sftp.listdir()
+
+    # Paramiko and pysftp return unicode strings; we want to bash to local.
+    list_returned = []
+    for each in list_remote_files:
+        if each.endswith(".tap") or each.endswith(".sig"):  # We are interested in only these extensions.
+            list_returned.append(str(each))
+
+    return list_returned
+
+
+def sftp_select_retrieval_target(list_available):
+    """Accepts an sftp_find output list, and does some data processing before
+    polling the user. Ultimately, returns a list of just the files for the
+    relevant recovery record the user wishes to use.
+
+    :param list_available:
+    :return:
+    """
+    list_working = list_available.copy()  # We need a clone because we are going to break it up.
+    # Then to kick out all the sigs (as duplicates)
+    for file in list_working:
+        if file.endswith(".sig"):
+            list_working.remove(file)
+    # Then we need a list of available machines
+    dict_availability = {}
+    for file in list_working:
+        name_machine, year, month, day, blocknumber = file.split("-")
+        date = ("%s-%s-%s" % (year, month, day))
+        if name_machine not in dict_availability.keys():
+            machine_entry = {"dates": {}}
+            dict_availability.update({name_machine: machine_entry})
+            # And a list of available dates (keyed by target machines)
+        if date not in dict_availability[name_machine]["dates"].keys(): # And how many blocks are in each date.
+            dict_availability[name_machine]["dates"].update({date: 1})
+        else:
+            new_count = dict_availability[name_machine]["dates"][date] + 1
+            dict_availability[name_machine]["dates"].update({date: new_count})
+    # Then, present the user with an arbitrary numbered list of machines to select from
+    message = "The following machines are available from your SFTP share location. " \
+              "Please enter the option number for the machine you'd like to recover locally."
+    machine_selected = get_user_input(message, {"machine": dict_availability.keys()}, "machine")
+    # Then the dates for the machines they selected
+    dict_datecounts = dict_availability[machine_selected]["dates"]
+    list_dates = []
+    list_counts = []
+    for date in dict_datecounts.keys():
+        list_dates.append(date)
+    list_dates.sort(reverse=True)  #Puts most recent first.
+    for date in list_dates:  # Produces a list of block counts sorted by date, with dates presorted.
+        list_counts.append(dict_datecounts[date])
+    message = "For %s, you can choose from the following dates to recover from." % machine_selected
+    date_selected = get_user_input(message, {"date": list_dates, "# of Blocks": list_counts}, "date")
+    # finally, construct a list of both .tap and .sig files for the given machine and date.
+    file_filter = "%s-%s" % (machine_selected, date_selected)
+    list_to_fetch = []
+    for file in list_available:
+        if file.startswith(file_filter):
+            list_to_fetch.append(file)
+
+    return list_to_fetch
 
 
 def prevalidate_blocks(namespace, list_blocks, index):
