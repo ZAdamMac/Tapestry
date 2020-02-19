@@ -493,6 +493,9 @@ def get_user_input(message, dict_data, resp_column, list_column_order):
     # get the size of the terminal window
     width, height = shutil.get_terminal_size((80, 24))
     # make an index to add to the dict_data
+    list_pass_columns = ["index"]
+    for column in list_column_order:
+        list_pass_columns.append()
     index = []
     counter = 1
     for each in dict_data[0]:
