@@ -24,6 +24,7 @@ from random import shuffle
 import shutil
 import sys
 import tarfile
+import textwrap
 import uuid
 
 __version__ = "2.0.2"
@@ -375,6 +376,70 @@ def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
     jobs.join()
 
 
+def format_table(dict_data, list_column_order, output_width):
+    # Build the Larger Dictionary (for Width Data)
+    expanded_dict_data = {}
+    for column in dict_data:
+        longest = 0
+        for row in dict_data[column]:
+            if len(row) > longest:
+                longest = len(row)
+        expanded_dict_data.update({column: {"len_max": longest, "data": dict_data[column]}})
+    # Truncate all entries to maximum width
+    remaining_width = int(output_width)
+    divider = len(list_column_order)
+    for column in list_column_order:  # This step allows for columnar compression
+        if divider > 1:
+            pad_r = 3
+        else:
+            pad_r = 0
+        if expanded_dict_data[column]["len_max"] < (remaining_width / divider - pad_r):
+            width = (expanded_dict_data[column]["len_max"] + pad_r)  # The column will fit with seperator, unmodified
+            expanded_dict_data[column].update({"width": width})
+        else:
+            trimmed_data = []
+            for row in expanded_dict_data[column]["data"]:
+                new_row = textwrap.shorten(row, (remaining_width/divider - pad_r), placeholder="...")
+                trimmed_data.append(new_row)
+            expanded_dict_data[column].update({"data": trimmed_data})
+            width = remaining_width / divider
+            expanded_dict_data[column].update({"width": (remaining_width / divider)})
+        remaining_width -= width  # We have that much room left
+        divider -= 1  # And this many rows left to count.
+    # Add padding to entries
+    for column in list_column_order:
+        pad_to = expanded_dict_data[column]["width"]
+        padded_data = []
+        for row in expanded_dict_data[column]["data"]:
+            while len(row) < (pad_to-3):
+                row += " "
+            padded_data.append(row)
+        expanded_dict_data[column].update({"data": padded_data})
+    # Build header line/seperator
+    output_array = []
+    header = ""
+    for column in list_column_order:
+        pad_to = expanded_dict_data[column]["width"]
+        while len(column) < pad_to:
+            column += " "
+        header += column
+    output_array.append(header)
+    seperator = ""
+    while len(seperator) < output_width:
+        seperator += "-"
+    output_array.append(seperator)
+    # Build each line
+    sum_rows = len(expanded_dict_data[list_column_order[0]]["data"])
+    for row in range(sum_rows):
+        this_row = ""
+        for column in list_column_order:
+            this_row += " | " + expanded_dict_data[column]["data"][row]
+        this_row = this_row.lstrip(" | ")
+        output_array.append(this_row)
+
+    return output_array
+
+
 def generate_keys(namespace, gpg_agent):
     """Provided with a namespace and a connection to the gpg agent, generates a
     new key. Does not obviate the build runtime.
@@ -424,19 +489,28 @@ def generate_keys(namespace, gpg_agent):
     return namespace
 
 
-def get_user_input(message, dict_data, resp_column):
+def get_user_input(message, dict_data, resp_column, list_column_order):
     # get the size of the terminal window
     width, height = shutil.get_terminal_size((80, 24))
-    # get the width of each column
-    num_items = len(dict_data[list((dict_data.keys())[0])])
-    num_columns = len(list(dict_data.keys()))
-    index_column_width = len(str(num_items))+1
-    balance_width = width - index_column_width  # TODO Resume for this function here.
-    # add index
-    # Determine width budgets for each column
+    # make an index to add to the dict_data
+    index = []
+    counter = 1
+    for each in dict_data[0]:
+        index.append(counter)
+        counter += 1
+    dict_data.update({"index": index})
+    # pretty-print the message.
+    for each in textwrap.wrap(message, width=width):
+        print(each)
     # Drop to the table printer.
+    for each in format_table(dict_data, list_column_order, width):
+        print(each)
     # Get response
+    response = input("Enter the row number of your selection: ")
+    response = (int(response)-1)  # Drop to a real index.
     # Return looked-up value
+    lookup_list = dict_data[resp_column]
+    return lookup_list[response]
 
 
 def media_retrieve_files(mountpoint, temp_path, gpg_agent):
@@ -1187,7 +1261,7 @@ def sftp_place(connection, tgt, remote_path):
             error = "Couldn't place file at %s; no such directory on remote host" % remote_path
             return error
         try:
-            connection.put(tgt, localpath=work_path)
+            connection.put(tgt)
         except IOError as e:
             error = "Couldn't retrieve %s from remote host; %s" % e
             return error
