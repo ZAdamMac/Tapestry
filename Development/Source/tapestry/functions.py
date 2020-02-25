@@ -302,8 +302,8 @@ def do_main(namespace, gpg_agent):
     prevalidate_blocks(ns, list_blocks, ops_list)
     encrypt_blocks(list_blocks, gpg_agent, ns.activeFP, ns)
     sign_blocks(namespace, gpg_agent)
-    if namespace.modeNetwork.lower() == "ftp":
-        ftp_deposit_files(namespace)
+    if namespace.modeNetwork.lower() == "sftp":
+        sftp_deposit_files(namespace)
     clean_up(namespace.workDir)
     print("The temporary working directories have been cleared and your files")
     print("are now stored here: %s" % namespace.drop)
@@ -1219,6 +1219,41 @@ def sftp_connect(namespace):  # TODO: Rework to make conformant with test expect
     return sftp_connection, error
 
 
+def sftp_desposit_files(namespace):
+    """The function is the glue logic for transferring files to the sftp
+    server while operating in that mode. This function also handles any errors
+    that can be raised by the child functions and exits gracefully as needed.
+
+    :param namespace:
+    :return:
+    """
+    ns = namespace  # For Brevity
+    allowed_files = ["tap", "sig", "riff"]  # We don't need to or want to send just anything.
+
+    conn, error = sftp_connect(ns)
+
+    if error:
+        print("Tapestry has encountered an error with the SFTP connection and is exiting.")
+        print("Your files will be retained locally.")
+        print("Error: %s" % error)
+        clean_up(ns.workDir)
+        exit(1)
+
+    for cwd, dirs, files in os.walk(ns.drop):
+        for file in files:
+            fname, suffix = file.split(".")
+            if suffix in allowed_files:
+                sending = os.path.join(cwd, file)
+                error = sftp_place(conn, sending, ns.dirNet)
+                if error:
+                    print(error)
+                    if not ns.retainLocal:
+                        print("Switching to local retention for this and future files.")
+                        ns.retainLocal = True
+                if not ns.retainLocal:
+                    os.remove(sending)
+
+
 def sftp_fetch(connection, remote_path, tgt, work_path):
     if connection.getcwd().lower() == remote_path:
         try:
@@ -1265,9 +1300,6 @@ def sftp_place(connection, tgt, remote_path):
             return error
         try:
             connection.put(tgt)
-        except IOError as e:
-            error = "Couldn't retrieve %s from remote host; %s" % e
-            return error
 
         return None
 
