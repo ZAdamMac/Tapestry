@@ -314,9 +314,9 @@ def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
     ns = namespace
     print("Entering Recovery Mode")
-    if ns.modeNetwork.lower() == "ftp":
+    if ns.modeNetwork.lower() == "sftp":
         print("Fetching available blocks from the FTP server.")
-        namespace = ftp_retrieve_files(namespace, gpg_agent)
+        namespace = sftp_retrieve_files(namespace, gpg_agent)
         print("FTP Fetch Completed")
     else:
         rec_index = media_retrieve_files(namespace.recovery_path, namespace.workDir,
@@ -1219,7 +1219,7 @@ def sftp_connect(namespace):  # TODO: Rework to make conformant with test expect
     return sftp_connection, error
 
 
-def sftp_desposit_files(namespace):
+def sftp_deposit_files(namespace):
     """The function is the glue logic for transferring files to the sftp
     server while operating in that mode. This function also handles any errors
     that can be raised by the child functions and exits gracefully as needed.
@@ -1298,11 +1298,81 @@ def sftp_place(connection, tgt, remote_path):
         except IOError:
             error = "Couldn't place file at %s; no such directory on remote host" % remote_path
             return error
-        try:
-            connection.put(tgt)
+
+        connection.put(tgt)
 
         return None
 
+
+def sftp_retrieve_files(namespace, gpg_agent):
+    ns = namespace
+    gpg = gpg_agent  # Both for the sake of brevity
+    print("Connecting to the remote SFTP store...")
+
+    conn, error = sftp_connect(namespace)  # Get a connection and handle its errors if appropriate.
+    if error is not None:
+        print("An error has occurred in connecting.")
+        print(error)
+        print("Exiting...")
+        exit(1)
+
+    list_all_files = sftp_find(conn, ns.dirNet)  # Get the full list of files stored remotely.
+    list_target_files = sftp_select_retrieval_target(list_all_files)  # Get the files the user actually wants
+
+    list_found_files = []
+
+    is_error_notfound = False
+    for file in list_target_files:  # physically retrieve those files.
+        error = sftp_fetch(conn, ns.dirNet, file, ns.workDir)
+        if error is not None:
+            is_error_notfound = True
+            print("%s - skipping" % error)
+        else:
+            list_found_files.append(os.path.join(ns.workDir, file))
+
+    if is_error_notfound:
+        print("One or more files were not able to be retrieved from the remote store.")
+        print("If you wish do not wish to continue with only a partial restore, press ctrl+c now.")
+        foo = input("Press enter to continue.")
+
+    # Now we need to obtain a recovery file of some kind.
+    decrypted_first = tapestry.TaskDecrypt(os.path.join(ns.workDir, list_found_files[0]), ns.workDir, gpg_agent)
+    decrypted_first = decrypted_first()
+    debug_print("SRF: decrypted_first is: %s" % decrypted_first)
+    debug_print("SRF: The conditional is therefore: %s" % decrypted_first.split(" ")[1].lower())
+    if decrypted_first.split(" ")[1].lower() == "success":
+        tar = tarfile.open(os.path.join(ns.workDir, decrypted_first.split(" ")[3].rstrip(".")), "r:*")
+        # Hideous string management hack.
+        tapfile_contents = tar.getnames()
+        debug_print("The provided block contains: %s" % str(tapfile_contents))
+
+        if "recovery-pkl" in tapfile_contents:
+            index_file = tar.extractfile("recovery-pkl")
+        elif "recovery-riff" in tapfile_contents:
+            index_file = tar.extractfile("recovery-riff")
+        else:
+            index_file = open("/dev/null", "rb")  # Just for giggles
+            print("Something has gone wrong!")
+            print("One or more blocks are corrupt and missing their recovery index.")
+            print("This is a fatal error.")
+            clean_up(ns.workDir)
+            exit(1)
+    else:
+        print("Something has gone wrong in initial decryption.")
+        print("Verify you have the key for the blocks provided and try again.")
+        clean_up(ns.workDir)
+        exit(1)
+
+    # If we made it this far, we have a recovery file, so let's return a recovery index
+    rec_index = tapestry.RecoveryIndex(index_file)
+    if len(list_found_files) != rec_index.blocks:
+        print("There is a a mismatch in the number of recovered blocks and the amount of blocks listed in the"
+              " recovery index. Would you like to continue?")
+        input("Press enter to continue or ctrl+c to cancel.")
+
+    ns.rec_index = rec_index
+
+    return ns
 
 
 def sftp_select_retrieval_target(list_available):
