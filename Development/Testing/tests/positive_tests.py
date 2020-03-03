@@ -815,7 +815,7 @@ def test_parse_config(ns):
         "block_size_raw": int(64 * 2 ** 20), "compid": "HAL 9000",
         "recovery_path": "The Obelisk", "uid": "anothermartian", "drop": "area51",
         "numConsumers": os.cpu_count(), "currentOS": platform.system(), "network_credential_type": "SFTP",
-        "network_credential_path": "/", "network_credential_pass": False, "do_validation": True
+        "network_credential_value": "/", "network_credential_pass": False, "do_validation": True
         }
 
     # There are, however, dynamic constraints we have to test for
