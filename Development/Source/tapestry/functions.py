@@ -1087,7 +1087,7 @@ def verify_blocks(ns, gpg_agent, testing=False):
                 found_blocks.append(os.path.join(root, file))
     for block in found_blocks:
         with open(block+".sig", "rb") as k:
-            result = gpg.verify_file(k, block, always_trust=testing)
+            result = gpg.verify_file(k, block)
         if not result.valid:
             print("Rejecting %s; invalid signature." % (os.path.split(block)[1]))
         else:
