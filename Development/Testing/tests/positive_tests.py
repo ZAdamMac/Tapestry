@@ -938,11 +938,17 @@ def test_sftp_place(config):
     :return:
     """
     errors = []
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
     tgt_file = os.path.join(config["path_config"],
                             os.path.join("test articles", "control-config.cfg"))
 
-    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                    config["sftp_credential"], config["sftp_trust"])
+    connection, failure = tapestry.sftp_connect(ns)
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
@@ -964,9 +970,15 @@ def test_sftp_find(config):
     :return:
     """
     errors = []
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
 
-    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                config["sftp_credential"], config["sftp_trust"])
+    connection, failure = tapestry.sftp_connect(ns)
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
@@ -994,9 +1006,15 @@ def test_sftp_fetch(config):
     :return:
     """
     errors = []
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
 
-    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                config["sftp_credential"], config["sftp_trust"])
+    connection, failure = tapestry.sftp_connect(ns)
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
