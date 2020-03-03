@@ -770,7 +770,7 @@ def test_media_retrieve_files(config):
     """
     # We need a small, known-good tap with a known-good riff and sig to exist
     # in resources. This should be reflected in the documentation and the VCS
-    # and the corresponding key also needs to be made public!
+    # and the corresponding key also needs to be made public! TODO
     errors = []
 
     test_index = tapestry.media_retrieve_files(config["path_config"], config["path_temp"], gnupg.GPG())
