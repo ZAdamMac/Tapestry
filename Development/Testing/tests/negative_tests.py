@@ -66,7 +66,7 @@ def runtime(dict_config, do_network):
     :return:
     """
     expects = ["test_user", "path_logs", "path_temp", "test_fp", "sftp_id",
-               "sftp_credential", "sftp_uid", "sftp_rootpath", "sftp_trust"]  # Add new dict_config keys here
+               "sftp_credential", "sftp_uid", "sftp_rootpath"]  # Add new dict_config keys here
     can_run = framework.validate_dict_config(dict_config, expects)
 
     # We're storing a lot of the externals of the testing in a config file.
