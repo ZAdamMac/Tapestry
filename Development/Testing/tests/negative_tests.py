@@ -241,7 +241,7 @@ def test_TaskCheckIntegrity(config):
         f.write(string_test)
 
     with tarfile.open(test_tar, "w:") as tf:
-        tf.add(test_file)
+        tf.add(test_file, arcname="hash_test")
 
     test_task = tapestry.TaskCheckIntegrity(test_tar, "hash_test", control_hash)
     check_passed, foo = test_task()
