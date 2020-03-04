@@ -984,12 +984,12 @@ def test_sftp_find(config):
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
         return errors
 
-    found, raised = tapestry.sftp_find(connection, config["sftp_rootpath"])
+    found = tapestry.sftp_find(connection, config["sftp_rootpath"])
 
     if len(found) == 0:
-        errors.append("[ERROR] Raised: %s" % raised)
+        errors.append("[ERROR] No Files Found Remotely!")
     else:
-        if "control-file.txt" not in found:
+        if "control-file.tap" not in found:  # TODO add to docs
             errors.append("[ERROR] The find operation returned the following "
                           "list of items, but not the target item:")
             errors.append(str(found))
@@ -1020,14 +1020,14 @@ def test_sftp_fetch(config):
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
         return errors
 
-    raised = tapestry.sftp_fetch(connection, config["sftp_rootpath"], "control-file.txt",
+    raised = tapestry.sftp_fetch(connection, config["sftp_rootpath"], "control-file.tap",
                                  config["path_temp"])
 
     if raised:
         errors.append("[ERROR] Raised: %s" % raised)
     else:
         for root, dirs, found in os.walk(config["path_temp"]):
-            if "control-file.txt" not in found:
+            if "control-file.tap" not in found:
                 errors.append("[ERROR] The find operation returned the following "
                               "list of items, but not the target item:")
                 errors.append(str(found))

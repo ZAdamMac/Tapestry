@@ -1166,9 +1166,10 @@ def sftp_connect(namespace):  # TODO: Rework to make conformant with test expect
     :return: Connection (or None, if error), error (string)
     """
     ns = namespace
+    error = None
 
     if ns.currentOS.lower() == "linux":
-        user_khp = "~/.ssh/known_hosts"
+        user_khp = os.path.expanduser("~/.ssh/known_hosts")
         sys_khp = "/etc/ssh/known_hosts"
     elif ns.currentOS.lower() == "windows":
         user_khp = os.path.join(os.environ["USERPROFILE"], ".ssh\\known_hosts")
@@ -1187,20 +1188,20 @@ def sftp_connect(namespace):  # TODO: Rework to make conformant with test expect
     try:
         sftp_connection = None
         if ns.network_credential_type.lower() == "passphrase":
-            ns.sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
-                                                   password=ns.network_credential_pass)
-        if ns.network_credential_type.lower() == "key":
+           sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=int(ns.portNet),
+                                                   password=ns.network_credential_value)
+        elif ns.network_credential_type.lower() == "key":
             if not ns.network_credential_pass:
-                sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
+                sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=int(ns.portNet),
                                                        private_key=ns.network_credential_value)
             else:
-                sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=ns.portNet,
+                sftp_connection = pysftp.Connection(host=ns.addrNet, username=ns.nameNet, port=int(ns.portNet),
                                                        private_key=ns.network_credential_value,
                                                        private_key_pass=ns.network_credential_pass)
         else:
             error = "The configuration has specified an impossible or unrecognized SFTP connection type."
             sftp_connection = None
-    except (sshe.AuthenticationException,sshe.PartialAuthentication) as e:
+    except (sshe.AuthenticationException, sshe.PartialAuthentication) as e:
         error = "There was an error in authentication, aborting connection."
     except sshe.BadAuthenticationType as e:
         error = ("The authentication method attempted does not match which was expected by the server. " \
@@ -1213,8 +1214,6 @@ def sftp_connect(namespace):  # TODO: Rework to make conformant with test expect
     finally:
         if not sftp_connection:
             sftp_connection = None
-        if not error:
-            error = None
 
     return sftp_connection, error
 
@@ -1255,19 +1254,19 @@ def sftp_deposit_files(namespace):
 
 
 def sftp_fetch(connection, remote_path, tgt, work_path):
-    if connection.getcwd().lower() == remote_path:
-        try:
-            connection.cd(remote_path)
-        except IOError:
-            error = "Couldn't retrieve file from %s; no such directory on remote host" % remote_path
-            return error
-        try:
-            connection.get(tgt, localpath=work_path)
-        except IOError:
-            error = "Couldn't retrieve %s from remote host; no such file in %s" % (tgt, remote_path)
-            return error
+    try:
+        if connection.pwd != remote_path:
+            connection.chdir(remote_path)
+    except IOError:
+        error = "Couldn't retrieve file from %s; no such directory on remote host" % remote_path
+        return error
+    try:
+        connection.get(tgt, localpath=os.path.join(work_path, tgt))
+    except IOError:
+        error = "Couldn't retrieve %s from remote host; no such file in %s" % (tgt, remote_path)
+        return error
 
-        return None
+    return None
 
 
 def sftp_find(sftp, storagedir):
@@ -1279,7 +1278,8 @@ def sftp_find(sftp, storagedir):
     :param storagedir: The remote root dir as passed through NS.
     :return:
     """
-    sftp.chdir(storagedir)
+    if sftp.pwd != storagedir:
+        sftp.chdir(storagedir)
     list_remote_files = sftp.listdir()
 
     # Paramiko and pysftp return unicode strings; we want to bash to local.
@@ -1292,16 +1292,19 @@ def sftp_find(sftp, storagedir):
 
 
 def sftp_place(connection, tgt, remote_path):
-    if connection.getcwd().lower() == remote_path:
-        try:
-            connection.cd(remote_path)
-        except IOError:
-            error = "Couldn't place file at %s; no such directory on remote host" % remote_path
-            return error
-
+    error = None
+    try:
+        if str(connection.pwd) != remote_path:
+            connection.chdir(remote_path)
         connection.put(tgt)
+    except IOError as e:
+        error = "Couldn't place file at %s; no such directory on remote host" % remote_path
+        tgt = False
+    except PermissionError:
+        error = "Permission Denied"
+        tgt = False
 
-        return None
+    return tgt, error
 
 
 def sftp_retrieve_files(namespace, gpg_agent):
