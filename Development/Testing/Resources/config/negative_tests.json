@@ -29,13 +29,13 @@
         "pass message": "[PASS] The hashing mismatch was correctly detected",
         "fail message": "[FAIL] One or more errors were raised in testing:"
     },
-    "test_sftp_connnect_invalid": {
+    "test_sftp_connect_invalid": {
         "title": "-------------------------[SFTP Connection Trust Test]---------------------------",
         "description": "Calls sftp_connect against a known-good SFTP server using an invalid trust, and ensures a valid response came back.",
         "pass message": "[PASS] sftp_connect refused to connect to an untrusted server.",
         "fail message": "[FAIL] One or more errors were raised in testing:"
     },
-    "test_sftp_connnect_down": {
+    "test_sftp_connect_down": {
         "title": "-----------------------[SFTP Connection Failure Test]--------------------------",
         "description": "Calls sftp_connect against a non-extant SFTP server and ensures the expected responses come back",
         "pass message": "[PASS] sftp_connect behaves correctly when the target server is down.",

@@ -45,14 +45,15 @@ def parse_config():
     sftp_credential = parser.get("Network Configuration", "SFTP Credential")
     sftp_uid = parser.get("Network Configuration", "SFTP User")
     sftp_rootpath = parser.get("Network Configuration", "SFTP Directory")
-    sftp_trust = parser.get("Network Configuration", "SFTP Trust")
+    path_inc_out = parser.get("Environment Information", "Inclusive Output Path")
+
 
     configuration = {"test_user": test_user, "path_logs": path_logs,
                      "path_config": path_config, "path_corpus": path_corpus,
                      "path_temp": path_temp, "test_fp": test_fp,
                      "sftp_id": sftp_id, "sftp_credential": sftp_credential,
                      "sftp_uid": sftp_uid, "sftp_rootpath": sftp_rootpath,
-                     "sftp_trust": sftp_trust}
+                     "path_inc_out": path_inc_out}
 
     return configuration
 
@@ -79,6 +80,7 @@ def parse_args():
 
     return arguments
 
+
 if __name__ == "__main__":
     print("Tapestry Test Automation - Version %s" % __version__)
     print("These tests were designed to validate the tapestry version listed above.")
@@ -90,7 +92,7 @@ if __name__ == "__main__":
         input("Start your FTP daemons for the network tests now, and press enter to continue.")
     if dict_args["runtime"]:
         print("Triggering the runtime tests. This can take quite a while depending on machine specs.")
-        runtime_tests.runtime(dict_config)
+        runtime_tests.runtime(dict_config, dict_args["do_network_tests"])
     print("Starting the positive-case unit tests.")
     returner = os.getcwd()
     positive_tests.runtime(dict_config, dict_args["do_network_tests"])

@@ -113,7 +113,7 @@
         "pass message": "[PASS] verify_blocks appears to work as designed.",
         "fail message": "[FAIL] One or more errors were raised in testing:"
     },
-    "test_sftp_connnect": {
+    "test_sftp_connect": {
         "title": "----------------------------[SFTP Connection Test]-----------------------------",
         "description": "Calls sftp_connect against a known-good SFTP server using correct credentials, and ensures a valid response came back.",
         "pass message": "[PASS] sftp_connect returns valid connection objects.",

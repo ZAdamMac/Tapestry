@@ -24,6 +24,7 @@ import json
 import multiprocessing as mp
 import os
 import platform
+import pysftp
 from random import choice
 import shutil
 from string import printable
@@ -84,7 +85,7 @@ def runtime(dict_config, do_network):
                         test_parse_config, test_verify_blocks
                         ]
     # Populate this list with all the network tests (gated by do_network)
-    list_network_tests = [test_sftp_connect, test_sftp_place, test_sftp_find, test_ftp_fetch]
+    list_network_tests = [test_sftp_connect, test_sftp_place, test_sftp_find, test_sftp_fetch]
 
     if can_run:
         log = establish_logger(dict_config)
@@ -517,7 +518,7 @@ def test_TaskCheckIntegrity_call(config):
         f.write(string_test)
 
     with tarfile.open(test_tar, "w:") as tf:
-        tf.add(test_file)
+        tf.add(test_file, arcname="hash_test")
 
     test_task = tapestry.TaskCheckIntegrity(test_tar, "hash_test", control_hash)
     check_passed, foo = test_task()
@@ -769,7 +770,7 @@ def test_media_retrieve_files(config):
     """
     # We need a small, known-good tap with a known-good riff and sig to exist
     # in resources. This should be reflected in the documentation and the VCS
-    # and the corresponding key also needs to be made public!
+    # and the corresponding key also needs to be made public! TODO
     errors = []
 
     test_index = tapestry.media_retrieve_files(config["path_config"], config["path_temp"], gnupg.GPG())
@@ -813,7 +814,8 @@ def test_parse_config(ns):
         "nameNet": "amartian", "dirNet": "olympus mons/the face", "retainLocal": True,
         "block_size_raw": int(64 * 2 ** 20), "compid": "HAL 9000",
         "recovery_path": "The Obelisk", "uid": "anothermartian", "drop": "area51",
-        "numConsumers": os.cpu_count(), "currentOS": platform.system()
+        "numConsumers": os.cpu_count(), "currentOS": platform.system(), "network_credential_type": "SFTP",
+        "network_credential_value": "/", "network_credential_pass": False, "do_validation": True
         }
 
     # There are, however, dynamic constraints we have to test for
@@ -893,7 +895,7 @@ def test_verify_blocks(config):
     return errors
 
 
-def test_sftp_connect(config):
+def test_sftp_connect(config):  # TODO: Test Not Reflective of Reality (change args only)
     """A very simplistic test that validates a known-good set of SFTP
     information can be used to connect to a given SFTP endpoint and return a
     valid connection object. The errors returned by sftp_connect are added to
@@ -904,14 +906,21 @@ def test_sftp_connect(config):
     :return:
     """
     errors = []
-    connection, resp_errors = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                    config["sftp_credential"], config["sftp_trust"])
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
+
+    connection, resp_errors = tapestry.sftp_connect(ns)
 
     if not connection:
-        errors.append("[ERROR] Raised: %s" % resp_errors)
+        errors.append("[ERROR] Raised: '%s'" % resp_errors)
 
     if connection:
-        if isinstance(connection, tapestry.SFTPConnection):
+        if isinstance(connection, pysftp.Connection):
             pass
         else:
             errors.append("[ERROR] sftp_connect returned a connection that is"
@@ -929,11 +938,17 @@ def test_sftp_place(config):
     :return:
     """
     errors = []
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
     tgt_file = os.path.join(config["path_config"],
                             os.path.join("test articles", "control-config.cfg"))
 
-    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                    config["sftp_credential"], config["sftp_trust"])
+    connection, failure = tapestry.sftp_connect(ns)
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
@@ -955,20 +970,26 @@ def test_sftp_find(config):
     :return:
     """
     errors = []
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
 
-    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                config["sftp_credential"], config["sftp_trust"])
+    connection, failure = tapestry.sftp_connect(ns)
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
         return errors
 
-    found, raised = tapestry.sftp_find(connection, config["sftp_rootpath"])
+    found = tapestry.sftp_find(connection, config["sftp_rootpath"])
 
     if len(found) == 0:
-        errors.append("[ERROR] Raised: %s" % raised)
+        errors.append("[ERROR] No Files Found Remotely!")
     else:
-        if "control-file.txt" not in found:
+        if "control-file.tap" not in found:  # TODO add to docs
             errors.append("[ERROR] The find operation returned the following "
                           "list of items, but not the target item:")
             errors.append(str(found))
@@ -985,22 +1006,28 @@ def test_sftp_fetch(config):
     :return:
     """
     errors = []
+    ns = tapestry.Namespace()
+    ns.currentOS = platform.system()
+    ns.addrNet, ns.portNet = config["sftp_id"].split(":")
+    ns.nameNet = config["sftp_uid"]
+    ns.network_credential_value = config["sftp_credential"]
+    ns.network_credential_type = "passphrase"
+    ns.network_credential_pass = False  # We're just testing passwords here
 
-    connection, failure = tapestry.sftp_connect(config["sftp_id"], config["sftp_uid"],
-                                                config["sftp_credential"], config["sftp_trust"])
+    connection, failure = tapestry.sftp_connect(ns)
 
     if not connection:
         errors.append("[ERROR] Connection attempt failed - did the previous test succeed?")
         return errors
 
-    raised = tapestry.sftp_fetch(connection, config["sftp_rootpath"], "control-file.txt",
+    raised = tapestry.sftp_fetch(connection, config["sftp_rootpath"], "control-file.tap",
                                  config["path_temp"])
 
     if raised:
         errors.append("[ERROR] Raised: %s" % raised)
     else:
         for root, dirs, found in os.walk(config["path_temp"]):
-            if "control-file.txt" not in found:
+            if "control-file.tap" not in found:
                 errors.append("[ERROR] The find operation returned the following "
                               "list of items, but not the target item:")
                 errors.append(str(found))

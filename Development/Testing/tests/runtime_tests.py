@@ -47,20 +47,23 @@ def establish_logger(config):
     return logger
 
 
-def runtime(dict_config):
+def runtime(dict_config, do_network):
     """A simple runtime function that does the actual operating floor. This is
     what gets called from the main script in order to actually run the tests.
 
     :param dict_config: required, provides all config information.
     :return:
     """
-    expects = ["test_user", "path_logs", "path_config", "path_corpus", "path_temp"]  # Add new dict_config keys here
+    expects = ["test_user", "path_logs", "path_config", "path_corpus", "path_temp", "path_inc_out"]  # Add new dict_config keys here
     can_run = framework.validate_dict_config(dict_config, expects)
     if can_run:  # Any new tests need to be added here.
         log = establish_logger(dict_config)
         test_gen_key(dict_config, log)
         test_inc(dict_config, log)
         test_rcv(dict_config, log)
+        test_validate(dict_config, log)
+        if do_network:
+            test_network(dict_config, log)
         delete = test_conformity(dict_config, log)
         log.save()
         if delete:
@@ -83,10 +86,10 @@ def test_conformity(config, logs):
             hash_origin = hasher.hexdigest()
 
             hasher = hashlib.md5()
-            path_placed = path_origin.replace(config["path_corpus"], config["path_temp"])
+            path_placed = path_origin.replace(config["path_corpus"], config["path_inc_out"])
             try:
                 hasher.update(open(path_placed, "rb").read())
-                hash_test = hasher.hexdigest
+                hash_test = hasher.hexdigest()
             except FileNotFoundError:
                 hash_test = b'0'
 
@@ -158,6 +161,69 @@ def test_rcv(config, logs):
     print("--rcv completed in %s" % elapse)
     logs.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
     logs.log(str(waiting))
+
+
+def test_validate(config, logs):
+    """Test the Recovery runtime, and put the subprocess output back
+    into the logs. Relies on the "rcv-test.cfg" file in
+    Testing/Resources/config. View the testdocs for details.
+
+    :param config:
+    :param logs:
+    :return:
+    """
+    config_this = os.path.join(config["path_config"], "config/validate-test.cfg")
+    block_locate = locate_previous_block(config["path_corpus"])
+
+    start = time.monotonic()
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--devtest", "--validate", block_locate, "-c", config_this])
+    elapse = framework.elapsed(start)
+    print("--validate completed in %s" % elapse)
+    logs.log("Validation Mode Test Completed in %s - Returned:" % elapse)
+    logs.log(str(waiting))
+
+
+def test_network(config, logs):
+    """Test the Recovery runtime, and put the subprocess output back
+    into the logs. Relies on the "rcv-test.cfg" file in
+    Testing/Resources/config. View the testdocs for details.
+
+    :param config:
+    :param logs:
+    :return:
+    """
+    config_this = os.path.join(config["path_config"], "config/network-test.cfg")
+    block_locate = locate_previous_block(config["path_corpus"])
+
+    start = time.monotonic()
+    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--devtest", "-c", config_this])
+    elapse = framework.elapsed(start)
+    print("Network Test completed in %s" % elapse)
+    logs.log("Network Test Completed in %s - Returned:" % elapse)
+    logs.log(str(waiting))
+
+
+def locate_previous_block(path_corpus):
+    """Attempt to locate one tapestry block and return its absolute path for
+    use by the test_validate block. Like the other runtime tests validation
+    requires human intervention to read the CLI output; however, the core
+    validation functionality is itself unit tested and we are only looking
+    for display conformity here.
+
+    :param path_corpus: A string representing the absolute path of the
+    corpus parent directory; this is assumed to be the output path for
+    all the various individual test config files.
+    """
+    # TODO update documentation re: configuration, this test's limitations.
+    tap = None
+    for path, directories, files in os.walk(os.path.split(path_corpus)[0]):
+        for file in files:
+            if file.endswith(".tap"):
+                tap = os.path.join(path, file)
+    if tap is not None:
+        return tap
+    else:
+        raise FileNotFoundError
 
 
 if __name__ == "__main__":
