@@ -1143,6 +1143,7 @@ def runtime():
             state.network_credential_pass = getpass.getpass(prompt="Enter Network Credential Passphrase: ")
     if state.demand_validate:
         demand_validate(state, gpg_conn)
+        exit()  # We have nothing else to do, so fuck it.
     if state.genKey:
         state = generate_keys(state, gpg_conn)
     verify_keys(state, gpg_conn)
@@ -1489,6 +1490,8 @@ def demand_validate(ns, gpg):
     :param gpg: A valid GPG agent object.
     :return:
     """
+    if not os.path.exists(ns.workDir):
+        os.mkdir(ns.workDir)
     path_arg = ns.validation_target
     if "," in path_arg:
         paths = path_arg.split(",")
@@ -1509,7 +1512,7 @@ def demand_validate(ns, gpg):
         with open(path, "rb") as f:
             print("Decrypting the Block.")
             gpg.decrypt_file(f, always_trust=True, output=path_out)
-        with tarfile.open(path_out, "r:") as tf:
+        with tarfile.open(path_out, "r:*") as tf:
             if "recovery-riff" in tf.getnames():
                 rec_file = tf.extractfile("recovery-riff")
                 rec_index = tapestry.RecoveryIndex(rec_file)
@@ -1520,4 +1523,6 @@ def demand_validate(ns, gpg):
                 do_validate = False
         if do_validate:  # We step out at this level to close the tarfile in advance.
             prevalidate_blocks(ns, [path_out], rec_index)  # This allows multithreaded
+
+        clean_up(ns.workDir)
 
