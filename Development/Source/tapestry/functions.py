@@ -1278,9 +1278,14 @@ def sftp_find(sftp, storagedir):
     :param storagedir: The remote root dir as passed through NS.
     :return:
     """
-    if sftp.pwd != storagedir:
-        sftp.chdir(storagedir)
-    list_remote_files = sftp.listdir()
+
+    try:
+        if sftp.pwd != storagedir:
+            sftp.chdir(storagedir)
+            list_remote_files = sftp.listdir()
+    except IOError:
+        print("SFTP Root Directory Doesn't Exist: %s" % storagedir)
+        list_remote_files = []
 
     # Paramiko and pysftp return unicode strings; we want to bash to local.
     list_returned = []
