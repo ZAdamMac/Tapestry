@@ -41,6 +41,7 @@ This will install tapestry in the Virtual Environment, and do so in such a way t
 # 3. Adjust Configuration
 There are several `.cfg` configuration files present in `Resources/config` which need to be updated. In particular:
 - `signing fp` needs to be updated to reflect a key available to the testing user to sign files with;
+- `encryption fp` should stay the same, but you should install test_enc_key from the resources file.
 - All paths need to be updated appropriately.
 
 There is also a `tests/test_config.cfg` file that needs to be adjusted.
