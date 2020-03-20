@@ -6,5 +6,7 @@ setup(name='tapestry',
       author='Zac Adam-MacEwen',
       author_email='zadammac@kenshosec.com',
       url='https://www.github.com/zadammac/Tapestry',
-      packages=['tapestry', 'python-gnupg', 'paramiko'],
+      packages=['tapestry'],
+      install_requires=['pysftp', 'python-gnupg', 'paramiko'],
      )
+1
