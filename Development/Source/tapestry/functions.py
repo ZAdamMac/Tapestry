@@ -9,6 +9,7 @@ github: https://www.github.com/ZAdamMac/Tapestry
 
 from . import classes as tapestry
 import argparse
+from collections import namedtuple
 import configparser
 import datetime
 import getpass
@@ -36,6 +37,29 @@ class Namespace(object):  # this just creates an object with arbitrary attribute
     pass
 
 # Function Definitions
+
+
+def access_test(absolute_path, test_F=True, test_R=True, test_W=True, test_X=False):
+    """Tests to see what access rights we have
+    
+    Args:
+        absolute_path (os.path): Path to test against
+        test_F (bool, optional): Enable os.F_OK (exist) rights test. Defaults to True.
+        test_R (bool, optional): Enable os.R_OK (read) rights test. Defaults to True.
+        test_W (bool, optional): Enable os.W_OK (write) rights test. Defaults to True.
+        test_X (bool, optional): Enable os.X_OK (execute) rights test. Defaults to False.
+    
+    Returns:
+        tuple: Results of each test. Attribute for tests not conducted will be None.
+    """
+    Result = namedtuple('AccessTestResult', ['exist', 'read', 'write', 'execute'])
+    r = Result(
+        os.access(absolute_path, os.F_OK) if test_F else None,
+        os.access(absolute_path, os.R_OK) if test_R else None,
+        os.access(absolute_path, os.W_OK) if test_W else None,
+        os.access(absolute_path, os.X_OK) if test_X else None
+    )
+    return r
 
 
 def announce():
@@ -68,25 +92,30 @@ def build_ops_list(namespace):
             for file in files:
                 absolute_path = os.path.join(dir_path, file)
                 sub_path = os.path.relpath(absolute_path, ns.category_paths[category])
-                size = os.path.getsize(absolute_path)
-                if size <= ns.block_size_raw:  # We'll be handling this file.
-                    hasher = hashlib.new('sha256')
-                    with open(absolute_path, "rb") as contents:
-                        chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
-                        while chunk != b"":
-                            hasher.update(chunk)
+                access_test_results = access_test(absolute_path)
+                if False not in access_test_results:
+                    size = os.path.getsize(absolute_path)
+                    if size <= ns.block_size_raw:  # We'll be handling this file.
+                        hasher = hashlib.new('sha256')
+                        with open(absolute_path, "rb") as contents:
                             chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
-                    hash_digest = hasher.hexdigest()
-                    file_descriptor = {
-                        'fname': file, 'sha256': hash_digest, 'category': category,
-                        'fpath': sub_path, 'fsize': size
-                        }
-                    files_index.update({str(uuid.uuid1(node)): file_descriptor})
+                            while chunk != b"":
+                                hasher.update(chunk)
+                                chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
+                        hash_digest = hasher.hexdigest()
+                        file_descriptor = {
+                            'fname': file, 'sha256': hash_digest, 'category': category,
+                            'fpath': sub_path, 'fsize': size
+                            }
+                        files_index.update({str(uuid.uuid1(node)): file_descriptor})
+                    else:
+                        size_pretty = size / 1048576
+                        block_size_pretty = ns.block_size_raw / 1048576
+                        print("{%s} %s is larger than %s (%s) and is being excluded" %
+                            (category, file, size_pretty, block_size_pretty))
                 else:
-                    size_pretty = size / 1048576
-                    block_size_pretty = ns.block_size_raw / 1048576
-                    print("{%s} %s is larger than %s (%s) and is being excluded" %
-                          (category, file, size_pretty, block_size_pretty))
+                    print("Error accessing %s: %s. Verify it exists and you have permissions" %
+                        (absolute_path, access_test_results), file=sys.stderr)
 
     return files_index
 
