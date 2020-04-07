@@ -838,32 +838,38 @@ def parse_config(namespace):
         place_config_template(ns.config_path)
         exit(3)
 
-    ns.activeFP = config.get("Environment Variables", "Expected FP")
-    ns.fp = config.get("Environment Variables", "Expected FP")
-    ns.signing = config.getboolean("Environment Variables", "Sign by Default")
-    ns.sigFP = config.get("Environment Variables", "Signing FP")
-    ns.keysize = config.getint("Environment Variables", "keysize")
-    ns.compress = config.getboolean("Environment Variables", "Use Compression")
-    ns.compressLevel = config.getint("Environment Variables", "Compression Level")
-    ns.step = "none"
-    ns.sumJobs = 0
-    ns.jobsDone = 0
-    ns.modeNetwork = config.get("Network Configuration", "mode")
-    ns.addrNet = config.get("Network Configuration", "server")
-    ns.portNet = config.getint("Network Configuration", "port")
-    ns.nameNet = config.get("Network Configuration", "username")
-    ns.network_credential_type = config.get("Network Configuration", "Auth Type")
-    ns.network_credential_value = config.get("Network Configuration", "Credential Path")
-    ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase")
-    ns.dirNet = config.get("Network Configuration", "remote drop location")
-    ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
-    ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
-        2 ** 20)  # The math is necessary to go from MB to Bytes)
-    ns.compid = config.get("Environment Variables", "compid")
-    ns.recovery_path = config.get("Environment Variables", "recovery path")
-    ns.uid = config.get("Environment Variables", "uid")
-    ns.drop = config.get("Environment Variables", "Output Path")
-    ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation")
+    try:
+        ns.activeFP = config.get("Environment Variables", "Expected FP")
+        ns.fp = config.get("Environment Variables", "Expected FP")
+        ns.signing = config.getboolean("Environment Variables", "Sign by Default")
+        ns.sigFP = config.get("Environment Variables", "Signing FP")
+        ns.keysize = config.getint("Environment Variables", "keysize")
+        ns.compress = config.getboolean("Environment Variables", "Use Compression")
+        ns.compressLevel = config.getint("Environment Variables", "Compression Level")
+        ns.step = "none"
+        ns.sumJobs = 0
+        ns.jobsDone = 0
+        ns.modeNetwork = config.get("Network Configuration", "mode")
+        ns.addrNet = config.get("Network Configuration", "server")
+        ns.portNet = config.getint("Network Configuration", "port")
+        ns.nameNet = config.get("Network Configuration", "username")
+        ns.network_credential_type = config.get("Network Configuration", "Auth Type")
+        ns.network_credential_value = config.get("Network Configuration", "Credential Path")
+        ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase")
+        ns.dirNet = config.get("Network Configuration", "remote drop location")
+        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
+        ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
+            2 ** 20)  # The math is necessary to go from MB to Bytes)
+        ns.compid = config.get("Environment Variables", "compid")
+        ns.recovery_path = config.get("Environment Variables", "recovery path")
+        ns.uid = config.get("Environment Variables", "uid")
+        ns.drop = config.get("Environment Variables", "Output Path")
+        ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation")
+    except configparser.NoOptionError:
+        print("Tapestry has attempted to reference a configuration option which is missing from the config file.")
+        print("Please confirm the structure of your config file is correct.")
+        print("If you have just upgraded to 2.1 or later, you may be missing the network options fields.")
+        exit(3)
 
     if ns.currentOS == "Linux":
         ns.workDir = "/tmp/Tapestry/"
