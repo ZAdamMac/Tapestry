@@ -336,7 +336,7 @@ def do_main(namespace, gpg_agent):
     clean_up(namespace.workDir)
     print("The temporary working directories have been cleared and your files")
     print("are now stored here: %s" % namespace.drop)
-    exit()
+    exit(0)
 
 
 def do_recovery(namespace, gpg_agent):
@@ -358,7 +358,7 @@ def do_recovery(namespace, gpg_agent):
     unpack_blocks(namespace)
     clean_up(namespace.workDir)
     debug_print("REC: Got this far, so I should terminate")
-    exit()
+    exit(0)
 
 
 def encrypt_blocks(targets, gpg_agent, fingerprint, namespace):
@@ -601,11 +601,11 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
             print("Something has gone wrong!")
             print("One or more blocks are corrupt and missing their recovery index.")
             print("This is a fatal error.")
-            exit()
+            exit(1)
     else:
         print("Something has gone wrong in initial decryption.")
         print("Verify you have the key for the blocks provided and try again.")
-        exit()
+        exit(2)
 
     # If we made it this far, we have a recovery file, so let's return a recovery index
     rec_index = tapestry.RecoveryIndex(index_file)
@@ -836,7 +836,7 @@ def parse_config(namespace):
         print("Generating a template config file in that location.")
         print("Please edit this config file appropriately and rerun the program.")
         place_config_template(ns.config_path)
-        exit()
+        exit(3)
 
     ns.activeFP = config.get("Environment Variables", "Expected FP")
     ns.fp = config.get("Environment Variables", "Expected FP")
@@ -1154,7 +1154,7 @@ def verify_keys(ns, gpg):
         print("This could be due to either a configuration error, or the key needs to be re-imported.")
         print("Please double-check your configuration and keyring and try again.")
         clean_up(ns.workDir)
-        exit()
+        exit(4)
     debug_print("Fetching key %s from Keyring" % ns.activeFP)
     debug_print(ns.activeFP)
 
@@ -1172,7 +1172,7 @@ def runtime():
             state.network_credential_pass = getpass.getpass(prompt="Enter Network Credential Passphrase: ")
     if state.demand_validate:
         demand_validate(state, gpg_conn)
-        exit()  # We have nothing else to do, so fuck it.
+        exit(0)  # We have nothing else to do, so fuck it.
     if state.genKey:
         state = generate_keys(state, gpg_conn)
     verify_keys(state, gpg_conn)
@@ -1181,7 +1181,7 @@ def runtime():
     else:
         do_main(state, gpg_conn)
     clean_up(state.workDir)
-    exit()
+    exit(0)
 
 
 def sftp_connect(namespace):  # TODO: Rework to make conformant with test expectations
@@ -1266,7 +1266,7 @@ def sftp_deposit_files(namespace):
         print("Your files will be retained locally.")
         print("Error: %s" % error)
         clean_up(ns.workDir)
-        exit(1)
+        exit(5)
 
     for cwd, dirs, files in os.walk(ns.drop):
         for file in files:
@@ -1352,7 +1352,7 @@ def sftp_retrieve_files(namespace, gpg_agent):
         print("An error has occurred in connecting.")
         print(error)
         print("Exiting...")
-        exit(1)
+        exit(5)
 
     list_all_files = sftp_find(conn, ns.dirNet)  # Get the full list of files stored remotely.
     list_target_files = sftp_select_retrieval_target(list_all_files)  # Get the files the user actually wants
@@ -1394,12 +1394,12 @@ def sftp_retrieve_files(namespace, gpg_agent):
             print("One or more blocks are corrupt and missing their recovery index.")
             print("This is a fatal error.")
             clean_up(ns.workDir)
-            exit(1)
+            exit(5)
     else:
         print("Something has gone wrong in initial decryption.")
         print("Verify you have the key for the blocks provided and try again.")
         clean_up(ns.workDir)
-        exit(1)
+        exit(5)
 
     # If we made it this far, we have a recovery file, so let's return a recovery index
     rec_index = tapestry.RecoveryIndex(index_file)
