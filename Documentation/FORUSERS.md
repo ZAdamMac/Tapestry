@@ -1,5 +1,6 @@
 # Tapestry Specialist Backup Tool - User Documentation
 *General-Use Documentation, prepared for Version 2.0.2*
+*Some documentation applies only to 2.1, which is the development release. It is noted clearly as such.*
 
 The goal of this specific documentation file is to provide a general overview and basic use cases for tapestry. More information about special use cases and considerations can be found in `FORADMINS.md`
 
@@ -9,7 +10,7 @@ Tapestry is a reasonably lightweight and flexible script in its essence, but it 
 **Suggested Minimum Hardware Requirements**
 - 4 GB RAM (Probably will run in less)
 - 3.0 GHz, 64-Bit Dual-Core Processor (or equivalent)
-- 10 GB or more unusued Hard Drive Space
+- 10 GB or more unused Hard Drive Space
 
 **Software Requirements**
 - Python v3.5 or Later
@@ -108,3 +109,13 @@ Using Tapestry with FTP is a little more complex. Tapestry is designed primarily
 - Set server and port per the configuration of your server.
 - If necessary, provide a username to authenticate as.
 - It is recommended you leave `keep local copies` set to True.
+
+### Using Tapestry Exit Codes
+***Upcoming in 2.1***: Tapestry provides OS-level exit codes based on events encountered during its run. For the most part, these exit codes represent particular error conditions, which are given distinct exit codes. You can intercept these with your automation in order to add your own additional error handling should issues arise.
+
+|Exit Code|Meaning|
+|0|Tapestry completed the requested operation successfully.|
+|1|Tapestry attempted to validate or recover from a particular tapfile, but there was an issue with its recovery index file and it was unable to do so. This typically means that this is a very old Tapfile, generated pre-0.3.0.|
+|2|Tapestry was attempting to validate or recover a particular tapfile and encountered an error in decryption that prevented it from doing so. Usually, this is a simple matter of not having the appropriate key on your keyring.|
+|3|Tapestry was unable to locate the requested config file, or identify a fallback config file. Therefore, it has created a new one within its CWD. You should update this file or review your configuration path in the command to make sure you have a valid config file available.|
+|4|Tapestry was unable to find the key that is configured as the encryption key on the keyring. Because of this it couldn't have proceeded with its operations and has exited accordingly.|
