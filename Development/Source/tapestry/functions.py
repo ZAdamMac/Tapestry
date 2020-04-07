@@ -1170,6 +1170,7 @@ def runtime():
     state = Namespace()
     state = parse_args(state)
     state = parse_config(state)
+    state = start_logging(state)
     gpg_conn = start_gpg(state)
     announce()
     if state.modeNetwork.lower() != "none":
@@ -1190,7 +1191,21 @@ def runtime():
     exit(0)
 
 
-def sftp_connect(namespace):  # TODO: Rework to make conformant with test expectations
+def start_logging(ns):
+    """Now that we have a logger, we need a way to instantiate it and attach it
+    to the namespace/state object. Fortunately, that's straight forward.
+
+    :param ns: the namespace object to which the logger will be attached.
+    :return: the modified namespace object.
+    """
+    date = str(datetime.date.today())
+    name_logfile = "tapestry-%s.log" % date
+    ns.logs = tapestry.SimpleLogger(ns.dropDir, name_logfile, ns.compid, date, ns.config_path)
+
+    return ns
+
+
+def sftp_connect(namespace):
     """Attempts to grab a pysftp.Connection() object for the relevant
     config information stored in tapestry.cfg. In the event of any failures the
     exceptions will be handled and reraised - the control logic should handle
