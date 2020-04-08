@@ -80,6 +80,8 @@ def build_ops_list(namespace):
     :return:
     """
     ns = namespace
+    ns.logs.log("Building the Operations list. A list of rejected files and their reasons follows.")
+    ns.logs.log("For a list of files that were not rejected, decrypt and read the main RIFF file.")
     # Step 1: Index Everything for the Blocksort
     files_index = {}  # This comes out the same as the 'findex' key in a NewRIFF JSON
     node = uuid.getnode()
@@ -111,11 +113,15 @@ def build_ops_list(namespace):
                     else:
                         size_pretty = size / 1048576
                         block_size_pretty = ns.block_size_raw / 1048576
-                        print("{%s} %s is larger than %s (%s) and is being excluded" %
+                        message = ("{%s} %s is larger than %s (%s) and is being excluded" %
                             (category, file, size_pretty, block_size_pretty))
+                        print(message)
+                        ns.logs.log(message)
                 else:
-                    print("Error accessing %s: %s. Verify it exists and you have permissions" %
-                        (absolute_path, access_test_results), file=sys.stderr)
+                    message = ("Error accessing %s: %s. Verify it exists and you have permissions" %
+                              (absolute_path, access_test_results))
+                    print(message)
+                    ns.logs.log(message)
 
     return files_index
 
@@ -206,6 +212,7 @@ def debug_print(body):
         global state
         if state.debug:
             print(output_string)
+            state.logs.log(output_string)
     except NameError:  # In this edge case we are probably running in a test context
         print(output_string)  # therefore output is likely desired
 
@@ -336,6 +343,7 @@ def do_main(namespace, gpg_agent):
     clean_up(namespace.workDir)
     print("The temporary working directories have been cleared and your files")
     print("are now stored here: %s" % namespace.drop)
+    ns.logs.save()
     exit(0)
 
 
@@ -343,13 +351,16 @@ def do_recovery(namespace, gpg_agent):
     """Basic function that holds the runtime for the entire recovery process."""
     ns = namespace
     print("Entering Recovery Mode")
+    ns.logs.log("This is a recovery-mode operation.")
     if ns.modeNetwork.lower() == "sftp":
         print("Fetching available blocks from the FTP server.")
+        ns.logs.log("Using SFTP to retrieve backup data.")
         namespace = sftp_retrieve_files(namespace, gpg_agent)
         print("FTP Fetch Completed")
     else:
+        ns.logs.log("Attempting to search %s for recovery files." % namespace.recovery_path)
         rec_index = media_retrieve_files(namespace.recovery_path, namespace.workDir,
-                                         gpg_agent)
+                                         gpg_agent, ns.logs)
         namespace.rec_index = rec_index
         debug_print("DoRecovery: namespace after MRF: %s" % namespace)
     verified_blocks = verify_blocks(namespace, gpg_agent)
@@ -358,6 +369,7 @@ def do_recovery(namespace, gpg_agent):
     unpack_blocks(namespace)
     clean_up(namespace.workDir)
     debug_print("REC: Got this far, so I should terminate")
+    ns.logs.save()
     exit(0)
 
 
@@ -473,6 +485,7 @@ def generate_keys(namespace, gpg_agent):
     """Provided with a namespace and a connection to the gpg agent, generates a
     new key. Does not obviate the build runtime.
     """
+    namespace.logs.log("The --genKey flag was set, so a new key needed to be generated.")
     print("You have indicated you wish to have Tapestry generate a new Disaster Recovery Key.")
     print(("This key will be a %s -bit RSA Key Pair with the credentials you specify." % namespace.keysize))
     print("This key will not expire by default. If you need this functionality, add it in GPG.")
@@ -484,6 +497,7 @@ def generate_keys(namespace, gpg_agent):
                                   name_email=contact_key)
     keypair = gpg_agent.gen_key(inp)
     namespace.activeFP = keypair.fingerprint  # Changes the value of FP to the new key
+    namespace.logs.log(("The newly-generated key's fingerprint was %s" % keypair.fingerprint))
 
     config = configparser.ConfigParser()
 
@@ -508,12 +522,14 @@ def generate_keys(namespace, gpg_agent):
         key_handle = os.fdopen(key_file, "w")
         key_handle.write(str(key_out))
         key_handle.close()
+        print("The new keys have been saved in the output folder. Please move them to removable media or other backup.")
     except ValueError:  # Most Probable cause for this is that the version of the gnupg module is outdated
         print("An error has occured which prevented the private side of the disaster recovery key from being exported.")
         print("This error is likely caused by this system's version of the python-gnupg module being outdated.")
         print("You can export the key manually using the method of your choice.")
-
-    print("The new keys have been saved in the output folder. Please move them to removable media or other backup.")
+        namespace.logs.log("An error prevented the keys from being exported - this usually has to do with"
+                           " this machine's version of python-gnupg being outdated. You can update this with "
+                           "pip.")
 
     return namespace
 
@@ -545,7 +561,7 @@ def get_user_input(message, dict_data, resp_column, list_column_order):
     return lookup_list[response]
 
 
-def media_retrieve_files(mountpoint, temp_path, gpg_agent):
+def media_retrieve_files(mountpoint, temp_path, gpg_agent, logs):
     """Iterates over mountpoint, moving .tap files and their signatures to the
     temporary working directory. Early in operation, will retrieve the recovery
     pickle or NewRIFF index from the first block it finds.
@@ -553,6 +569,7 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
     :param mountpoint: absolute path to the media mountpoint.
     :param temp_path: absolute path to the system's working directory.
     :param gpg_agent: a python-gnupg gpg agent object
+    :param logs: ns.logs, the SimpleLogger object.
     :return:
     """
     print("Now searching local media for the first block. This includes decrypting")
@@ -578,6 +595,7 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
             print("The are no recovery files on the mountpoint at %s" % mountpoint)
             print("Check the media is inserted correctly (or that that address is correct) and try again.")
             input("Press enter to continue")
+            logs.log("Didn't find files there, retrying. If the log ends here the user aborted the recovery.")
         else:
             initial_block_hunt = False
 
@@ -601,10 +619,12 @@ def media_retrieve_files(mountpoint, temp_path, gpg_agent):
             print("Something has gone wrong!")
             print("One or more blocks are corrupt and missing their recovery index.")
             print("This is a fatal error.")
+            logs.log("FATAL ERROR: One or more blocks has a corrupted index. The program will now terminate.")
             exit(1)
     else:
         print("Something has gone wrong in initial decryption.")
         print("Verify you have the key for the blocks provided and try again.")
+        logs.log("FATAL ERROR: The user's keyring did not have the correct key for these blocks.")
         exit(2)
 
     # If we made it this far, we have a recovery file, so let's return a recovery index
@@ -1175,11 +1195,11 @@ def runtime():
     announce()
     if state.modeNetwork.lower() != "none":
         if state.network_credential_pass or (state.network_credential_type == "passphrase"):
-            print("Tapestry is running in network storage mode and requires some credentialling information.")
+            print("Tapestry is running in network storage mode and requires some credentialing information.")
             state.network_credential_pass = getpass.getpass(prompt="Enter Network Credential Passphrase: ")
     if state.demand_validate:
         demand_validate(state, gpg_conn)
-        exit(0)  # We have nothing else to do, so fuck it.
+        exit(0)  # We have nothing else to do, so exit.
     if state.genKey:
         state = generate_keys(state, gpg_conn)
     verify_keys(state, gpg_conn)
@@ -1286,6 +1306,8 @@ def sftp_deposit_files(namespace):
         print("Tapestry has encountered an error with the SFTP connection and is exiting.")
         print("Your files will be retained locally.")
         print("Error: %s" % error)
+        ns.logs.log("The following error arose during SFTP setup, and was fatal: \n %s" % error)
+        ns.logs.save()
         clean_up(ns.workDir)
         exit(5)
 
@@ -1297,8 +1319,10 @@ def sftp_deposit_files(namespace):
                 error = sftp_place(conn, sending, ns.dirNet)
                 if error:
                     print(error)
+                    ns.logs.log("SFTP Error: %s during delivery of %s" % (error, file))
                     if not ns.retainLocal:
                         print("Switching to local retention for this and future files.")
+                        ns.logs.log("Because of the above-stated error, backup files will be retained locally.")
                         ns.retainLocal = True
                 if not ns.retainLocal:
                     os.remove(sending)
@@ -1373,6 +1397,9 @@ def sftp_retrieve_files(namespace, gpg_agent):
         print("An error has occurred in connecting.")
         print(error)
         print("Exiting...")
+        ns.logs.log("An error occurred trying to connected to the SFTP Share: %s" % error)
+        ns.logs.log("This was fatal to the operation of the program.")
+        ns.logs.save()
         exit(5)
 
     list_all_files = sftp_find(conn, ns.dirNet)  # Get the full list of files stored remotely.
@@ -1386,12 +1413,14 @@ def sftp_retrieve_files(namespace, gpg_agent):
         if error is not None:
             is_error_notfound = True
             print("%s - skipping" % error)
+            ns.logs.log("%s - skipping" % error)
         else:
             list_found_files.append(os.path.join(ns.workDir, file))
 
     if is_error_notfound:
         print("One or more files were not able to be retrieved from the remote store.")
         print("If you wish do not wish to continue with only a partial restore, press ctrl+c now.")
+        ns.logs.log("For the reasons above, this is a partial restore only.")
         foo = input("Press enter to continue.")
 
     # Now we need to obtain a recovery file of some kind.
@@ -1414,11 +1443,15 @@ def sftp_retrieve_files(namespace, gpg_agent):
             print("Something has gone wrong!")
             print("One or more blocks are corrupt and missing their recovery index.")
             print("This is a fatal error.")
+            ns.logs.log("One or more blocks are corrupt and missing their recovery indexes. This is a fatal error.")
+            ns.logs.save()
             clean_up(ns.workDir)
             exit(5)
     else:
         print("Something has gone wrong in initial decryption.")
         print("Verify you have the key for the blocks provided and try again.")
+        ns.logs.log("There was an error in the decryption of the recovery blocks. This is terminal.")
+        ns.logs.save()
         clean_up(ns.workDir)
         exit(5)
 
@@ -1489,6 +1522,7 @@ def sftp_select_retrieval_target(list_available):
 def prevalidate_blocks(namespace, list_blocks, index):
     if namespace.do_validation:
         ns = namespace
+        ns.logs.log("Lines beneath this point are failed hash validation checks.")
         jobs = mp.JoinableQueue()
         for file in list_blocks:
             with tarfile.open(file, mode="r:*") as tf:
@@ -1517,6 +1551,8 @@ def prevalidate_blocks(namespace, list_blocks, index):
             else:
                 if message[0]:  # We only need to output the actual output if the job fails.
                     message[1] = "Working"
+                else:
+                    ns.logs.log(message[1])
             rounds_complete += 1
             if rounds_complete == sum_jobs:
                 done.put(None)  # Use none as a poison pill to kill the queue.
@@ -1528,7 +1564,8 @@ def prevalidate_blocks(namespace, list_blocks, index):
             jobs.put(None)
         jobs.join()  # TODO replace lines below with better logic during the improved logging process.
         print("Please review the above lines for any failed files, and capture that information for your records.")
-        foo = input("Press Enter to Continue")  # Pausing for input here is not long-term acceptable; breaks automation
+        print("Failures were also logged to %s" % ns.drop)
+        ns.logs.log("Review lines above this mark for failed validation checks.")
 
 
 def demand_validate(ns, gpg):
@@ -1540,6 +1577,7 @@ def demand_validate(ns, gpg):
     :param gpg: A valid GPG agent object.
     :return:
     """
+    ns.logs.log("This run was a demand validation run; used to check only that block contents are valid.")
     if not os.path.exists(ns.workDir):
         os.mkdir(ns.workDir)
     path_arg = ns.validation_target
@@ -1552,13 +1590,16 @@ def demand_validate(ns, gpg):
         if not os.path.isfile(path):  # We want to autoskip missing paths.
             paths.remove(path)
             print("Skipping: %s, file does not exist." % path)
+            ns.logs.log("Skipping: %s, file does not exist." % path)
         if not path.endswith(".tap"):  # We can only work with our files!
             paths.remove(path)
             print("Skipping %s, not a tapestry block file!" % path)
+            ns.logs.log("Skipping %s, not a tapestry block file!" % path)
     for path in paths:  # this list now consists of .tap files that actually exist!
         # Validate each block individually in case they don't belong to the same set.
         path_out = os.path.join(ns.workDir, os.path.basename(path))
         print("Attempting to validate %s" % os.path.basename(path))
+        ns.logs.log("Attempting to validate %s" % os.path.basename(path))
         with open(path, "rb") as f:
             print("Decrypting the Block.")
             gpg.decrypt_file(f, always_trust=True, output=path_out)
@@ -1570,9 +1611,11 @@ def demand_validate(ns, gpg):
             else:
                 print("This file does not contain a RIFF-format recovery index and cannot be validated.")
                 print("The file may be damaged, or have been created by a Pre-2.0 version of Tapestry.")
+                ns.logs.log("This file does not contain a RIFF-format recovery index and cannot be validated.")
+                ns.logs.log("The file may be damaged, or have been created by a Pre-2.0 version of Tapestry.")
                 do_validate = False
         if do_validate:  # We step out at this level to close the tarfile in advance.
             prevalidate_blocks(ns, [path_out], rec_index)  # This allows multithreaded
 
-        clean_up(ns.workDir)
+    clean_up(ns.workDir)
 
