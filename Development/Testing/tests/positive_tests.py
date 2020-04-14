@@ -89,6 +89,7 @@ def runtime(dict_config, do_network):
 
     if can_run:
         log = establish_logger(dict_config)
+        dict_config["logs"] = log
         skips = []
         if not os.path.exists(dict_config["path_temp"]):
             os.mkdir(dict_config["path_temp"])
@@ -770,10 +771,10 @@ def test_media_retrieve_files(config):
     """
     # We need a small, known-good tap with a known-good riff and sig to exist
     # in resources. This should be reflected in the documentation and the VCS
-    # and the corresponding key also needs to be made public! TODO
+    # and the corresponding key also needs to be made public!
     errors = []
 
-    test_index = tapestry.media_retrieve_files(config["path_config"], config["path_temp"], gnupg.GPG())
+    test_index = tapestry.media_retrieve_files(config["path_config"], config["path_temp"], gnupg.GPG(), config["logs"])
     found_tap = os.path.isfile(os.path.join(config["path_temp"], "testtap.tap"))
     found_sig = os.path.isfile(os.path.join(config["path_temp"], "testtap.tap.sig"))
     with open(os.path.join(config["path_config"],
