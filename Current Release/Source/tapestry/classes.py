@@ -15,6 +15,8 @@ import os
 import pickle
 import shutil
 import tarfile
+from platform import system
+from textwrap import wrap
 
 # Define Exceptions
 
@@ -321,17 +323,19 @@ class TaskCheckIntegrity(object):
         self.hash_good = kg_hash
 
     def __call__(self):
-        hasher = hashlib.md5()
-        with tarfile.open(self.tarf, "rb") as tarball:
+        hasher = hashlib.sha256()  # Had to change this because switched to sha256 from md5 in functions.py.
+        with tarfile.open(self.tarf, "r:*") as tarball:
             file_under_test = tarball.extractfile(self.fid)
             if file_under_test is None:
-                return [False, "File %s not Found" % self.fid]
+                return [False, "File %s not found in block\n" % self.fid]
             else:
                 hasher.update(file_under_test.read())
         if hasher.hexdigest() == self.hash_good:
             return [True, "File %s has a valid hash." % self.fid]
         else:
-            return [False, "File %s has an invalid hash." % self.fid]
+            print(hasher.hexdigest())
+            print(self.hash_good)
+            return [False, "File %s has an invalid hash.\n" % self.fid]
 
 
 # Define Package Overrides
@@ -487,3 +491,47 @@ class RecoveryIndex(object):
             raise RecoveryIndexError("The self.mode variable is an unexpected value. Are you hacking?")
 
         return category, sub_path
+
+
+class SimpleLogger:
+    """A minimal class to provide very low-level logging functionality to an
+    arbitrary logfile. Tapestry relies on this being instantiated and attached
+    to the namespace object shared among functions so that it can be called.
+    """
+
+    def __init__(self, landingdir, name, label, date, cfg):
+        """Return a SimpleLogger object with the below properties
+
+        :param landingdir: The path (ideally absolute) to the output file.
+        :param name: The name of that logfile
+        :param label: The machine label for which this backup is being run.
+        :param date: The current date, used in the header.
+        :param cfg: The path to the config file used, ideally absolute.
+        """
+
+        landingAbs = os.path.join(landingdir, name)
+        if not os.path.exists(landingdir):
+            os.makedirs(landingdir)
+        self.loggerfile = open(landingAbs, "w")  # This will REPLACE the existing logfile with the new one so be careful
+        header = "This file is a log of all operations that were part of the run of Tapestry %s, " \
+                 "using the configuration file at %s, which is for the machine labelled \"%s\"."
+        header = (header % (date, cfg, label))
+        for each in wrap(header,80):
+            self.loggerfile.write(each+'\n')
+        cores = os.cpu_count()
+        self.loggerfile.write("Cores Available: %s \n" % cores)
+        self.loggerfile.write("Operating System: %s \n" % system())
+        RAM = os.popen("free -m").readlines()[1].split()[1]
+        self.loggerfile.write("RAM Available: %s MB \n" % RAM)
+        self.loggerfile.write("================================BEGIN USAGE LOG==================================\n")
+
+    def log(self, foo):
+        """# Formats foo nicely and adds it to the log"""
+        for each in wrap(foo, 80):
+            self.loggerfile.write(each+'\n')
+
+    def save(self):
+        """saves the file to disk. Once used you have to re-instance the logger"""
+        self.loggerfile.write("\n\n===============================[END OF RECORD]===============================")
+        self.loggerfile.flush()
+        self.loggerfile.close()
