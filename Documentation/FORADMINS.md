@@ -15,6 +15,9 @@ Tapestry is a reasonably lightweight and flexible script in its essence, but it 
 - Python v3.5 or Later
 - Python-GnuPG, v.0.4.2 or later
 - GnuPG 2.1.11 or Later
+- Paramiko
+
+These software requirements will now automatically be installed when installing via Pip.
 
 ## Key Security Considerations
 All of Tapestry's security relies on the security of the PGP protocol, GnuPG's implementation of it, the pinentry binary currently assigned to GPG, and the cryptographic viability of the Disaster Recovery and Signing Keys.

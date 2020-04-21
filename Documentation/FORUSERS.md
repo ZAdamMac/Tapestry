@@ -45,14 +45,18 @@ This is an INI file whose categories and values are defined below.
 |**keysize**|2048|The size of key to generate during --genKey and as part of first time setup. 2048 is the minimum viable, and therefore sane, default.
 |**use compression**|True|Toggles the use of Tapestry's built-in bz2 compression handler. If set to true, blocks are compressed before encrypting to keep them under the blocksize.|
 |**compression level**|2|A value from 1-9 indicating the number of bz2 compression passes to be used. Experimentation is required for different blocksizes to determine the minimum viable value. 9 passes is maximally efficient, but also takes considerable time, especially on larger blocksizes.|
+|**Build-Time File Validation**|True| Controls whether or not the additional validation step will be done after the tarfile is built. This step ensures that the tarbuild process did not modify the contents of the backup files in any way.|
 
 ### Network Configuration
 |Option|Default|Use|
 |---|---|---|
-|**mode**|none|Determines whether or not the FTP mode will be used. "none" for no network mode, "ftp" for the FTP_TLS mode.|
+|**mode**|none|Determines whether or not the FTP mode will be used. "none" for no network mode, "sftp" for the SFTP mode.|
 |**server**|localhost|Determines the address of the server for the FTP mode|
-|**port**|21|Determines the port at which the FTP server is listening.|
+|**port**|22|Determines the port at which the FTP server is listening.|
 |**username**|ftptest|Username to use when authenticating to server - user will be prompted for a password at runtime. Can be blank|
+|**auth type**|passphrase|Accepts `passphrase` and `key`, controlling whether a passphrase or key would be used to to network operations. If network operations are needed and the auth type is passphrase, the user will be prompted for the passphrase at the start of the run.|
+|**credential has passphrase**|True|If true, the user will be prompted for the passphrase at the bginning of the run.|
+|**credential path**|"/dev/null"|The path to a keyfile to be used to authenticate SFTP requests.
 |**remote drop location**|drop|The path appended to all file upload requests. Should be blank in the reference implementation.|
 |**keep local copies**| True| If false, Tapestry will delete the local copy of each block and signature upon upload.|
 
@@ -103,7 +107,7 @@ Tapestry is designed to use two different networking modes - Networked File Syst
 Using Tapestry with any variation of a network filesystem is as simple as ensuring the desired device or drive is mounted to the local filesystem and setting the desired output directory on that device as Tapestry's output directory. No other networking configuration is necessary and the mode value should be `none`
 
 ### Using Tapestry with FTP/S
-***Upcoming in 2.1***: *FTP/S Support is being dropped by Tapestry in the 2.1 release in favour of the more common, and arguably more secure, SFTP protocol*
+***Deprecated from 2.1***: *FTP/S Support is being dropped by Tapestry in the 2.1.0 release in favour of the more common, and arguably more secure, SFTP protocol*
 Using Tapestry with FTP is a little more complex. Tapestry is designed primarily to work with TLS-secured FTP servers such as vsftpd. To configure this mode, make the following settings under Network Configuration:
 - Set `mode = ftp`
 - Set server and port per the configuration of your server.
@@ -111,7 +115,7 @@ Using Tapestry with FTP is a little more complex. Tapestry is designed primarily
 - It is recommended you leave `keep local copies` set to True.
 
 ### Using Tapestry Exit Codes
-***Upcoming in 2.1***: Tapestry provides OS-level exit codes based on events encountered during its run. For the most part, these exit codes represent particular error conditions, which are given distinct exit codes. You can intercept these with your automation in order to add your own additional error handling should issues arise.
+***New in 2.1***: Tapestry provides OS-level exit codes based on events encountered during its run. For the most part, these exit codes represent particular error conditions, which are given distinct exit codes. You can intercept these with your automation in order to add your own additional error handling should issues arise.
 
 |Exit Code|Meaning|
 |0|Tapestry completed the requested operation successfully.|

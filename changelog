@@ -95,13 +95,13 @@ v 2.0.0 (legacy):
     - Tapestry is now packaged as a module and installed and invoked as such.
     - Places the (currently unutilized) integrity testing task classes into `classes.py` for future use.
 
-v 2.0.1 (release):
+v 2.0.1 (legacy):
     - Issue 12: rectified an NS attribute error that was causing runs with the genKey flag set to use the previous key
     (if any) rather than the newly-generated key
     - Issue 13: Changed the behaviour for the creation of category directories to improve error handling in cases where
     the parent directory of a category is missing.
 
-v 2.1.0 (dev):
+v 2.1.0 (release):
     - Test Framework Redesign - better test coverage means more reliable software
     - Updated documentation to facilitate security review and additional development efforts.
     - Added new functionality surrounding file validation, either on-demand or at runtime.
@@ -113,4 +113,10 @@ v 2.1.0 (dev):
           location.
     - Deprecates all former network functionality; this is being replaced with new SFTP functionality.
         - Deemed acceptable as FTP/S is a rare arrangement by comparison to SFTP.
+        - This requires new fields be added to your configuration file.
         - Stashing on network shared drives still possible.
+    - Adds SFTP functionality
+    - Restores the logger functionality. Future logging improvements likely, but the original functionality of logging
+      skipped files should be restored.
+    - Issue 19: Tapestry will crash upon encountering a file it cannot operate against, such as a broken symlink.
+      EricaPomme supplied a new function that will address this.
