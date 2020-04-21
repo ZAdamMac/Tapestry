@@ -28,7 +28,7 @@ import tarfile
 import textwrap
 import uuid
 
-__version__ = "2.0.2"
+__version__ = "2.1.0"
 
 # Class Definitions
 
@@ -1220,7 +1220,7 @@ def start_logging(ns):
     """
     date = str(datetime.date.today())
     name_logfile = "tapestry-%s.log" % date
-    ns.logs = tapestry.SimpleLogger(ns.dropDir, name_logfile, ns.compid, date, ns.config_path)
+    ns.logs = tapestry.SimpleLogger(ns.drop, name_logfile, ns.compid, date, ns.config_path)
 
     return ns
 
