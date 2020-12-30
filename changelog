@@ -101,7 +101,7 @@ v 2.0.1 (legacy):
     - Issue 13: Changed the behaviour for the creation of category directories to improve error handling in cases where
     the parent directory of a category is missing.
 
-v 2.1.0 (release):
+v 2.1.0 (legacy):
     - Test Framework Redesign - better test coverage means more reliable software
     - Updated documentation to facilitate security review and additional development efforts.
     - Added new functionality surrounding file validation, either on-demand or at runtime.
@@ -121,7 +121,7 @@ v 2.1.0 (release):
     - Issue 19: Tapestry will crash upon encountering a file it cannot operate against, such as a broken symlink.
       EricaPomme supplied a new function that will address this.
 
-v 2.1.1 (dev):
+v 2.1.1 (release):
     - Fixes a bug reported as issue #25 which prevented Tapestry from placing its own config template.
     - Fixes an unreported bug that prevented SFTP operation on modern versions of Paramiko.
     - A change of environment has permanently broken the test for the >0.3.0 recovery index methods. This could break
