@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='tapestry',
-      version='2.0.2.02',
+      version='2.1.1.20201230',
       description='tapestry development build - not suitable for release',
       author='Zac Adam-MacEwen',
       author_email='zadammac@kenshosec.com',
