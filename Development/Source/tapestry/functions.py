@@ -936,31 +936,33 @@ def place_config_template(path):
     :return:
     """
 
+    # Note Bene: When adding to dict_default_config, values MUST BE strings, regardless of how they are
+    # used later on in the routine.
     dict_default_config = {
         "Environment Variables": {
             "uid": "your_uid",
             "compid": "your_hostname",
-            "blocksize": 4096,
+            "blocksize": "4096",
             "expected FP": "Provide Encryption Key Fingerprint or run with option --genKey",
-            "sign by default": True,
+            "sign by default": "True",
             "signing FP": "Provide signing key fingerprint",
             "recovery path": "Provide path to the recovery file location, ex. /media/ or D:/",
             "output path": "Provide path to the output for recovery file and logs.",
-            "keysize": 2048,
-            "use compression": True,
-            "compression level": 2,
-            "Build-Time File Validation": True
+            "keysize": "2048",
+            "use compression": "True",
+            "compression level": "2",
+            "Build-Time File Validation": "True"
         },
         "Network Configuration": {
             "mode": "none",
             "server": "localhost",
-            "port": 21,
+            "port": "21",
             "username": "ftptest",
             "remote drop location": "path on the ftp to which to drop files",
-            "keep local copies": True,
+            "keep local copies": "True",
             "Auth Type": "key",
             "Credential Path": "~/.ssh/id_rsa",
-            "Credential Has Passphrase": True
+            "Credential Has Passphrase": "True"
         },
         "Default Locations/Nix": {
             "category": "path to top directory, reproduce as desired."
@@ -1275,8 +1277,8 @@ def sftp_connect(namespace):
     except (sshe.AuthenticationException, sshe.PartialAuthentication) as e:
         error = "There was an error in authentication, aborting connection."
     except sshe.BadAuthenticationType as e:
-        error = ("The authentication method attempted does not match which was expected by the server. " \
-                "Expected: %s, attempted %s" % (e.allowed_types, ns.network_credential_type))
+        error = ("The authentication method attempted does not match which was expected by the server. "
+                 "Expected: %s, attempted %s" % (e.allowed_types, ns.network_credential_type))
     except sshe.PasswordRequiredException as e:
         error = "The private key indicated requires a passphrase, which was not provided."
     except (sshe.ChannelException, sshe.NoValidConnectionsError, sshe.ProxyCommandFailure, sshe.SSHException):
