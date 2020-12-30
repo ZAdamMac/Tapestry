@@ -120,3 +120,7 @@ v 2.1.0 (release):
       skipped files should be restored.
     - Issue 19: Tapestry will crash upon encountering a file it cannot operate against, such as a broken symlink.
       EricaPomme supplied a new function that will address this.
+
+v 2.1.1 (dev):
+    - Fixes a bug reported as issue #25 which prevented Tapestry from placing its own config template.
+    - Fixes an unreported bug that prevented SFTP operation on modern versions of Paramiko.
