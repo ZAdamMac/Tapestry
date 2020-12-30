@@ -8,5 +8,4 @@ setup(name='tapestry',
       url='https://www.github.com/zadammac/Tapestry',
       packages=['tapestry'],
       install_requires=['pysftp', 'python-gnupg', 'paramiko'],
-     )
-1
+      )
