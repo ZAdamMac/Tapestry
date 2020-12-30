@@ -30,7 +30,7 @@ def establish_logger(config):
     :param config: dict_config.
     :return: logger, a logging object.
     """
-    name_log = ("runtime_test-%s-%s.log" % (config["test_user"], str(date.today())))
+    name_log = ("runtime_tests-%s-%s.log" % (config["test_user"], str(date.today())))
     logger = framework.SimpleLogger(config["path_logs"], name_log, "runtime-tests")
     logger.log("------------------------------[SAMPLE GENERATION]------------------------------")
     logger.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")

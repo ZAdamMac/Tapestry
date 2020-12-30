@@ -16,7 +16,7 @@ In order to set up for network testing, you require a system where you can estab
 - `drop`, which can be named anything. You set this value as SFTP Directory in the test config. The SFTP user you authenticate as must be able to read and write to this directory.
 - `unreadable`, which must be called such. The SFTP user you authenticate as should not be able to read or write to that directory.
 
-You should place a file containing a few bytes of arbitrary data within drop named `control-file.txt` which is used in the positive version of test_sftp_fetch.
+You should place a file containing a few bytes of arbitrary data within drop named `control-file.tap` which is used in the positive version of test_sftp_fetch.
 
 # 1. Establishing a Test Corpus
 The `--runtime` testing mode operates multiple full rounds of Tapestry in various modes to ensure the full process operates as expected. In order to do this it is required that a corpus of test files exist. Technically, this could be any set of files, provided the configuration of each round is correct (Resources/config/$mode-test.cfg). However, for convenience, a script in Resources/helpers called `corpusmaker.py` is provided to generate these randomized files.
