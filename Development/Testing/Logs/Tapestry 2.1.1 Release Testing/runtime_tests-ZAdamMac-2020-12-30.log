@@ -1,0 +1,43 @@
+===============================================================================
+This is a log of tests run against some version of Tapestry by the 
+runtime-tests.py testing utility. The date is indicated in the filename. 
+It should be made clear that these tests do not indicate any sort of warranty 
+or guarantee of merchantability.
+
+=======TEST MACHINE SPECS=======
+Cores Available: 4 
+Operating System: Linux 
+RAM Available: 11365 MB 
+================================
+
+
+
+================================BEGIN TESTING==================================
+------------------------------[SAMPLE GENERATION]------------------------------
+
+This log is for a test of a development version of Tapestry, with SHA256 hash:
+
+60031e24f91be93b8187a331eb0a7cc1d9c7de701e9358d41ae6420ecc494c0c
+
+
+Which relies on the classes library with hash:
+
+6aeebc09c17f575e60a1809bbfde615acbb58ea1d573287d7f362614e1b0c457
+
+Key Generation Mode Test Completed in 00:00:09 - Returned:
+CompletedProcess(args=['python3', '-m', 'tapestry', '--genKey', '--devtest', '-c', '/home/patches/PycharmProjects/Tapestry/Development/Testing/Resources/config/genkey-test.cfg'], returncode=4)
+Inclusive Mode Test Completed in 00:00:01 - Returned:
+CompletedProcess(args=['python3', '-m', 'tapestry', '--inc', '--devtest', '-c', '/home/patches/PycharmProjects/Tapestry/Development/Testing/Resources/config/inc-test.cfg'], returncode=0)
+Recovery Mode Test Completed in 00:00:03 - Returned:
+CompletedProcess(args=['python3', '-m', 'tapestry', '--rcv', '--devtest', '-c', '/home/patches/PycharmProjects/Tapestry/Development/Testing/Resources/config/rcv-test.cfg'], returncode=0)
+Validation Mode Test Completed in 00:00:00 - Returned:
+CompletedProcess(args=['python3', '-m', 'tapestry', '--devtest', '--validate', '/home/patches/Desktop/tapestry-testbed/test/genkey/Testbed-2020-12-30-1.tap', '-c', '/home/patches/PycharmProjects/Tapestry/Development/Testing/Resources/config/validate-test.cfg'], returncode=0)
+Network Test Completed in 00:00:05 - Returned:
+CompletedProcess(args=['python3', '-m', 'tapestry', '--devtest', '-c', '/home/patches/PycharmProjects/Tapestry/Development/Testing/Resources/config/network-test.cfg'], returncode=5)
+-------------------------------[CHECK INTEGRITY]-------------------------------
+[PASS] Runtime Integrity Check validates files unpacked as expected.
+
+
+===============================[END OF TESTING]===============================
+ Tester Comments: 
+ This test was run on 2020-12-30

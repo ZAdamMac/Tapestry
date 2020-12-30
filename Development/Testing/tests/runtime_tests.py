@@ -30,7 +30,7 @@ def establish_logger(config):
     :param config: dict_config.
     :return: logger, a logging object.
     """
-    name_log = ("runtime_test-%s-%s.log" % (config["test_user"], str(date.today())))
+    name_log = ("runtime_tests-%s-%s.log" % (config["test_user"], str(date.today())))
     logger = framework.SimpleLogger(config["path_logs"], name_log, "runtime-tests")
     logger.log("------------------------------[SAMPLE GENERATION]------------------------------")
     logger.log("\nThis log is for a test of a development version of Tapestry, with SHA256 hash:")
@@ -118,7 +118,7 @@ def test_gen_key(config, logs):
     config_this = os.path.join(config["path_config"], "config/genkey-test.cfg")
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--genKey", "--devtest", "-c", config_this])
+    waiting = subprocess.run([config["python_command"], "-m", "tapestry", "--genKey", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--genKey completed in %s" % elapse)
     logs.log("Key Generation Mode Test Completed in %s - Returned:" % elapse)
@@ -137,7 +137,7 @@ def test_inc(config, logs):
     config_this = os.path.join(config["path_config"], "config/inc-test.cfg")
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--inc", "--devtest", "-c", config_this])
+    waiting = subprocess.run([config["python_command"], "-m", "tapestry", "--inc", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--inc completed in %s" % elapse)
     logs.log("Inclusive Mode Test Completed in %s - Returned:" % elapse)
@@ -156,7 +156,7 @@ def test_rcv(config, logs):
     config_this = os.path.join(config["path_config"], "config/rcv-test.cfg")
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--rcv", "--devtest", "-c", config_this])
+    waiting = subprocess.run([config["python_command"], "-m", "tapestry", "--rcv", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("--rcv completed in %s" % elapse)
     logs.log("Recovery Mode Test Completed in %s - Returned:" % elapse)
@@ -176,7 +176,7 @@ def test_validate(config, logs):
     block_locate = locate_previous_block(config["path_corpus"])
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--devtest", "--validate", block_locate, "-c", config_this])
+    waiting = subprocess.run([config["python_command"], "-m", "tapestry", "--devtest", "--validate", block_locate, "-c", config_this])
     elapse = framework.elapsed(start)
     print("--validate completed in %s" % elapse)
     logs.log("Validation Mode Test Completed in %s - Returned:" % elapse)
@@ -196,7 +196,7 @@ def test_network(config, logs):
     block_locate = locate_previous_block(config["path_corpus"])
 
     start = time.monotonic()
-    waiting = subprocess.run(["python3.6", "-m", "tapestry", "--devtest", "-c", config_this])
+    waiting = subprocess.run([config["python_command"], "-m", "tapestry", "--devtest", "-c", config_this])
     elapse = framework.elapsed(start)
     print("Network Test completed in %s" % elapse)
     logs.log("Network Test Completed in %s - Returned:" % elapse)

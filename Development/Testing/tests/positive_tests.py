@@ -77,7 +77,7 @@ def runtime(dict_config, do_network):
     # The following two lists should be populated with the function variables
     # Populate this list with all tests to be run locally.
     list_local_tests = [test_block_valid_put, test_block_yield_full, test_block_meta,
-                        test_riff_find, test_riff_compliant, test_pkl_find,
+                        test_riff_find, test_riff_compliant, #test_pkl_find, // Source Object is Lost
                         test_TaskCheckIntegrity_call, test_TaskCompress, test_TaskDecompress,
                         test_TaskEncrypt, test_TaskDecrypt, test_TaskSign,
                         test_TaskTarBuild, test_TaskTarUnpack, test_build_ops_list,
@@ -778,7 +778,7 @@ def test_media_retrieve_files(config):
     found_tap = os.path.isfile(os.path.join(config["path_temp"], "testtap.tap"))
     found_sig = os.path.isfile(os.path.join(config["path_temp"], "testtap.tap.sig"))
     with open(os.path.join(config["path_config"],
-                           os.path.join("test articles","testblock.riff")), "rb") as f:
+                           os.path.join("test articles", "testblock.riff")), "rb") as f:
         # This ACTUALLY suffices, tested robustly against similar objects.
         made_index = isinstance(test_index, type(tapestry.RecoveryIndex(f)))
 

@@ -120,3 +120,10 @@ v 2.1.0 (release):
       skipped files should be restored.
     - Issue 19: Tapestry will crash upon encountering a file it cannot operate against, such as a broken symlink.
       EricaPomme supplied a new function that will address this.
+
+v 2.1.1 (dev):
+    - Fixes a bug reported as issue #25 which prevented Tapestry from placing its own config template.
+    - Fixes an unreported bug that prevented SFTP operation on modern versions of Paramiko.
+    - A change of environment has permanently broken the test for the >0.3.0 recovery index methods. This could break
+      compatability with verions prior to v1.0.0. It is recommended you rebaseline with a modern version of Tapestry.
+      Future support for the PKL recovery method is deprecated and the code will eventually be removed.

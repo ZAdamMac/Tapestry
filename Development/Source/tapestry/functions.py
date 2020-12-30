@@ -28,7 +28,7 @@ import tarfile
 import textwrap
 import uuid
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 # Class Definitions
 
@@ -936,31 +936,33 @@ def place_config_template(path):
     :return:
     """
 
+    # Note Bene: When adding to dict_default_config, values MUST BE strings, regardless of how they are
+    # used later on in the routine.
     dict_default_config = {
         "Environment Variables": {
             "uid": "your_uid",
             "compid": "your_hostname",
-            "blocksize": 4096,
+            "blocksize": "4096",
             "expected FP": "Provide Encryption Key Fingerprint or run with option --genKey",
-            "sign by default": True,
+            "sign by default": "True",
             "signing FP": "Provide signing key fingerprint",
             "recovery path": "Provide path to the recovery file location, ex. /media/ or D:/",
             "output path": "Provide path to the output for recovery file and logs.",
-            "keysize": 2048,
-            "use compression": True,
-            "compression level": 2,
-            "Build-Time File Validation": True
+            "keysize": "2048",
+            "use compression": "True",
+            "compression level": "2",
+            "Build-Time File Validation": "True"
         },
         "Network Configuration": {
             "mode": "none",
             "server": "localhost",
-            "port": 21,
+            "port": "21",
             "username": "ftptest",
             "remote drop location": "path on the ftp to which to drop files",
-            "keep local copies": True,
+            "keep local copies": "True",
             "Auth Type": "key",
             "Credential Path": "~/.ssh/id_rsa",
-            "Credential Has Passphrase": True
+            "Credential Has Passphrase": "True"
         },
         "Default Locations/Nix": {
             "category": "path to top directory, reproduce as desired."
@@ -1275,12 +1277,11 @@ def sftp_connect(namespace):
     except (sshe.AuthenticationException, sshe.PartialAuthentication) as e:
         error = "There was an error in authentication, aborting connection."
     except sshe.BadAuthenticationType as e:
-        error = ("The authentication method attempted does not match which was expected by the server. " \
-                "Expected: %s, attempted %s" % (e.allowed_types, ns.network_credential_type))
+        error = ("The authentication method attempted does not match which was expected by the server. "
+                 "Expected: %s, attempted %s" % (e.allowed_types, ns.network_credential_type))
     except sshe.PasswordRequiredException as e:
         error = "The private key indicated requires a passphrase, which was not provided."
-    except (sshe.ChannelException, sshe.CouldNotCanonicalize, sshe.NoValidConnectionsError, sshe.ProxyCommandFailure,
-            sshe.SSHException):
+    except (sshe.ChannelException, sshe.NoValidConnectionsError, sshe.ProxyCommandFailure, sshe.SSHException):
         error = "Could not connect to the remote SFTP host. Retaining local files and shutting down."
     finally:
         if not sftp_connection:
@@ -1504,7 +1505,7 @@ def sftp_select_retrieval_target(list_available):
     list_counts = []
     for date in dict_datecounts.keys():
         list_dates.append(date)
-    list_dates.sort(reverse=True)  #Puts most recent first.
+    list_dates.sort(reverse=True)  # Puts most recent first.
     for date in list_dates:  # Produces a list of block counts sorted by date, with dates presorted.
         list_counts.append(dict_datecounts[date])
     message = "For %s, you can choose from the following dates to recover from." % machine_selected
@@ -1528,7 +1529,7 @@ def prevalidate_blocks(namespace, list_blocks, index):
             with tarfile.open(file, mode="r:*") as tf:
                 list_members = tf.getnames()
                 for member in list_members:
-                    if member != "recovery-riff":  #Obviously we can't validate this noise.
+                    if member != "recovery-riff":  # Obviously we can't validate this noise.
                         task = tapestry.TaskCheckIntegrity(file, member, index[member]['sha256'])
                         jobs.put(task)
         workers = []

@@ -46,6 +46,7 @@ def parse_config():
     sftp_uid = parser.get("Network Configuration", "SFTP User")
     sftp_rootpath = parser.get("Network Configuration", "SFTP Directory")
     path_inc_out = parser.get("Environment Information", "Inclusive Output Path")
+    python_command = parser.get("Environment Information", "Python Command")
 
 
     configuration = {"test_user": test_user, "path_logs": path_logs,
@@ -53,7 +54,7 @@ def parse_config():
                      "path_temp": path_temp, "test_fp": test_fp,
                      "sftp_id": sftp_id, "sftp_credential": sftp_credential,
                      "sftp_uid": sftp_uid, "sftp_rootpath": sftp_rootpath,
-                     "path_inc_out": path_inc_out}
+                     "path_inc_out": path_inc_out, "python_command": python_command}
 
     return configuration
 

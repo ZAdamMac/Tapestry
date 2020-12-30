@@ -7,7 +7,7 @@ Tapestry is a bespoke data backup tool designed to provide secure and reliable b
 Full documentation is available as part of DOCUMENTATION.md
 
 ## Requirements
-	-Python 3.6.7
+	-Python 3.6.7 or later
 	-Python-gnupg 0.4.2
 	-GnuPG 2 or later, installed as default
 	

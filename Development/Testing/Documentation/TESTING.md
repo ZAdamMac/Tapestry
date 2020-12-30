@@ -16,9 +16,21 @@ In order to set up for network testing, you require a system where you can estab
 - `drop`, which can be named anything. You set this value as SFTP Directory in the test config. The SFTP user you authenticate as must be able to read and write to this directory.
 - `unreadable`, which must be called such. The SFTP user you authenticate as should not be able to read or write to that directory.
 
-You should place a file containing a few bytes of arbitrary data within drop named `control-file.txt` which is used in the positive version of test_sftp_fetch.
+You should place a file containing a few bytes of arbitrary data within drop named `control-file.tap` which is used in the positive version of test_sftp_fetch.
 
-# 1. Packaging Tapestry
+# 1. Establishing a Test Corpus
+The `--runtime` testing mode operates multiple full rounds of Tapestry in various modes to ensure the full process operates as expected. In order to do this it is required that a corpus of test files exist. Technically, this could be any set of files, provided the configuration of each round is correct (Resources/config/$mode-test.cfg). However, for convenience, a script in Resources/helpers called `corpusmaker.py` is provided to generate these randomized files.
+
+The recommended command to generate these files is:
+```bash
+python3 corpusmaker -r /path/to/test/dir -p 10 -l 1000 -d documents,photos,videos,music
+```
+
+For a full explanation of each of these command flags refer to corpusmaker.py's source or run it with the --help special flag.
+
+Keep note of where these files are placed as that location will need to be configured in the various configuration files such as test_config.cfg and so forth.
+
+# 2. Packaging Tapestry
 Much like the Development Team would do in order to get ready to push a new version of Tapestry to PyPI, the source of the development version of tapestry can be packaged quite nicely. From a shell located at `Tapestry/Development/Source`, run:
 
 ```commandline
@@ -29,7 +41,7 @@ Using your appropriate python callable.
 
 This will generate a large number of additional files which you do not need to add to vcs - in point of fact if you commit the build, wheel, and egg files into your PR it will be rejected.
 
-# 2. Installing Tapestry from the Test Environment
+# 3. Installing Tapestry from the Test Environment
 While within your test environment, you can install the test version of tapestry to that environment using the following command:
 
 ```commandline
@@ -38,7 +50,7 @@ pip install --editable .
 
 This will install tapestry in the Virtual Environment, and do so in such a way that your edits to the source will be instantly reflected.
 
-# 3. Adjust Configuration
+# 4. Adjust Configuration
 There are several `.cfg` configuration files present in `Resources/config` which need to be updated. In particular:
 - `signing fp` needs to be updated to reflect a key available to the testing user to sign files with;
 - `encryption fp` should stay the same, but you should install test_enc_key from the resources file.
@@ -46,7 +58,7 @@ There are several `.cfg` configuration files present in `Resources/config` which
 
 There is also a `tests/test_config.cfg` file that needs to be adjusted.
 
-# 4. Run the Tests
+# 5. Run the Tests
 Depending on your needs, the tests support a few options.
 
 While operating in your virtual environment, you can change directory to `Tapestry/Development/Testing` and invoke the tests this way:
@@ -57,5 +69,5 @@ python -m tests
 
 There are effectively three testing modes to choose from:
 1. By default, only the suites in positive_tests.py and negative_tests.py will be run. This is the fastest method and usually completes in no more than a handful of seconds, and is ideal for pre-commit testing of small changes.
-2. If you're testing for network functionality I recommend supplying the flag `--network`. This will trigger any network-related unit tests in the positive and negative control sets. Before doing so, you should make sure you have the appropriate network targets (such as SFTP servers, etc) up and running.
-3. If the commit you're about to test will be submitted as part of a PR, it's mandatory to first run all tests, so supply both `--network` and `--runtime` as flags.
+2. If you're testing for network functionality I recommend supplying the flag `--net`. This will trigger any network-related unit tests in the positive and negative control sets. Before doing so, you should make sure you have the appropriate network targets (such as SFTP servers, etc) up and running.
+3. If the commit you're about to test will be submitted as part of a PR, it's mandatory to first run all tests, so supply both `--net` and `--runtime` as flags.
