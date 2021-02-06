@@ -16,6 +16,7 @@ import getpass
 import gnupg
 import hashlib
 import io
+import keyring
 import multiprocessing as mp
 import os
 import paramiko.ssh_exception as sshe
@@ -534,12 +535,23 @@ def generate_keys(namespace, gpg_agent):
     return namespace
 
 
+def keyring_get_value(key, strict=True):
+    """    Aconvenience wrapper that attempts to get a value stored in the keyring's 'tapestry' system based on input
+    string "key". If it fails to find a value for key while kwarg strict=True, it will raise KeyError.
+    """
+    value = keyring.get_password("tapestry", key)
+    if strict:
+        if value is None:
+            raise KeyError
+    return value
+
+
 def get_user_input(message, dict_data, resp_column, list_column_order):
     # get the size of the terminal window
     width, height = shutil.get_terminal_size((80, 24))
     # make an index to add to the dict_data
     list_pass_columns = ["index"]
-    for column in list_column_order:
+    for column in list_column_order: # Todo did this ever work? Is this untested?
         list_pass_columns.append()
     index = []
     counter = 1
@@ -755,6 +767,8 @@ def parse_args(namespace):
     parser.add_argument('-c', help="absolute or relative path to the config file", action="store")
     parser.add_argument('--validate', help="Expects a path or csv string of paths describing blocks to validate.",
                         action="store")
+    parser.add_argument('--secrets', help="Runs a subroutine to update the values of secrets in the keyring",
+                                         action="store_true")
     args = parser.parse_args()
 
     ns.rcv = args.rcv
@@ -764,6 +778,7 @@ def parse_args(namespace):
     ns.genKey = args.genKey
     ns.config_path = args.c
     ns.validation_target = args.validate
+    ns.secrets = args.secrets
     if ns.validation_target is not None:
         ns.demand_validate = True
     else:
@@ -861,35 +876,46 @@ def parse_config(namespace):
     try:
         ns.activeFP = config.get("Environment Variables", "Expected FP")
         ns.fp = config.get("Environment Variables", "Expected FP")
-        ns.signing = config.getboolean("Environment Variables", "Sign by Default")
+        ns.signing = config.getboolean("Environment Variables", "Sign by Default", fallback=True)
         ns.sigFP = config.get("Environment Variables", "Signing FP")
-        ns.keysize = config.getint("Environment Variables", "keysize")
-        ns.compress = config.getboolean("Environment Variables", "Use Compression")
-        ns.compressLevel = config.getint("Environment Variables", "Compression Level")
+        ns.keysize = config.getint("Environment Variables", "keysize", fallback=4096)
+        ns.compress = config.getboolean("Environment Variables", "Use Compression", fallback=True)
+        ns.compressLevel = config.getint("Environment Variables", "Compression Level", fallback=False)
         ns.step = "none"
         ns.sumJobs = 0
         ns.jobsDone = 0
-        ns.modeNetwork = config.get("Network Configuration", "mode")
-        ns.addrNet = config.get("Network Configuration", "server")
-        ns.portNet = config.getint("Network Configuration", "port")
-        ns.nameNet = config.get("Network Configuration", "username")
-        ns.network_credential_type = config.get("Network Configuration", "Auth Type")
-        ns.network_credential_value = config.get("Network Configuration", "Credential Path")
-        ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase")
-        ns.dirNet = config.get("Network Configuration", "remote drop location")
-        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
-        ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
-            2 ** 20)  # The math is necessary to go from MB to Bytes)
-        ns.compid = config.get("Environment Variables", "compid")
-        ns.recovery_path = config.get("Environment Variables", "recovery path")
+        ns.modeNetwork = config.get("Network Configuration", "mode", fallback="none")
+        ns.addrNet = config.get("Network Configuration", "server", fallback=None)
+        ns.portNet = config.getint("Network Configuration", "port", fallback=None)
+        ns.nameNet = config.get("Network Configuration", "username", fallback=None)
+        ns.network_credential_type = config.get("Network Configuration", "Auth Type", fallback=None)
+        ns.network_credential_value = config.get("Network Configuration", "Credential Path", fallback=None)
+        ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase", fallback=None)
+        if ns.network_credential_type.lower() == "passphrase":
+            ns.network_credential_value = keyring_get_value("network_passphrase")
+        if ns.network_credential_pass:
+            ns.network_credential_value = keyring_get_value("network_passphrase")
+        if ns.rcv:
+            ns.encryption_key_passphrase = keyring_get_value("decryption_passphrase", strict=False)
+        ns.signing_key_passphrase = keyring_get_value("signing_passphrase", strict=False)
+        ns.dirNet = config.get("Network Configuration", "remote drop location", fallback=None)
+        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies", fallback=True)
+        ns.block_size_raw = config.getint("Environment Variables", "blockSize", fallback=2000) * (
+            2 ** 20)  # The math is necessary to go from MB to Bytes
+        ns.compid = config.get("Environment Variables", "compid", fallback="Tapestry")
+        ns.recovery_path = config.get("Environment Variables", "recovery path", fallback=None)
         ns.uid = config.get("Environment Variables", "uid")
-        ns.drop = config.get("Environment Variables", "Output Path")
-        ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation")
+        ns.drop = config.get("Environment Variables", "Output Path", fallback=None)
+        ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation", fallback=True)
     except configparser.NoOptionError:
-        print("Tapestry has attempted to reference a configuration option which is missing from the config file.")
+        print("Tapestry has attempted to reference a required option which is missing from the config file.")
         print("Please confirm the structure of your config file is correct.")
-        print("If you have just upgraded to 2.1 or later, you may be missing the network options fields.")
+        print("If you have just upgraded to 2.2 or later, you may be missing added fields.")
         exit(3)
+    except KeyError:
+        print("Tapestry was unable to find a value it expected in the keyring for config flag %s.")
+        print("Please rerun tapestry with the flag --secrets specified to adjust these values.")
+        exit(6)
 
     if ns.currentOS == "Linux":
         ns.workDir = "/tmp/Tapestry/"
@@ -1131,6 +1157,18 @@ def unpack_blocks(namespace):
     tasks.join()
 
 
+def update_secrets():
+    print("You have selected --secrets, and we will now go through the possible secret values to encode them.")
+    print("Secrets stored in this way are stored in your system keyring and not the tapestry system files.")
+    print("Python will have access to these fields! If a secret value is not desired to be stored, press enter to skip")
+    print("A blank value will delete the current stored value for that key for security reasons.")
+    print("Check the documentation to see how each value is used.")
+    secret_keys = ["network_passphrase", "signing_passphrase", "decryption_passphrase"]
+    for each in secret_keys:
+        value = getpass.getpass(prompt="%s?" % each)
+        keyring.set_password("tapestry", each, value)
+
+
 def verify_blocks(ns, gpg_agent, testing=False):
     """Verifies blocks and returns a list of verified blocks as a result"""
     gpg = gpg_agent
@@ -1189,14 +1227,19 @@ def verify_keys(ns, gpg):
 
 def runtime():
     global state
+    keyring.get_keyring()
     state = Namespace()
     state = parse_args(state)
+    if state.secrets:
+        update_secrets()
+        exit(0)
     state = parse_config(state)
     state = start_logging(state)
     gpg_conn = start_gpg(state)
     announce()
     if state.modeNetwork.lower() != "none":
-        if state.network_credential_pass or (state.network_credential_type == "passphrase"):
+        if (state.network_credential_pass or (state.network_credential_type == "passphrase"))\
+                and state.network_credential_value is None:
             print("Tapestry is running in network storage mode and requires some credentialing information.")
             state.network_credential_pass = getpass.getpass(prompt="Enter Network Credential Passphrase: ")
     if state.demand_validate:
