@@ -551,7 +551,7 @@ def get_user_input(message, dict_data, resp_column, list_column_order):
     width, height = shutil.get_terminal_size((80, 24))
     # make an index to add to the dict_data
     list_pass_columns = ["index"]
-    for column in list_column_order:
+    for column in list_column_order: # Todo did this ever work? Is this untested?
         list_pass_columns.append()
     index = []
     counter = 1
@@ -767,6 +767,8 @@ def parse_args(namespace):
     parser.add_argument('-c', help="absolute or relative path to the config file", action="store")
     parser.add_argument('--validate', help="Expects a path or csv string of paths describing blocks to validate.",
                         action="store")
+    parser.add_argument('--secrets', help="Runs a subroutine to update the values of secrets in the keyring",
+                                         action="store_true")
     args = parser.parse_args()
 
     ns.rcv = args.rcv
@@ -776,6 +778,7 @@ def parse_args(namespace):
     ns.genKey = args.genKey
     ns.config_path = args.c
     ns.validation_target = args.validate
+    ns.secrets = args.secrets
     if ns.validation_target is not None:
         ns.demand_validate = True
     else:
@@ -1154,6 +1157,18 @@ def unpack_blocks(namespace):
     tasks.join()
 
 
+def update_secrets():
+    print("You have selected --secrets, and we will now go through the possible secret values to encode them.")
+    print("Secrets stored in this way are stored in your system keyring and not the tapestry system files.")
+    print("Python will have access to these fields! If a secret value is not desired to be stored, press enter to skip")
+    print("A blank value will delete the current stored value for that key for security reasons.")
+    print("Check the documentation to see how each value is used.")
+    secret_keys = ["network_passphrase", "signing_passphrase", "decryption_passphrase"]
+    for each in secret_keys:
+        value = getpass.getpass(prompt="%s?" % each)
+        keyring.set_password("tapestry", each, value)
+
+
 def verify_blocks(ns, gpg_agent, testing=False):
     """Verifies blocks and returns a list of verified blocks as a result"""
     gpg = gpg_agent
@@ -1215,12 +1230,16 @@ def runtime():
     keyring.get_keyring()
     state = Namespace()
     state = parse_args(state)
+    if state.secrets:
+        update_secrets()
+        exit(0)
     state = parse_config(state)
     state = start_logging(state)
     gpg_conn = start_gpg(state)
     announce()
     if state.modeNetwork.lower() != "none":
-        if state.network_credential_pass or (state.network_credential_type == "passphrase"):
+        if (state.network_credential_pass or (state.network_credential_type == "passphrase"))\
+                and state.network_credential_value is None:
             print("Tapestry is running in network storage mode and requires some credentialing information.")
             state.network_credential_pass = getpass.getpass(prompt="Enter Network Credential Passphrase: ")
     if state.demand_validate:
