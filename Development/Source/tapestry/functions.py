@@ -16,6 +16,7 @@ import getpass
 import gnupg
 import hashlib
 import io
+import keyring
 import multiprocessing as mp
 import os
 import paramiko.ssh_exception as sshe
@@ -534,6 +535,17 @@ def generate_keys(namespace, gpg_agent):
     return namespace
 
 
+def keyring_get_value(key, strict=True):
+    """    Aconvenience wrapper that attempts to get a value stored in the keyring's 'tapestry' system based on input
+    string "key". If it fails to find a value for key while kwarg strict=True, it will raise KeyError.
+    """
+    value = keyring.get_password("tapestry", key)
+    if strict:
+        if value is None:
+            raise KeyError
+    return value
+
+
 def get_user_input(message, dict_data, resp_column, list_column_order):
     # get the size of the terminal window
     width, height = shutil.get_terminal_size((80, 24))
@@ -876,6 +888,13 @@ def parse_config(namespace):
         ns.network_credential_type = config.get("Network Configuration", "Auth Type", fallback=None)
         ns.network_credential_value = config.get("Network Configuration", "Credential Path", fallback=None)
         ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase", fallback=None)
+        if ns.network_credential_type.lower() == "passphrase":
+            ns.network_credential_value = keyring_get_value("network_passphrase")
+        if ns.network_credential_pass:
+            ns.network_credential_value = keyring_get_value("network_passphrase")
+        if ns.rcv:
+            ns.encryption_key_passphrase = keyring_get_value("decryption_passphrase", strict=False)
+        ns.signing_key_passphrase = keyring_get_value("signing_passphrase", strict=False)
         ns.dirNet = config.get("Network Configuration", "remote drop location", fallback=None)
         ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies", fallback=True)
         ns.block_size_raw = config.getint("Environment Variables", "blockSize", fallback=2000) * (
@@ -890,6 +909,10 @@ def parse_config(namespace):
         print("Please confirm the structure of your config file is correct.")
         print("If you have just upgraded to 2.2 or later, you may be missing added fields.")
         exit(3)
+    except KeyError:
+        print("Tapestry was unable to find a value it expected in the keyring for config flag %s.")
+        print("Please rerun tapestry with the flag --secrets specified to adjust these values.")
+        exit(6)
 
     if ns.currentOS == "Linux":
         ns.workDir = "/tmp/Tapestry/"
@@ -1189,6 +1212,7 @@ def verify_keys(ns, gpg):
 
 def runtime():
     global state
+    keyring.get_keyring()
     state = Namespace()
     state = parse_args(state)
     state = parse_config(state)
