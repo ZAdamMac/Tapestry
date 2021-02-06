@@ -74,8 +74,21 @@ Tapestry supports the following arguments at runtime:
 |--rcv|Places the script in recovery mode, checking its recovery path for .tap files and their associated .sigs and recovering them programatically.
 |--debug|Increases the verbosity of both Tapestry and its gpg callbacks for light debugging purposes|
 |-c| the string which immediately follows should be a path to a configuration file.|
+|--validate| the string which immediately follows will be a targeted .tap file, which will be validated for hash correctness.|
+|--secrets| if this flag is provided, the program will prompt for a series of values to add to the keyring before exiting without taking any further action|
 
 If no runtime arguments are provided the program assumes you intended to do a "basic build", and runs the backup routine using only the relevant "default locations" list.
+
+## Secrets Module
+As of the release of version 2.2, tapestry will use `keyring` to store configuration values in the system keyring. The following keys are currently used:
+|key prompt|function|
+|---|---|
+|network_credential|For passphrase-based or key-with-passphrase authentication SFTP authentication, the passphrase for the SFTP access can be stored here.|
+|signing_passphrase|(Unrecommended). For enhanced automation the signing key passphrase can be stored here.|
+|decryption_passphrase|(Unrecommended). For enhanced recovery automation the passphrase for the disaster recovery key can be stored here. Only needed for file recovery operations, so doing this is not recommended|
+
+### Security Consideration with the Secrets Module
+As a result of how keyring authentication works in most OSes, Tapestry will not have unique access to the values stored in the keyring, which can instead by accessed by any running python application. It is not currently recommended to store the passphrase of the Disaster Recovery key in this way. It is only recommended to store the signing key passphrase if the signing key will be unique to Tapestry and not be usable for any other purposes, though this still has implications for your personal security and is only recommended under very narrow circumstances. Contact us here for more information.
 
 ## Key Security
 Tapestry relies on a two-asymmetric-key system for its protection, as a mechanism to eliminate the need for trust between the user and their storage solution. Tapestry is currently designed to produce only its own key automatically - for the moment it is taken as read that the user would know how to develop a signing key. Specific instructions for signing key generation can be found in the GnuPG manpage or their online documentation. For the purposes of this section, it will be enough to concern the active and passive key security considerations.
@@ -118,9 +131,11 @@ Using Tapestry with FTP is a little more complex. Tapestry is designed primarily
 ***New in 2.1***: Tapestry provides OS-level exit codes based on events encountered during its run. For the most part, these exit codes represent particular error conditions, which are given distinct exit codes. You can intercept these with your automation in order to add your own additional error handling should issues arise.
 
 |Exit Code|Meaning|
+|---|---|
 |0|Tapestry completed the requested operation successfully.|
 |1|Tapestry attempted to validate or recover from a particular tapfile, but there was an issue with its recovery index file and it was unable to do so. This typically means that this is a very old Tapfile, generated pre-0.3.0.|
 |2|Tapestry was attempting to validate or recover a particular tapfile and encountered an error in decryption that prevented it from doing so. Usually, this is a simple matter of not having the appropriate key on your keyring.|
 |3|Tapestry was unable to locate the requested config file, or identify a fallback config file. Therefore, it has created a new one within its CWD. You should update this file or review your configuration path in the command to make sure you have a valid config file available.|
 |4|Tapestry was unable to find the key that is configured as the encryption key on the keyring. Because of this it couldn't have proceeded with its operations and has exited accordingly.|
 |5|Tapestry encountered some manner of network error in attempting to use the SFTP module functionality.|
+|6|Tapestry was missing one or more required secrets. Rerun in --secrets mode to set them|
