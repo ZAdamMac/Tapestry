@@ -861,34 +861,34 @@ def parse_config(namespace):
     try:
         ns.activeFP = config.get("Environment Variables", "Expected FP")
         ns.fp = config.get("Environment Variables", "Expected FP")
-        ns.signing = config.getboolean("Environment Variables", "Sign by Default")
+        ns.signing = config.getboolean("Environment Variables", "Sign by Default", fallback=True)
         ns.sigFP = config.get("Environment Variables", "Signing FP")
-        ns.keysize = config.getint("Environment Variables", "keysize")
-        ns.compress = config.getboolean("Environment Variables", "Use Compression")
-        ns.compressLevel = config.getint("Environment Variables", "Compression Level")
+        ns.keysize = config.getint("Environment Variables", "keysize", fallback=4096)
+        ns.compress = config.getboolean("Environment Variables", "Use Compression", fallback=True)
+        ns.compressLevel = config.getint("Environment Variables", "Compression Level", fallback=False)
         ns.step = "none"
         ns.sumJobs = 0
         ns.jobsDone = 0
-        ns.modeNetwork = config.get("Network Configuration", "mode")
-        ns.addrNet = config.get("Network Configuration", "server")
-        ns.portNet = config.getint("Network Configuration", "port")
-        ns.nameNet = config.get("Network Configuration", "username")
-        ns.network_credential_type = config.get("Network Configuration", "Auth Type")
-        ns.network_credential_value = config.get("Network Configuration", "Credential Path")
-        ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase")
-        ns.dirNet = config.get("Network Configuration", "remote drop location")
-        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies")
-        ns.block_size_raw = config.getint("Environment Variables", "blockSize") * (
-            2 ** 20)  # The math is necessary to go from MB to Bytes)
-        ns.compid = config.get("Environment Variables", "compid")
-        ns.recovery_path = config.get("Environment Variables", "recovery path")
+        ns.modeNetwork = config.get("Network Configuration", "mode", fallback="none")
+        ns.addrNet = config.get("Network Configuration", "server", fallback=None)
+        ns.portNet = config.getint("Network Configuration", "port", fallback=None)
+        ns.nameNet = config.get("Network Configuration", "username", fallback=None)
+        ns.network_credential_type = config.get("Network Configuration", "Auth Type", fallback=None)
+        ns.network_credential_value = config.get("Network Configuration", "Credential Path", fallback=None)
+        ns.network_credential_pass = config.getboolean("Network Configuration", "Credential Has Passphrase", fallback=None)
+        ns.dirNet = config.get("Network Configuration", "remote drop location", fallback=None)
+        ns.retainLocal = config.getboolean("Network Configuration", "Keep Local Copies", fallback=True)
+        ns.block_size_raw = config.getint("Environment Variables", "blockSize", fallback=2000) * (
+            2 ** 20)  # The math is necessary to go from MB to Bytes
+        ns.compid = config.get("Environment Variables", "compid", fallback="Tapestry")
+        ns.recovery_path = config.get("Environment Variables", "recovery path", fallback=None)
         ns.uid = config.get("Environment Variables", "uid")
-        ns.drop = config.get("Environment Variables", "Output Path")
-        ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation")
+        ns.drop = config.get("Environment Variables", "Output Path", fallback=None)
+        ns.do_validation = config.getboolean("Environment Variables", "Build-Time File Validation", fallback=True)
     except configparser.NoOptionError:
-        print("Tapestry has attempted to reference a configuration option which is missing from the config file.")
+        print("Tapestry has attempted to reference a required option which is missing from the config file.")
         print("Please confirm the structure of your config file is correct.")
-        print("If you have just upgraded to 2.1 or later, you may be missing the network options fields.")
+        print("If you have just upgraded to 2.2 or later, you may be missing added fields.")
         exit(3)
 
     if ns.currentOS == "Linux":
