@@ -15,7 +15,7 @@ Full documentation is available as part of DOCUMENTATION.md
 
 Building Tapestry has been a large and time-consuming project, but it would have been even more so without the work of the developers of our dependencies - GnuPG, the Python-GnuPG module, and obvious python itself.
 
-If you would like to contribute to the development of Tapestry, feel free to submit a pull request, or perhaps buy me a coffee at [ko-fi.com/KenshoSec](https://ko-fi.com/KenshoSec), or consider backing [@ZAdamMac on Github Sponsors](https://github.com/users/ZAdamMac/sponsorship.)
+If you would like to contribute to the development of Tapestry, feel free to submit a pull request, or perhaps buy me a coffee at [ko-fi.com/arclabs](https://ko-fi.com/arclabs), or consider backing [@ZAdamMac on Github Sponsors](https://github.com/users/ZAdamMac/sponsorship.)
 	
 ## Security Considerations
 Tapestry relies on Gnu Privacy Guard (GPG), a well-known FOSS implementation of the PGP protocol, in order to securely store the archives it generates, and also to provide a mechanism for verifying the individual who generated the backup. It does this using two separate keys - the Encryption Key (sometimes called the "Disaster Recovery" key, after the comment included on keys Tapestry generates) and an optional, though strongly recommended, signing key specified by the user.
