@@ -138,4 +138,5 @@ Using Tapestry with FTP is a little more complex. Tapestry is designed primarily
 |3|Tapestry was unable to locate the requested config file, or identify a fallback config file. Therefore, it has created a new one within its CWD. You should update this file or review your configuration path in the command to make sure you have a valid config file available.|
 |4|Tapestry was unable to find the key that is configured as the encryption key on the keyring. Because of this it couldn't have proceeded with its operations and has exited accordingly.|
 |5|Tapestry encountered some manner of network error in attempting to use the SFTP module functionality.|
-|6|Tapestry was missing one or more required secrets. Rerun in --secrets mode to set them|
+|6|The keyring does not contain some value that Tapestry expected. If run interactively the missing value will be printed to stdout.|
+
