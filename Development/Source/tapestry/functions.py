@@ -98,24 +98,29 @@ def build_ops_list(namespace):
                 access_test_results = access_test(absolute_path)
                 if False not in access_test_results:
                     size = os.path.getsize(absolute_path)
-                    if size <= ns.block_size_raw:  # We'll be handling this file.
-                        hasher = hashlib.new('sha256')
-                        with open(absolute_path, "rb") as contents:
-                            chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
-                            while chunk != b"":
-                                hasher.update(chunk)
+                    try:
+                        if size <= ns.block_size_raw:  # We'll be handling this file.
+                            with open(absolute_path, "rb") as contents:
                                 chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
-                        hash_digest = hasher.hexdigest()
-                        file_descriptor = {
-                            'fname': file, 'sha256': hash_digest, 'category': category,
-                            'fpath': sub_path, 'fsize': size
-                            }
-                        files_index.update({str(uuid.uuid1(node)): file_descriptor})
-                    else:
-                        size_pretty = size / 1048576
-                        block_size_pretty = ns.block_size_raw / 1048576
-                        message = ("{%s} %s is larger than %s (%s) and is being excluded" %
-                            (category, file, size_pretty, block_size_pretty))
+                                while chunk != b"":
+                                    hasher.update(chunk)
+                                    chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
+                            hash_digest = hasher.hexdigest()
+                            file_descriptor = {
+                                'fname': file, 'sha256': hash_digest, 'category': category,
+                                'fpath': sub_path, 'fsize': size
+                                }
+                            files_index.update({str(uuid.uuid1(node)): file_descriptor})
+                        else:
+                            size_pretty = size / 1048576
+                            block_size_pretty = ns.block_size_raw / 1048576
+                            message = ("{%s} %s is larger than %s (%s) and is being excluded" %
+                                (category, file, size_pretty, block_size_pretty))
+                            print(message)
+                            ns.logs.log(message)
+                    except PermissionError:
+                        message = ("Error accessing %s: %s. Was this a network share file?"
+                                   % (absolute_path, access_test_results))
                         print(message)
                         ns.logs.log(message)
                 else:
