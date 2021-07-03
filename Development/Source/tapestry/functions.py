@@ -719,7 +719,7 @@ def unix_pack_blocks(sizes, ops_list, namespace):
             this_task = tapestry.TaskTarBuild(tarf, fid, path, block.name)
             temp_queue.append(this_task)
         this_riff = block.meta(len(collection_blocks), sum_sizes, sum_files,
-                               str(datetime.date.today()), None, ops_list, ns.drop)
+                               str(datetime.date.today()), ns.comment_string, ops_list, ns.drop)
         this_task = tapestry.TaskTarBuild(tarf, "recovery-riff",
                                           this_riff, block.name)
         tarf_queue.put(this_task)
@@ -774,6 +774,8 @@ def parse_args(namespace):
                         action="store")
     parser.add_argument('--secrets', help="Runs a subroutine to update the values of secrets in the keyring",
                                          action="store_true")
+    parser.add_argument('-n', help="note to add to the metadata for this run for your future reference",
+                        action='store', default=None)
     args = parser.parse_args()
 
     ns.rcv = args.rcv
@@ -784,6 +786,7 @@ def parse_args(namespace):
     ns.config_path = args.c
     ns.validation_target = args.validate
     ns.secrets = args.secrets
+    ns.comment_string = args.n
     if ns.validation_target is not None:
         ns.demand_validate = True
     else:
@@ -850,7 +853,7 @@ def windows_pack_blocks(sizes, ops_list, namespace):
                 tf.add(path, arcname=fid, recursive=False)
             status_print(current_counter, sum_files, "Packing", None)
         this_riff = block.meta(len(collection_blocks), sum_sizes, sum_files,
-                               str(datetime.date.today()), None, ops_list, ns.drop)
+                               str(datetime.date.today()), ns.comment_string, ops_list, ns.drop)
         with tarfile.open(tarf, "a:") as tf:
             tf.add(this_riff, arcname="recovery-riff", recursive=False)
 
