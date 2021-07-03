@@ -75,7 +75,8 @@ Tapestry supports the following arguments at runtime:
 |--debug|Increases the verbosity of both Tapestry and its gpg callbacks for light debugging purposes|
 |-c| the string which immediately follows should be a path to a configuration file.|
 |--validate| the string which immediately follows will be a targeted .tap file, which will be validated for hash correctness.|
-|--secrets| if this flag is provided, the program will prompt for a series of values to add to the keyring before exiting without taking any further action|
+|--secrets| if this flag is provided, the program will prompt for a series of values to add to the keyring before exiting without taking any further action new in 2.2.0|
+|-n| the string which immediately follows this flag will be added to the RIFF recovery index as a comment. New in 2.2.0|
 
 If no runtime arguments are provided the program assumes you intended to do a "basic build", and runs the backup routine using only the relevant "default locations" list.
 
@@ -106,7 +107,7 @@ Additionally, it is important to keep a master copy of the disaster recovery key
 ### Passphrase Security
 Tapestry, and Kensho Security Labs, endorse long passphrases punctuated randomly and including numerals for key passphrases.
 
-Tapestry itself never handles a passphrase you provide it, either for recovery decryption or signing of backups, or indeed for key generation. This is the reason for the requirement for a recent version of GnuPG to be installed. Tapestry provides the command for the operation to GPG without a passphrase, prompting newer versions of GPG to respond by invoking the pinentry program they are configured to use. On most OS integrations this presents as a system window appearing, asking for the passphrase.
+Tapestry itself never handles a passphrase you provide it, either for recovery decryption or signing of backups, or indeed for key generation. This is the reason for the requirement for a recent version of GnuPG to be installed. Tapestry provides the command for the operation to GPG without a passphrase, prompting newer versions of GPG to respond by invoking the pinentry program they are configured to use. On most OS integrations this presents as a system window appearing, asking fort the passphrase.
 
 # Selecting your "Locations"
 Tapestry treats every location defined in its configuration file as the top of an `os.walk()` command. This means, in practical terms, that everything in every subdirectory of that location will be backed up. Therefore, it is important to consider if any symbolic links are going to be followed that may end up with unintended consequences.
