@@ -1,0 +1,71 @@
+===============================================================================
+This is a log of tests run against some version of Tapestry by the 
+positive-tests.py testing utility. The date is indicated in the filename. 
+It should be made clear that these tests do not indicate any sort of warranty 
+or guarantee of merchantability.
+
+=======TEST MACHINE SPECS=======
+Cores Available: 8 
+Operating System: Linux 
+RAM Available: 15720 MB 
+================================
+
+
+
+================================BEGIN TESTING==================================
+----------------------------[Negative Unit Tests]-----------------------------
+
+This log is for a test of a development version of Tapestry, with SHA256 hash:
+
+60031e24f91be93b8187a331eb0a7cc1d9c7de701e9358d41ae6420ecc494c0c
+
+
+Which relies on the classes library with hash:
+
+6aeebc09c17f575e60a1809bbfde615acbb58ea1d573287d7f362614e1b0c457
+
+------------------[Block Placement Test: Invalid-Sized File]------------------
+This test validates that a tapestry.Block object will not accept a put()
+request for a file that is larger than the remaining size of the block.
+
+
+[PASS] The Block object indicated it rejected the file.
+
+
+------------------[Block Signature Validation Test]------------------
+This test validates that tapestry will reject a file with invalid signatures
+
+
+[PASS] The verify_blocks correctly ignored the invalidly-signed file.
+
+
+------------------[Recovery Index Confusion Test]------------------
+Makes sure that RecoveryIndexError is raised correctly when loading a
+tapestry.RecoveryIndex option with data.
+
+
+[PASS] Intercepted the expected exception.
+
+
+------------------[Task_Decompress Test: Uncompressed Target]------------------
+This test validates that the expected response is returned by TaskDecompress
+when it is called against a target file that does not contain BZ2 compressed
+data.
+
+
+[PASS] The file was correctly skipped.
+
+
+----------------------------[Integrity Check Test]-----------------------------
+Feeds a garbage hash to TaskCheckIntegrity to ensure that files are correctly
+rejected by this test when necessary.
+
+
+[PASS] The hashing mismatch was correctly detected
+
+
+
+
+===============================[END OF TESTING]===============================
+ Tester Comments: 
+ This test was run on 2021-02-05
