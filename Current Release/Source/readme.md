@@ -8,7 +8,7 @@ Full documentation is available as part of DOCUMENTATION.md
 
 ## Requirements
 	-Python 3.6.7 or later
-	-Python-gnupg 0.4.2
+	-Python-gnupg 0.4.2 or later 
 	-GnuPG 2 or later, installed as default
 	
 ## Contribution and Acknowledgement
