@@ -100,6 +100,7 @@ def build_ops_list(namespace):
                     size = os.path.getsize(absolute_path)
                     try:
                         if size <= ns.block_size_raw:  # We'll be handling this file.
+                            hasher = hashlib.new('sha256')
                             with open(absolute_path, "rb") as contents:
                                 chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
                                 while chunk != b"":
