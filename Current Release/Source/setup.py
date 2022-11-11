@@ -4,11 +4,11 @@ with open("readme.md", "r") as f:
       long_description = f.read()
 
 setup(name='tapestry',
-      version='2.1.1',
+      version='2.2.1',
       description='Tapestry Bespoke Backup Utility',
       long_description=long_description,
       author='Zac Adam-MacEwen',
-      author_email='zadammac@kenshosec.com',
+      author_email='zadammac@arcanalabs.ca',
       url='https://www.github.com/zadammac/Tapestry',
       packages=['tapestry'],
       install_requires=['python-gnupg', 'pysftp', 'paramiko'],
