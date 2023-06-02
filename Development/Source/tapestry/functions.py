@@ -762,7 +762,7 @@ def unix_pack_blocks(sizes, ops_list, namespace):
     tarf_queue.join()
     for w in workers:
         tarf_queue.put(None)
-
+    print("/n")
     return block_final_paths
 
 
@@ -878,7 +878,7 @@ def windows_pack_blocks(sizes, ops_list, namespace):
                                str(datetime.date.today()), ns.comment_string, ops_list, ns.drop)
         with tarfile.open(tarf, "a:") as tf:
             tf.add(this_riff, arcname="recovery-riff", recursive=False)
-
+    print("/n")
     return block_final_paths
 
 
@@ -1112,7 +1112,7 @@ def status_print(done, total, job, message):
     percent = int(round((done / total) * 100))
     if percent == 100:  # More Pretty Printing!
         if message == "Working...":
-            message = "Done!    \n"
+            message = "Done!     "
     text = ("\r {0}: [{1}] {2}% - {3}".format(job, done_bar_print, percent, message))
     sys.stdout.write(text)
     sys.stdout.flush()
@@ -1184,6 +1184,7 @@ def unpack_blocks(namespace):
     tasks.join()
     for w in workers:
         tasks.put(None)
+    print("/n")
     tasks.join()
 
 
