@@ -1,0 +1,10 @@
+setup.py
+tapestry/__init__.py
+tapestry/__main__.py
+tapestry/classes.py
+tapestry/functions.py
+tapestry.egg-info/PKG-INFO
+tapestry.egg-info/SOURCES.txt
+tapestry.egg-info/dependency_links.txt
+tapestry.egg-info/requires.txt
+tapestry.egg-info/top_level.txt

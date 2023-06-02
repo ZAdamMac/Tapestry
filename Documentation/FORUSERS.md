@@ -140,4 +140,5 @@ Using Tapestry with FTP is a little more complex. Tapestry is designed primarily
 |4|Tapestry was unable to find the key that is configured as the encryption key on the keyring. Because of this it couldn't have proceeded with its operations and has exited accordingly.|
 |5|Tapestry encountered some manner of network error in attempting to use the SFTP module functionality.|
 |6|The keyring does not contain some value that Tapestry expected. If run interactively the missing value will be printed to stdout.|
+|7|Somehow, one or more 0-length files remains in the packing list after the first block is packed. This should never be encounterable in reality and indicates an edge case in block-packing that should cause you some concern.|
 

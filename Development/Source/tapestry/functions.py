@@ -100,6 +100,7 @@ def build_ops_list(namespace):
                     size = os.path.getsize(absolute_path)
                     try:
                         if size <= ns.block_size_raw:  # We'll be handling this file.
+                            hasher = hashlib.new('sha256')
                             with open(absolute_path, "rb") as contents:
                                 chunk = contents.read(io.DEFAULT_BUFFER_SIZE)
                                 while chunk != b"":
@@ -688,13 +689,24 @@ def unix_pack_blocks(sizes, ops_list, namespace):
     )
     packing = True
     while packing:
+        placed_items = []
         for item in sizes:
             placed = working_block.put(item, ops_list[item])
             if placed:
-                sizes.remove(item)
+                placed_items.append(item)
+        for placed_item in placed_items:  # We need to do this rather than popping them immediately
+            sizes.remove(placed_item)     # Because that would break the indexing, and you still get recursion.
+        if smallest == 0:  # Special edge case, causes infinite loops if true after the first run through the list.
+            new_smallest = ops_list[sizes[-1]]['fsize']
+            if new_smallest == 0:  # This in theory should be unreachable code but we need to account for this case.
+                print("Fatal Error: Infinite Recursion in block build algorithm.")
+                exit(7)
+            else:
+                working_block.full = True  # at this point this must necessarily be true
         if working_block.full:  # We need a new block, unpacked items.
             collection_blocks.append(working_block)
             counter += 1
+            smallest = ops_list[sizes[-1]]['fsize']  # There is a new smallest file, and we need to start over.
             working_block = tapestry.Block(
                 (block_name_base+"-"+str(counter)), ns.block_size_raw, counter, smallest
             )

@@ -388,7 +388,7 @@ class Block(object):
             self.size += file_index_object['fsize']
             self.files += 1
             self.remaining = self.max_size - self.size
-            if self.remaining <= self.smallest:
+            if self.remaining < self.smallest:  # This must not include equivalence or we'll loop forever.
                 self.full = True
             return True
         else:  # This file won't fit and has to be placed somewhere else.
