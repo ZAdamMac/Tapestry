@@ -29,7 +29,7 @@ import tarfile
 import textwrap
 import uuid
 
-__version__ = "2.1.1"
+__version__ = "2.2.2-dev1"
 
 # Class Definitions
 
@@ -95,7 +95,7 @@ def build_ops_list(namespace):
             for file in files:
                 absolute_path = os.path.join(dir_path, file)
                 sub_path = os.path.relpath(absolute_path, ns.category_paths[category])
-                access_test_results = access_test(absolute_path)
+                access_test_results = access_test(absolute_path, test_W=False)  # Forcing false here fixes issue #34
                 if False not in access_test_results:
                     size = os.path.getsize(absolute_path)
                     try:
@@ -762,7 +762,7 @@ def unix_pack_blocks(sizes, ops_list, namespace):
     tarf_queue.join()
     for w in workers:
         tarf_queue.put(None)
-    print("/n")
+    print("\n")
     return block_final_paths
 
 
@@ -1598,9 +1598,11 @@ def prevalidate_blocks(namespace, list_blocks, index):
     if namespace.do_validation:
         ns = namespace
         ns.logs.log("Lines beneath this point are failed hash validation checks.")
+        print("Starting post-packaging validation of block data.")
         jobs = mp.JoinableQueue()
         for file in list_blocks:
             with tarfile.open(file, mode="r:*") as tf:
+                print("Scanning block %s for files to validate." % file)
                 list_members = tf.getnames()
                 for member in list_members:
                     if member != "recovery-riff":  # Obviously we can't validate this noise.
