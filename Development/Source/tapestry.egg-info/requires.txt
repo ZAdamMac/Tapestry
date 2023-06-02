@@ -1,4 +1,0 @@
-keyring
-paramiko
-pysftp
-python-gnupg
